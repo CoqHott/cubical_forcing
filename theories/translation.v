@@ -442,18 +442,57 @@ Defined.
 
 (* Empty type *)
 
-Inductive Empty : Type :=.
+Inductive empty : Type :=.
 
-Definition Emptyᶠ {p} : @El p Typeᶠ.
+Definition emptyᶠ {p} : @El p Typeᶠ.
 Proof.
 unshelve refine (fun q α => mkTYPE _ _ _).
-+ unshelve refine (fun r β => Empty).
++ unshelve refine (fun r β => empty).
 + unshelve refine (fun _ => sTrue).
 Defined.
 
-Definition Emptyε {p : ℙ} : @Elε p Typeᶠ Typeε (Emptyᶠ).
+Definition emptyε {p : ℙ} : @Elε p Typeᶠ Typeε (emptyᶠ).
 Proof.
 unfold Elε. cbn. reflexivity.
 Defined.
 
-(* should come with recursor *) 
+Definition empty_elimᶠ {p}
+  (P : El (Arr emptyᶠ emptyε Typeᶠ Typeε))
+  (Pε : Elε (Arr emptyᶠ emptyε Typeᶠ Typeε) (Arrε emptyᶠ emptyε Typeᶠ Typeε) P)
+  (x : @El p emptyᶠ)
+  (xε : Elε emptyᶠ emptyε x) :
+  El (appᶠ P x xε).
+Proof.
+unshelve refine (fun q α => _).
+destruct (x q α).
+Defined.
+
+Definition empty_elimε {p}
+  (P : El (Arr emptyᶠ emptyε Typeᶠ Typeε))
+  (Pε : Elε (Arr emptyᶠ emptyε Typeᶠ Typeε) (Arrε emptyᶠ emptyε Typeᶠ Typeε) P)
+  (x : @El p emptyᶠ)
+  (xε : Elε emptyᶠ emptyε x) :
+  Elε _ (appε Pε x xε) (empty_elimᶠ P Pε x xε).
+Proof.
+unshelve refine (fun q α => _).
+destruct (x q α).
+Defined.
+
+(* equality *)
+
+(* Inductive eq_ {p} *)
+(*   (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A) *)
+(*   (x : @El p A) (xε : Elε A Aε x) :  *)
+(*   forall (y : @El p A) (yε : Elε A Aε y), Type := *)
+(* | refl_ : eq_ A Aε x xε x xε. *)
+
+(* Definition eqᶠ {p} *)
+(*   (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A) *)
+(*   (x : @El p A) (xε : Elε A Aε x) *)
+(*   (y : @El p A) (yε : Elε A Aε y) : *)
+(*   @El p Typeᶠ. *)
+(* Proof. *)
+(* unshelve refine (fun q α => mkTYPE _ _ _). *)
+(* + unshelve refine (fun r β => eq_ (α ∘ β ⋅ A) (α ∘ β ⋅ Aε)  *)
+(*                                   (α ∘ β ⋅ x) (α ∘ β ⋅ xε)  *)
+(*                                   (α ∘ β ⋅ y) (α ∘ β ⋅ yε)). *)
