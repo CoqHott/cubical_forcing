@@ -1,0 +1,5 @@
+-R theories/ Theories
+
+theories/category.v
+theories/translation.v
+theories/interval.v
