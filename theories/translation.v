@@ -480,19 +480,52 @@ Defined.
 
 (* equality *)
 
-(* Inductive eq_ {p} *)
-(*   (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A) *)
-(*   (x : @El p A) (xε : Elε A Aε x) :  *)
-(*   forall (y : @El p A) (yε : Elε A Aε y), Type := *)
-(* | refl_ : eq_ A Aε x xε x xε. *)
+Inductive eq_ {p} 
+  (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+  (x : @El p A) (xε : Elε A Aε x) : 
+  forall (y : @El p A) (yε : Elε A Aε y), Type :=
+| refl_ : eq_ A Aε x xε x xε.
 
-(* Definition eqᶠ {p} *)
-(*   (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A) *)
-(*   (x : @El p A) (xε : Elε A Aε x) *)
-(*   (y : @El p A) (yε : Elε A Aε y) : *)
-(*   @El p Typeᶠ. *)
-(* Proof. *)
-(* unshelve refine (fun q α => mkTYPE _ _ _). *)
-(* + unshelve refine (fun r β => eq_ (α ∘ β ⋅ A) (α ∘ β ⋅ Aε)  *)
-(*                                   (α ∘ β ⋅ x) (α ∘ β ⋅ xε)  *)
-(*                                   (α ∘ β ⋅ y) (α ∘ β ⋅ yε)). *)
+Inductive eqR {p}
+  (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+  (x : @El p A) (xε : Elε A Aε x) : 
+  forall (y : @El p A) (yε : Elε A Aε y),
+  (forall (q : ℙ) (α : q ≤ p), eq_ (α · A) (α · Aε) (α · x) (α · xε) (α · y) (α · yε))
+  -> SProp :=
+| reflR : eqR A Aε x xε x xε (fun q α => refl_ (α · A) (α · Aε) (α · x) (α · xε)).
+
+Definition eqᶠ {p}
+  (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+  (x : @El p A) (xε : Elε A Aε x)
+  (y : @El p A) (yε : Elε A Aε y) :
+  @El p Typeᶠ.
+Proof.
+unshelve refine (fun q α => mkTYPE _ _ _).
++ refine (fun r β => eq_ (α ∘ β · A) (α ∘ β · Aε) 
+                         (α ∘ β · x) (α ∘ β · xε) 
+                         (α ∘ β · y) (α ∘ β · yε)).
++ refine (eqR (α · A) (α · Aε) (α · x) (α · xε) (α · y) (α · yε)).
+Defined.
+
+Definition eqε {p}
+  (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+  (x : @El p A) (xε : Elε A Aε x)
+  (y : @El p A) (yε : Elε A Aε y) :
+  Elε Typeᶠ Typeε (eqᶠ A Aε x xε y yε).
+Proof.
+unfold Elε. cbn. reflexivity.
+Defined.
+
+Definition eq_transpᶠ {p}
+  (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+  (P : El (Arr A Aε Typeᶠ Typeε)) (Pε : Elε (Arr A Aε Typeᶠ Typeε) (Arrε A Aε Typeᶠ Typeε) P)
+  (x : @El p A) (xε : Elε A Aε x)
+  (y : @El p A) (yε : Elε A Aε y)
+  (e : @El p (eqᶠ A Aε x xε y yε)) (eε : Elε (eqᶠ A Aε x xε y yε) (eqε A Aε x xε y yε) e)
+  (a : @El p (appᶠ P x xε)) (aε : Elε (appᶠ P x xε) (appε Pε x xε) a) :
+  @El p (appᶠ P y yε).
+Proof.
+  (* TODO *)
+Admitted.
+
+(* J should be the same but slightly worse. *)
