@@ -289,6 +289,7 @@ Proof.
 refine (fun q α => inrR _ _ _ _ _ (α · y) (α · yε)).
 Defined.
 
+
 Definition sum_inv {p A Aε B Bε}
   (b : @El p (sumᶠ A Aε B Bε))
   (bε : Elε (sumᶠ A Aε B Bε) (sumε A Aε B Bε) b) :
@@ -352,7 +353,7 @@ Definition sum_elim p : forall
  forall q (α : q ≤ p),
  (P q α (α · b) (α · bε)).(typ) q !.
 Proof.
-intros.
+  intros.
 assert (be := @sum_inv p A Aε B Bε b bε).
 destruct (b p !) as [x xε|y yε].
 + destruct be.
@@ -525,7 +526,25 @@ Definition eq_transpᶠ {p}
   (a : @El p (appᶠ P x xε)) (aε : Elε (appᶠ P x xε) (appε Pε x xε) a) :
   @El p (appᶠ P y yε).
 Proof.
-  (* TODO *)
-Admitted.
+  intros q α.
+  clear eε. specialize (e p !). simpl in e.
+  change (! ∘ ?f) with f in *. change (! · ?f) with f in *.
+  destruct e. exact (a q α).
+Defined.
 
+Definition eq_transpε {p}
+  (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+  (P : El (Arr A Aε Typeᶠ Typeε)) (Pε : Elε (Arr A Aε Typeᶠ Typeε) (Arrε A Aε Typeᶠ Typeε) P)
+  (x : @El p A) (xε : Elε A Aε x)
+  (y : @El p A) (yε : Elε A Aε y)
+  (e : @El p (eqᶠ A Aε x xε y yε)) (eε : Elε (eqᶠ A Aε x xε y yε) (eqε A Aε x xε y yε) e)
+  (a : @El p (appᶠ P x xε)) (aε : Elε (appᶠ P x xε) (appε Pε x xε) a) :
+  @Elε p (appᶠ P y yε) (appε Pε y yε) (eq_transpᶠ A Aε P Pε x xε y yε e eε a aε).
+Proof.
+  unfold eq_transpᶠ.
+  set (ep := e p !). 
+  clearbody ep. simpl in ep. change (! ∘ ?f) with f in *. change (! · ?f) with f in *.
+  destruct ep. simpl.
+  exact aε.
+Defined.
 (* J should be the same but slightly worse. *)
