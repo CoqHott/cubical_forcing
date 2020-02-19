@@ -198,6 +198,31 @@ Proof.
 refine (fun q α x xε => fε q α x xε q !).
 Defined.
 
+Definition dappᶠ {p}
+           {A Aε}
+           {B : El (Arr A Aε Typeᶠ Typeε)}
+           {Bε : Elε (Arr A Aε Typeᶠ Typeε) (Arrε A Aε Typeᶠ Typeε) B}
+           (f : El (Prod A Aε B Bε))
+           (x : El A) (xε : Elε A Aε x) :
+  @El p (appᶠ B x xε).
+Proof.
+  intros q α.
+  exact (f q α (α · x) (α · xε)).
+Defined.
+
+Definition dappε {p}
+           {A Aε}
+           {B : El (Arr A Aε Typeᶠ Typeε)}
+           {Bε : Elε _ (Arrε A Aε Typeᶠ Typeε) B}
+           (f : El (Prod A Aε B Bε))
+           (fε : Elε _ (Prodε A Aε B Bε) f) 
+           (x : El A) (xε : Elε A Aε x) :
+  Elε (appᶠ B x xε) (appε Bε x xε) (@dappᶠ p A Aε B Bε f x xε).
+Proof.
+  intros q α.
+  exact (fε q α (α · x) (α · xε)).
+Defined.
+
 Inductive sum_ {p}
   (A : @El p Typeᶠ)
   (Aε : Elε Typeᶠ Typeε A)
@@ -517,6 +542,25 @@ Proof.
 unfold Elε. cbn. reflexivity.
 Defined.
 
+Definition reflᶠ  {p}
+           {A : @El p Typeᶠ} {Aε : Elε Typeᶠ Typeε A}
+           (x : @El p A) (xε : Elε A Aε x) :
+  @El p (eqᶠ A Aε x xε x xε).
+Proof.
+  intros q α.
+  unfold eqᶠ. cbn.
+  exact(refl_ _ _ (α · x) (α · xε)).
+Defined.
+
+Definition reflε {p}
+           {A : @El p Typeᶠ} {Aε : Elε Typeᶠ Typeε A}
+           (x : @El p A) (xε : Elε A Aε x) :
+  @Elε p _ (eqε A Aε x xε x xε) (reflᶠ x xε).
+Proof.
+  intros q α.
+  apply reflR.
+Defined.
+
 Definition eq_transpᶠ {p}
   (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
   (P : El (Arr A Aε Typeᶠ Typeε)) (Pε : Elε (Arr A Aε Typeᶠ Typeε) (Arrε A Aε Typeᶠ Typeε) P)
@@ -547,4 +591,32 @@ Proof.
   destruct ep. simpl.
   exact aε.
 Defined.
+
+
 (* J should be the same but slightly worse. *)
+Check eq_rect.
+Definition Jᶠ {p}
+           (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+           (x : @El p A) (xε : Elε A Aε x)
+           (P : El (Prod A Aε _
+                         (lamε (fun q α y yε =>
+                                  Arrε _ (eqε (α · A) (α · Aε) (α · x) (α · xε) y yε) Typeᶠ Typeε)
+                         )
+                   )
+           )
+           (Pε : Elε _
+                     (Prodε A Aε _
+                            (lamε (fun q α y yε =>
+                                     Arrε _ (eqε (α · A) (α · Aε) (α · x) (α · xε) y yε) Typeᶠ Typeε)
+                            )
+                     )
+                     P
+           )
+           (y : @El p A) (yε : Elε A Aε y)
+           (e : @El p (eqᶠ A Aε x xε y yε)) (eε : Elε _ (eqε A Aε x xε y yε) e)
+           (H : El  (appᶠ (dappᶠ P x xε) (reflᶠ x xε) (reflε x xε))) 
+  : El (appᶠ (dappᶠ P y yε) e eε) .
+Proof.
+  (*TODO*)
+Abort.
+                                       
