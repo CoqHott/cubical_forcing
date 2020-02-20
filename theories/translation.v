@@ -596,6 +596,34 @@ Defined.
 (* J should be the same but slightly worse. *)
 Check eq_rect.
 Definition Jᶠ {p}
+           {A : @El p Typeᶠ} {Aε : Elε Typeᶠ Typeε A}
+           {x : @El p A} (xε : Elε A Aε x)
+           {P : El (Prod A Aε _
+                         (lamε (fun q α y yε =>
+                                  Arrε _ (eqε (α · A) (α · Aε) (α · x) (α · xε) y yε) Typeᶠ Typeε)
+                         )
+                   )
+           }
+           (Pε : Elε _
+                     (Prodε A Aε _
+                            (lamε (fun q α y yε =>
+                                     Arrε _ (eqε (α · A) (α · Aε) (α · x) (α · xε) y yε) Typeᶠ Typeε)
+                            )
+                     )
+                     P
+           )
+           {y : @El p A} (yε : Elε A Aε y)
+           {e : @El p (eqᶠ A Aε x xε y yε)} (eε : Elε _ (eqε A Aε x xε y yε) e)
+           (H : El  (appᶠ (dappᶠ P x xε) (reflᶠ x xε) (reflε x xε))) 
+  : El (appᶠ (dappᶠ P y yε) e eε) .
+Proof.
+  assert (t := eε p !). 
+  change  (eqR A Aε x xε y yε e) in t. destruct t.
+  exact H.
+Defined.
+
+
+Definition Jε {p}
            (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
            (x : @El p A) (xε : Elε A Aε x)
            (P : El (Prod A Aε _
@@ -614,9 +642,11 @@ Definition Jᶠ {p}
            )
            (y : @El p A) (yε : Elε A Aε y)
            (e : @El p (eqᶠ A Aε x xε y yε)) (eε : Elε _ (eqε A Aε x xε y yε) e)
-           (H : El  (appᶠ (dappᶠ P x xε) (reflᶠ x xε) (reflε x xε))) 
-  : El (appᶠ (dappᶠ P y yε) e eε) .
+           (H : El (appᶠ (dappᶠ P x xε) (reflᶠ x xε) (reflε x xε)))
+           (Hε : Elε _ (appε (dappε P Pε x xε) (reflᶠ x xε) (reflε x xε)) H) 
+  : Elε (appᶠ (dappᶠ P y yε) e eε) (appε (dappε P Pε y yε) e eε) (Jᶠ xε Pε yε eε H).
 Proof.
-  (*TODO*)
-Abort.
-                                       
+  assert (t := eε p !). 
+  change  (eqR A Aε x xε y yε e) in t. destruct t.
+  exact Hε.
+Defined.
