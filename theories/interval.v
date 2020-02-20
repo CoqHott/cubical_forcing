@@ -63,4 +63,25 @@ refine (fun q α => yoR_cons 1 q (cst_1 q)).
 Defined.
 
 (* Axioms on the interval *)
-(* TODO *)
+Definition ax2ᶠ {p : ℙ}
+    (e : @El p (eqᶠ Iᶠ Iε i0ᶠ i0ε i1ᶠ i1ε))
+    (eε : Elε _ (eqε Iᶠ Iε i0ᶠ i0ε i1ᶠ i1ε) e) :
+    @El p emptyᶠ.
+Proof.
+refine (fun q α => _).
+pose proof (mkFinset 1 0 (sle_n _)) as z.
+pose proof (fun _ : finset q => false) as c.
+pose proof (match e q α in (eq_ _ _ _ _ x xε)
+        return (((α · i0ᶠ) q !).(arr) c z = (x q !).(arr) c z) with
+        | refl_ _ _ _ _ => eq_refl _
+        end) as H.
+inversion H.
+Defined.
+
+Definition ax2ε {p : ℙ}
+    (e : @El p (eqᶠ Iᶠ Iε i0ᶠ i0ε i1ᶠ i1ε))
+    (eε : Elε _ (eqε Iᶠ Iε i0ᶠ i0ε i1ᶠ i1ε) e) :
+    Elε emptyᶠ emptyε (ax2ᶠ e eε).
+Proof.
+refine (fun q α => sI).
+Defined.
