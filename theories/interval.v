@@ -64,3 +64,55 @@ Defined.
 
 (* Axioms on the interval *)
 (* TODO *)
+
+(** Axiom 2 **)
+
+Lemma ap_10 {A B} {f g : forall a  : A, B a} (x : A) (e : f = g) : f x = g x.
+Proof.
+  destruct e. reflexivity.
+Defined.
+
+Lemma neq_cst {p q} (α : p ≤ q) : α · i0ᶠ = α · i1ᶠ -> empty.
+Proof.
+  intro H.
+  unfold le_cmp in H.
+  apply (ap_10 p) in H.
+  cbn in H.
+  apply (ap_10 !) in H. cbn in H. unfold i0ᶠ, i1ᶠ in H.
+  unfold cst_0, cst_1 in H. cbn in H.
+  apply (f_equal arr) in H. cbn in H.
+  apply (ap_10 (fun _ => true)) in H. cbn in H.
+  unshelve eapply (ap_10 _) in H.
+  { unshelve econstructor.
+    - exact 0.
+    - constructor.
+  }
+  cbn in H.
+  discriminate.
+Defined.
+
+Definition ax2ᶠ {p} : @El p (Arr _ (eqε _ _ i0ᶠ i0ε i1ᶠ i1ε) _ emptyε).
+Proof.
+  intros q α.
+  intro H.
+  assert (t := H q !).
+  intro H1. cbn.
+  cbn in t. repeat change (?f ∘ !) with f in *.
+  apply (neq_cst α).
+  destruct t. reflexivity.
+Defined.
+
+Definition ax2ε {p} : @Elε p _ (Arrε _ (eqε _ _ i0ᶠ i0ε i1ᶠ i1ε) _ emptyε) ax2ᶠ.
+Proof.
+  intros q α.
+  cbn.
+  intro H.
+  assert (t := H q !).
+  intro H1. cbn.
+  cbn in t.
+  repeat change (?f ∘ !) with f in *.
+  apply empty_sind.
+  apply (neq_cst α).
+  destruct t. reflexivity.
+Defined.
+  
