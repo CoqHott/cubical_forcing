@@ -116,3 +116,34 @@ Proof.
   destruct t. reflexivity.
 Defined.
   
+
+Lemma increase_impliesb {q} (i : q ≤ 1) (x y : cube q) (H : le_cube x y) (n : finset 1) : (arr i x n) = true ->  (arr i y n) = true.
+Proof.
+  intro Hx.
+  assert (Hi := eps_arr i x y H n). 
+  destruct (arr i x n).
+  - destruct (arr i y n).
+    + reflexivity.
+    + destruct Hi.
+  - discriminate.
+Defined.
+
+Definition minIᶠ {p} (i j : @El p Iᶠ) : @El p Iᶠ.
+Proof.
+  intros q α. specialize (i q α). specialize (j q α).
+  unshelve econstructor.
+  - exact (fun x u => andb (arr i x u) (arr j x u)).
+  - intros x y H n.
+    set (ixn := (arr i x n)). assert (arr i x n = ixn) by reflexivity. destruct ixn.
+    + set (jxn := (arr j x n)). assert (arr j x n = jxn) by reflexivity. destruct jxn.
+      * rewrite (increase_impliesb i x y H n H0).
+        rewrite (increase_impliesb j x y H n H1).
+        constructor.
+      * constructor.
+    + constructor.
+Defined.
+
+Definition minIε {p} (i j : @El p Iᶠ) (iε : Elε Iᶠ Iε i) (jε : Elε Iᶠ Iε j) : @Elε p Iᶠ Iε (minIᶠ i j).
+Proof.
+  (* TODO *)
+Abort.
