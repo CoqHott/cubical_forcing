@@ -23,22 +23,59 @@ Inductive sFalse : SProp :=.
 Inductive sTrue : SProp := sI.
 
 
-(* Finite sets *)
+(* Proof-irrelevant inequalities *)
 
 Inductive sle (n : nat) : nat -> SProp :=
 | sle_n : sle n n
 | sle_S : forall m : nat, sle n m -> sle n (S m).
 
+Definition le_to_sle {m n : nat} :
+  le m n -> sle m n.
+Proof.
+intro H. induction H as [| m' n' IH].
+- exact (sle_n m).
+- exact (sle_S m m' IH).
+Defined.
+
+Definition sle_to_le {m n : nat} :
+  sle m n -> le m n.
+Proof.
+intro H.
+destruct (dec_le m n) as [Hd | Hd].
+- exact Hd.
+- assert (sFalse) as Hf.
+  { induction H as [| m' n' IHsle].
+    - destruct (Hd (le_n m)).
+    - apply IHsle. intro H'. exact (Hd (le_S m m' H')). }
+  destruct Hf.
+Defined.
+
 Definition slt (n m : nat) : SProp := sle (S n) m.
+
+(* Finite sets *)
 
 Record finset (n : nat) : Set := mkFinset {
     val : nat ;
     eps_val : slt val n ;
 }.
 
+Definition finzero {p : nat} : finset (S p).
+Proof.
+unshelve refine (mkFinset _ _ _).
++ exact 0.
++ apply le_to_sle. apply le_n_S. exact (le_0_n p).
+Defined.
+
+Definition finsucc {p : nat} (n : finset p) : finset (S p).
+Proof.
+destruct n as [n nε].
+unshelve refine (mkFinset _ _ _).
++ exact (S n).
++ apply le_to_sle. apply le_n_S. apply sle_to_le. exact nε.
+Defined.
+
 Arguments val {_}.
 Arguments eps_val {_}.
-
 
 (* Arrows *)
 
@@ -58,6 +95,13 @@ Record cube_arr (m n : nat) : Set := mkCubeArr {
 Arguments arr {_ _}.
 Arguments eps_arr {_ _}.
 
+Definition seq_cube_arr {p q : nat} {α β : cube_arr p q} :
+    α.(arr) ≡ β.(arr) -> α ≡ β.
+Proof.
+intro H.
+destruct α as [α αε]. destruct β as [β βε].
+simpl in H. destruct H. refine (srefl _).
+Defined.
 
 (* Composition *)
 
@@ -107,6 +151,8 @@ Lemma comp_id_right (m n : nat) (f : cube_arr m n) :
 Proof.
 reflexivity.
 Qed.
+
+(* Notations *)
 
 Definition ℙ@{} : Set := nat.
 
