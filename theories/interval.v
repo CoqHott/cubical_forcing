@@ -115,7 +115,9 @@ Proof.
   apply (neq_cst α).
   destruct t. reflexivity.
 Defined.
-  
+
+
+(*Axiom 3 *)
 
 Lemma increase_impliesb {q} (i : q ≤ 1) (x y : cube q) (H : le_cube x y) (n : finset 1) : (arr i x n) = true ->  (arr i y n) = true.
 Proof.
@@ -128,11 +130,10 @@ Proof.
   - discriminate.
 Defined.
 
-Definition minIᶠ {p} (i j : @El p Iᶠ) : @El p Iᶠ.
+Definition mincube {p} (i j : cube_arr p 1) : cube_arr p 1.
 Proof.
-  intros q α. specialize (i q α). specialize (j q α).
   unshelve econstructor.
-  - exact (fun x u => andb (arr i x u) (arr j x u)).
+  - intros x n. exact (andb (arr i x n) (arr j x n)).
   - intros x y H n.
     set (ixn := (arr i x n)). assert (arr i x n = ixn) by reflexivity. destruct ixn.
     + set (jxn := (arr j x n)). assert (arr j x n = jxn) by reflexivity. destruct jxn.
@@ -143,7 +144,54 @@ Proof.
     + constructor.
 Defined.
 
-Definition minIε {p} (i j : @El p Iᶠ) (iε : Elε Iᶠ Iε i) (jε : Elε Iᶠ Iε j) : @Elε p Iᶠ Iε (minIᶠ i j).
+Definition minIᶠ {p} (i j : @El p Iᶠ) : @El p Iᶠ.
 Proof.
-  (* TODO *)
-Abort.
+  intros q α.
+  assert (t := mincube (i p !) (j p !)).
+  exact (t ∘ α).
+Defined.
+  
+Definition minIε {p} {i j : @El p Iᶠ} (iε : Elε Iᶠ Iε i) (jε : Elε Iᶠ Iε j) : @Elε p Iᶠ Iε (minIᶠ i j).
+Proof.
+  intros q α.
+  unfold cast. simpl.
+  change (α · minIᶠ i j)
+    with  (fun (r : nat) (β : r ≤ q) => mincube (i p !) (j p !) ∘ α ∘ β).
+  constructor.
+Defined.
+
+
+(* Axiom 4 *)
+
+Definition maxcube {p} (i j : cube_arr p 1) : cube_arr p 1.
+Proof.
+  unshelve econstructor.
+  - intros x n. exact (orb (arr i x n) (arr j x n)).
+  - intros x y H n.
+    set (ixn := (arr i x n)). assert (arr i x n = ixn) by reflexivity. destruct ixn.
+    + rewrite (increase_impliesb i x y H n H0).
+      constructor.
+    + set (jxn := (arr j x n)). assert (arr j x n = jxn) by reflexivity. destruct jxn.
+      * rewrite (increase_impliesb j x y H n H1).
+        simpl. destruct (arr i y n); constructor.
+      * constructor.
+Defined.
+
+Definition maxIᶠ {p} (i j : @El p Iᶠ) : @El p Iᶠ.
+Proof.
+  intros q α.
+  assert (t := maxcube (i p !) (j p !)).
+  exact (t ∘ α).
+Defined.
+  
+Definition maxIε {p} (i j : @El p Iᶠ)
+           (iε : Elε Iᶠ Iε i) (jε : Elε Iᶠ Iε j) : @Elε p Iᶠ Iε (maxIᶠ i j).
+Proof.
+  intros q α. 
+  unfold cast. simpl.
+  change (α · maxIᶠ i j)
+    with  (fun (r : nat) (β : r ≤ q) => maxcube (i p !) (j p !) ∘ α ∘ β).
+  constructor.
+Defined.
+  
+                       
