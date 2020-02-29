@@ -26,6 +26,11 @@ intros A x P p y e.
 refine (match e in _ ≡ z as e return P _ e with srefl _ => p end).
 Defined.
 
+Definition ssym {A} {x y : A} (e : x ≡ y) : (y ≡ x).
+Proof.
+  destruct e. exact (srefl _).
+Defined.
+
 Inductive sFalse : SProp :=.
 Inductive sTrue : SProp := sI.
 

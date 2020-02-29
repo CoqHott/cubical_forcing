@@ -296,9 +296,23 @@ destruct (Hφ (S p) squish (homotopy_to_0ᶠ i iε) (homotopy_to_0ε i iε)) as 
               ((x y e) r (α ∘ β))))
          Hhε i0ᶠ restriction_0) as z.
   exact z.
-- refine (appᶠ (side_1 · Hh) _ _).
-
-Admitted.
+- assert (@El p (Arr _
+                    (appε φε (side_1 · homotopy_to_0ᶠ i iε)
+                             (side_1 · homotopy_to_0ε i iε))
+                     emptyᶠ emptyε)).
+  { exact (side_1 · Hh). }
+  refine (appᶠ X _ _).
+  pose (fun (y : @El p Iᶠ) (e : i ≡ y) =>
+        J_seqs _ i (fun z _ => Elε Iᶠ Iε z) iε y e) as yε.
+  pose (fun (y : @El p Iᶠ) (e : i ≡ y) =>
+        J_seq (@El p Iᶠ) i (fun z e => @El p (appᶠ φ z (yε z e)))
+        Hφi y e) as x.
+  pose (J_seqs (@El p Iᶠ) _
+         (fun y e =>
+           Elε (appᶠ φ y (yε y e)) (appε φε y (yε y e)) (x y e))
+         Hφiε (side_1 · homotopy_to_0ᶠ i iε) (ssym restriction_1)) as z.
+  exact z.
+Defined.
 
 Definition ax1_rightε {p : ℙ}
   (φ : @El p (Arr Iᶠ Iε Typeᶠ Typeε))
