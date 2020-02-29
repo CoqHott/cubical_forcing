@@ -212,12 +212,7 @@ apply (@seq_I p (side_1 · homotopy_to_0ᶠ i iε) (side_1 · homotopy_to_0ε i 
 apply seq_cube_arr. refine (srefl _).
 Defined.
 
-Definition flemme {x : Type} : x.
-Admitted.
-
-Definition flemmeε {s : SProp} : s.
-Admitted.
-
+(* deep J eliminator magic starts here *)
 Definition ax1_leftᶠ {p : ℙ}
   (φ : @El p (Arr Iᶠ Iε Typeᶠ Typeε))
   (φε : Elε _ (Arrε Iᶠ Iε Typeᶠ Typeε) φ)
@@ -230,15 +225,31 @@ Definition ax1_leftᶠ {p : ℙ}
   El (appᶠ φ i iε).
 Proof.
 destruct (Hφ (S p) squish (homotopy_to_0ᶠ i iε) (homotopy_to_0ε i iε)) as [Hh _ | Hh _].
-- unshelve refine (fun q α => _).
-  specialize (Hh _ (side_1 ∘ α)). unfold appᶠ in Hh.
-  refine (J_seq _ _
-           (fun y e => typ (φ q α (α · y) (α · (J_seqs _ _ (fun z f => Elε Iᶠ Iε z) (side_1 · homotopy_to_0ε i iε) y e))) q !)
-           Hh i restriction_1).
-- specialize (Hh _ side_0).
-  unshelve refine (match Hh _ _ in empty with end).
-  + apply flemme.
-  + apply flemmeε.
+- pose (fun (y : @El p Iᶠ) (e : side_1 · homotopy_to_0ᶠ i iε ≡ y) =>
+         J_seqs (@El p Iᶠ) _ (fun z _ => Elε Iᶠ Iε z)
+           (side_1 · homotopy_to_0ε i iε) y e) as yε.
+  pose (fun (y : @El p Iᶠ) (e : side_1 · homotopy_to_0ᶠ i iε ≡ y) =>
+         J_seq (@El p Iᶠ) _ (fun z e => @El p (appᶠ φ z (yε z e)))
+          (side_1 · Hh) y e) as x.
+  exact (x i restriction_1).
+- assert (@El p (Arr _
+           (appε φε (side_0 · homotopy_to_0ᶠ i iε)
+                    (side_0 · homotopy_to_0ε i iε))
+         emptyᶠ emptyε)).
+  { exact (side_0 · Hh). }
+  assert (@El p emptyᶠ).
+  { refine (appᶠ X _ _).
+    pose (fun (y : @El p Iᶠ) (e : i0ᶠ ≡ y) =>
+          J_seqs _ i0ᶠ (fun z _ => Elε Iᶠ Iε z) i0ε y e) as yε.
+    pose (fun (y : @El p Iᶠ) (e : i0ᶠ ≡ y) =>
+          J_seq (@El p Iᶠ) i0ᶠ (fun z e => @El p (appᶠ φ z (yε z e)))
+          Hi0 y e) as x.
+    pose (J_seqs (@El p Iᶠ) _
+           (fun y e =>
+             Elε (appᶠ φ y (yε y e)) (appε φε y (yε y e)) (x y e))
+           Hi0ε (side_0 · homotopy_to_0ᶠ i iε) (ssym restriction_0)) as z.
+    exact z. }
+  destruct (X0 p !).
 Defined.
 
 Definition ax1_leftε {p : ℙ}
@@ -252,10 +263,39 @@ Definition ax1_leftε {p : ℙ}
   (iε : Elε Iᶠ Iε i) :
   Elε _ (appε φε i iε) (ax1_leftᶠ φ φε Hφ Hφε Hi0 Hi0ε i iε).
 Proof.
-unshelve refine (fun q α => _). unfold ax1_leftᶠ.
-destruct (Hφ (S p) squish (homotopy_to_0ᶠ i iε) (homotopy_to_0ε i iε)) as [Hh _ | Hh _].
-- apply flemmeε.
-- apply flemmeε.
+unfold ax1_leftᶠ.
+destruct (Hφ (S p) squish (homotopy_to_0ᶠ i iε) (homotopy_to_0ε i iε)) as [Hh Hhε | Hh _].
+- pose (fun (y : @El p Iᶠ) (e : side_1 · homotopy_to_0ᶠ i iε ≡ y) =>
+         J_seqs (@El p Iᶠ) _ (fun z _ => Elε Iᶠ Iε z)
+           (side_1 · homotopy_to_0ε i iε) y e) as yε.
+  pose (fun (y : @El p Iᶠ) (e : side_1 · homotopy_to_0ᶠ i iε ≡ y) =>
+         J_seq (@El p Iᶠ) _ (fun z e => @El p (appᶠ φ z (yε z e)))
+          (side_1 · Hh) y e) as x.
+  pose (J_seqs (@El p Iᶠ) _
+         (fun y e =>
+           Elε (appᶠ φ y (yε y e))
+               (appε φε y (yε y e))
+               (x y e))
+         (side_1 · Hhε) i restriction_1) as z.
+  exact z.
+- assert (@El p (Arr _
+           (appε φε (side_0 · homotopy_to_0ᶠ i iε)
+                    (side_0 · homotopy_to_0ε i iε))
+         emptyᶠ emptyε)).
+  { exact (side_0 · Hh). }
+  assert (@El p emptyᶠ).
+  { refine (appᶠ X _ _).
+    pose (fun (y : @El p Iᶠ) (e : i0ᶠ ≡ y) =>
+          J_seqs _ i0ᶠ (fun z _ => Elε Iᶠ Iε z) i0ε y e) as yε.
+    pose (fun (y : @El p Iᶠ) (e : i0ᶠ ≡ y) =>
+          J_seq (@El p Iᶠ) i0ᶠ (fun z e => @El p (appᶠ φ z (yε z e)))
+          Hi0 y e) as x.
+    pose (J_seqs (@El p Iᶠ) _
+           (fun y e =>
+             Elε (appᶠ φ y (yε y e)) (appε φε y (yε y e)) (x y e))
+           Hi0ε (side_0 · homotopy_to_0ᶠ i iε) (ssym restriction_0)) as z.
+    exact z. }
+  destruct (X0 p !).
 Defined.
 
 Definition ax1_rightᶠ {p : ℙ}
@@ -273,28 +313,15 @@ Definition ax1_rightᶠ {p : ℙ}
 Proof.
 destruct (Hφ (S p) squish (homotopy_to_0ᶠ i iε) (homotopy_to_0ε i iε)) as [Hh Hhε | Hh _].
 - refine (appᶠ Hi0 _ _).
-  unshelve refine (fun q α => _).
-  specialize (Hhε _ (side_0 ∘ α)).
-  (* time for some J eliminator deep magic *)
   pose (fun (y : @El p Iᶠ) (e : side_0 · homotopy_to_0ᶠ i iε ≡ y) =>
-        J_seqs (@El p Iᶠ) _
-        (fun z _ => Elε Iᶠ Iε z)
-        (side_0 · homotopy_to_0ε i iε)
-        y e) as yε.
+        J_seqs (@El p Iᶠ) _ (fun z _ => Elε Iᶠ Iε z)
+        (side_0 · homotopy_to_0ε i iε) y e) as yε.
   pose (fun (y : @El p Iᶠ) (e : side_0 · homotopy_to_0ᶠ i iε ≡ y) =>
-        J_seq (@El p Iᶠ) _
-        (fun z e => @El p (appᶠ φ z (yε z e)))
-        (side_0 · Hh)
-        y e) as x.
+        J_seq (@El p Iᶠ) _ (fun z e => @El p (appᶠ φ z (yε z e)))
+        (side_0 · Hh) y e) as x.
   pose (J_seqs (@El p Iᶠ) _
-         (fun y e =>
-           rel (appᶠ φ y (yε y e) q α)
-            (fun r (β : r ≤ q) => cast
-              (appᶠ φ y (yε y e))
-              (@appε _ _ _ _ _ φ φε y (yε y e))
-              α β
-              ((x y e) r (α ∘ β))))
-         Hhε i0ᶠ restriction_0) as z.
+         (fun y e => Elε (appᶠ φ y (yε y e)) (appε φε y (yε y e)) (x y e))
+         (side_0 · Hhε) i0ᶠ restriction_0) as z.
   exact z.
 - assert (@El p (Arr _
                     (appε φε (side_1 · homotopy_to_0ᶠ i iε)
