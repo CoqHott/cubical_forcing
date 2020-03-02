@@ -19,6 +19,18 @@ intros A x P p y e.
 refine (match e in _ ≡ z as e return P _ e with srefl _ => p end).
 Defined.
 
+Lemma J_seqs : forall (A : Type) (x : A) (P : forall y, x ≡ y -> SProp),
+  P x (srefl _) -> forall y e, P y e.
+Proof.
+intros A x P p y e.
+refine (match e in _ ≡ z as e return P _ e with srefl _ => p end).
+Defined.
+
+Definition ssym {A} {x y : A} (e : x ≡ y) : (y ≡ x).
+Proof.
+  destruct e. exact (srefl _).
+Defined.
+
 Inductive sFalse : SProp :=.
 Inductive sTrue : SProp := sI.
 

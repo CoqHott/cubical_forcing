@@ -178,6 +178,24 @@ unshelve refine (mkCubeArr _ _ _ _).
   + refine (Hcd _).
 Defined.
 
+Definition squish {p : ℙ} : S p ≤ p.
+Proof.
+unshelve refine (mkCubeArr _ _ _ _).
+- refine (fun c n => c (finsucc n)).
+- intros c d Hcd n.
+  exact (Hcd (finsucc n)).
+Defined.
+
+Definition section_0 {p : ℙ} : (@squish p) ∘ side_0 = !.
+Proof.
+reflexivity.
+Defined.
+
+Definition section_1 {p : ℙ} : (@squish p) ∘ side_1 = !.
+Proof.
+reflexivity.
+Defined.
+
 Definition restriction_0 {p : ℙ}
 {i : @El p Iᶠ} {iε : Elε Iᶠ Iε i} :
     side_0 · (homotopy_to_0ᶠ i iε) ≡ i0ᶠ.
@@ -194,6 +212,152 @@ apply (@seq_I p (side_1 · homotopy_to_0ᶠ i iε) (side_1 · homotopy_to_0ε i 
 apply seq_cube_arr. refine (srefl _).
 Defined.
 
+(* deep J eliminator magic starts here *)
+Definition ax1_leftᶠ {p : ℙ}
+  (φ : @El p (Arr Iᶠ Iε Typeᶠ Typeε))
+  (φε : Elε _ (Arrε Iᶠ Iε Typeᶠ Typeε) φ)
+  (Hφ : @El p (Prod Iᶠ Iε (isdecᶠ φ φε) (isdecε φ φε)))
+  (Hφε : Elε _ (Prodε Iᶠ Iε (isdecᶠ φ φε) (isdecε φ φε)) Hφ)
+  (Hi0 : @El p (appᶠ φ i0ᶠ i0ε))
+  (Hi0ε : Elε (appᶠ φ i0ᶠ i0ε) (appε φε i0ᶠ i0ε) Hi0)
+  (i : @El p Iᶠ)
+  (iε : Elε Iᶠ Iε i) :
+  El (appᶠ φ i iε).
+Proof.
+destruct (Hφ (S p) squish (homotopy_to_0ᶠ i iε) (homotopy_to_0ε i iε)) as [Hh _ | Hh _].
+- pose (fun (y : @El p Iᶠ) (e : side_1 · homotopy_to_0ᶠ i iε ≡ y) =>
+         J_seqs (@El p Iᶠ) _ (fun z _ => Elε Iᶠ Iε z)
+           (side_1 · homotopy_to_0ε i iε) y e) as yε.
+  pose (fun (y : @El p Iᶠ) (e : side_1 · homotopy_to_0ᶠ i iε ≡ y) =>
+         J_seq (@El p Iᶠ) _ (fun z e => @El p (appᶠ φ z (yε z e)))
+          (side_1 · Hh) y e) as x.
+  exact (x i restriction_1).
+- assert (@El p (Arr _
+           (appε φε (side_0 · homotopy_to_0ᶠ i iε)
+                    (side_0 · homotopy_to_0ε i iε))
+         emptyᶠ emptyε)).
+  { exact (side_0 · Hh). }
+  assert (@El p emptyᶠ).
+  { refine (appᶠ X _ _).
+    pose (fun (y : @El p Iᶠ) (e : i0ᶠ ≡ y) =>
+          J_seqs _ i0ᶠ (fun z _ => Elε Iᶠ Iε z) i0ε y e) as yε.
+    pose (fun (y : @El p Iᶠ) (e : i0ᶠ ≡ y) =>
+          J_seq (@El p Iᶠ) i0ᶠ (fun z e => @El p (appᶠ φ z (yε z e)))
+          Hi0 y e) as x.
+    pose (J_seqs (@El p Iᶠ) _
+           (fun y e =>
+             Elε (appᶠ φ y (yε y e)) (appε φε y (yε y e)) (x y e))
+           Hi0ε (side_0 · homotopy_to_0ᶠ i iε) (ssym restriction_0)) as z.
+    exact z. }
+  destruct (X0 p !).
+Defined.
+
+Definition ax1_leftε {p : ℙ}
+  (φ : @El p (Arr Iᶠ Iε Typeᶠ Typeε))
+  (φε : Elε _ (Arrε Iᶠ Iε Typeᶠ Typeε) φ)
+  (Hφ : @El p (Prod Iᶠ Iε (isdecᶠ φ φε) (isdecε φ φε)))
+  (Hφε : Elε _ (Prodε Iᶠ Iε (isdecᶠ φ φε) (isdecε φ φε)) Hφ)
+  (Hi0 : @El p (appᶠ φ i0ᶠ i0ε))
+  (Hi0ε : Elε (appᶠ φ i0ᶠ i0ε) (appε φε i0ᶠ i0ε) Hi0)
+  (i : @El p Iᶠ)
+  (iε : Elε Iᶠ Iε i) :
+  Elε _ (appε φε i iε) (ax1_leftᶠ φ φε Hφ Hφε Hi0 Hi0ε i iε).
+Proof.
+unfold ax1_leftᶠ.
+destruct (Hφ (S p) squish (homotopy_to_0ᶠ i iε) (homotopy_to_0ε i iε)) as [Hh Hhε | Hh _].
+- pose (fun (y : @El p Iᶠ) (e : side_1 · homotopy_to_0ᶠ i iε ≡ y) =>
+         J_seqs (@El p Iᶠ) _ (fun z _ => Elε Iᶠ Iε z)
+           (side_1 · homotopy_to_0ε i iε) y e) as yε.
+  pose (fun (y : @El p Iᶠ) (e : side_1 · homotopy_to_0ᶠ i iε ≡ y) =>
+         J_seq (@El p Iᶠ) _ (fun z e => @El p (appᶠ φ z (yε z e)))
+          (side_1 · Hh) y e) as x.
+  pose (J_seqs (@El p Iᶠ) _
+         (fun y e =>
+           Elε (appᶠ φ y (yε y e))
+               (appε φε y (yε y e))
+               (x y e))
+         (side_1 · Hhε) i restriction_1) as z.
+  exact z.
+- assert (@El p (Arr _
+           (appε φε (side_0 · homotopy_to_0ᶠ i iε)
+                    (side_0 · homotopy_to_0ε i iε))
+         emptyᶠ emptyε)).
+  { exact (side_0 · Hh). }
+  assert (@El p emptyᶠ).
+  { refine (appᶠ X _ _).
+    pose (fun (y : @El p Iᶠ) (e : i0ᶠ ≡ y) =>
+          J_seqs _ i0ᶠ (fun z _ => Elε Iᶠ Iε z) i0ε y e) as yε.
+    pose (fun (y : @El p Iᶠ) (e : i0ᶠ ≡ y) =>
+          J_seq (@El p Iᶠ) i0ᶠ (fun z e => @El p (appᶠ φ z (yε z e)))
+          Hi0 y e) as x.
+    pose (J_seqs (@El p Iᶠ) _
+           (fun y e =>
+             Elε (appᶠ φ y (yε y e)) (appε φε y (yε y e)) (x y e))
+           Hi0ε (side_0 · homotopy_to_0ᶠ i iε) (ssym restriction_0)) as z.
+    exact z. }
+  destruct (X0 p !).
+Defined.
+
+Definition ax1_rightᶠ {p : ℙ}
+  (φ : @El p (Arr Iᶠ Iε Typeᶠ Typeε))
+  (φε : Elε _ (Arrε Iᶠ Iε Typeᶠ Typeε) φ)
+  (Hφ : @El p (Prod Iᶠ Iε (isdecᶠ φ φε) (isdecε φ φε)))
+  (Hφε : Elε _ (Prodε Iᶠ Iε (isdecᶠ φ φε) (isdecε φ φε)) Hφ)
+  (Hi0 : @El p (Arr (appᶠ φ i0ᶠ i0ε) (appε φε i0ᶠ i0ε) emptyᶠ emptyε))
+  (Hi0ε : Elε _ (Arrε (appᶠ φ i0ᶠ i0ε) (appε φε i0ᶠ i0ε) emptyᶠ emptyε) Hi0)
+  (i : @El p Iᶠ)
+  (iε : Elε Iᶠ Iε i)
+  (Hφi : @El p (appᶠ φ i iε))
+  (Hφiε : Elε (appᶠ φ i iε) (appε φε i iε) Hφi) :
+  @El p emptyᶠ.
+Proof.
+destruct (Hφ (S p) squish (homotopy_to_0ᶠ i iε) (homotopy_to_0ε i iε)) as [Hh Hhε | Hh _].
+- refine (appᶠ Hi0 _ _).
+  pose (fun (y : @El p Iᶠ) (e : side_0 · homotopy_to_0ᶠ i iε ≡ y) =>
+        J_seqs (@El p Iᶠ) _ (fun z _ => Elε Iᶠ Iε z)
+        (side_0 · homotopy_to_0ε i iε) y e) as yε.
+  pose (fun (y : @El p Iᶠ) (e : side_0 · homotopy_to_0ᶠ i iε ≡ y) =>
+        J_seq (@El p Iᶠ) _ (fun z e => @El p (appᶠ φ z (yε z e)))
+        (side_0 · Hh) y e) as x.
+  pose (J_seqs (@El p Iᶠ) _
+         (fun y e => Elε (appᶠ φ y (yε y e)) (appε φε y (yε y e)) (x y e))
+         (side_0 · Hhε) i0ᶠ restriction_0) as z.
+  exact z.
+- assert (@El p (Arr _
+                    (appε φε (side_1 · homotopy_to_0ᶠ i iε)
+                             (side_1 · homotopy_to_0ε i iε))
+                     emptyᶠ emptyε)).
+  { exact (side_1 · Hh). }
+  refine (appᶠ X _ _).
+  pose (fun (y : @El p Iᶠ) (e : i ≡ y) =>
+        J_seqs _ i (fun z _ => Elε Iᶠ Iε z) iε y e) as yε.
+  pose (fun (y : @El p Iᶠ) (e : i ≡ y) =>
+        J_seq (@El p Iᶠ) i (fun z e => @El p (appᶠ φ z (yε z e)))
+        Hφi y e) as x.
+  pose (J_seqs (@El p Iᶠ) _
+         (fun y e =>
+           Elε (appᶠ φ y (yε y e)) (appε φε y (yε y e)) (x y e))
+         Hφiε (side_1 · homotopy_to_0ᶠ i iε) (ssym restriction_1)) as z.
+  exact z.
+Defined.
+
+Definition ax1_rightε {p : ℙ}
+  (φ : @El p (Arr Iᶠ Iε Typeᶠ Typeε))
+  (φε : Elε _ (Arrε Iᶠ Iε Typeᶠ Typeε) φ)
+  (Hφ : @El p (Prod Iᶠ Iε (isdecᶠ φ φε) (isdecε φ φε)))
+  (Hφε : Elε _ (Prodε Iᶠ Iε (isdecᶠ φ φε) (isdecε φ φε)) Hφ)
+  (Hi0 : @El p (Arr (appᶠ φ i0ᶠ i0ε) (appε φε i0ᶠ i0ε) emptyᶠ emptyε))
+  (Hi0ε : Elε _ (Arrε (appᶠ φ i0ᶠ i0ε) (appε φε i0ᶠ i0ε) emptyᶠ emptyε) Hi0)
+  (i : @El p Iᶠ)
+  (iε : Elε Iᶠ Iε i)
+  (Hφi : @El p (appᶠ φ i iε))
+  (Hφiε : Elε (appᶠ φ i iε) (appε φε i iε) Hφi) :
+  Elε emptyᶠ emptyε (ax1_rightᶠ φ φε Hφ Hφε Hi0 Hi0ε i iε Hφi Hφiε).
+Proof.
+unshelve refine (fun q α => _).
+exact (sI).
+Defined.
+
 Definition ax1ᶠ {p : ℙ}
     (φ : @El p (Arr Iᶠ Iε Typeᶠ Typeε))
     (φε : Elε _ (Arrε Iᶠ Iε Typeᶠ Typeε) φ)
@@ -203,12 +367,33 @@ Definition ax1ᶠ {p : ℙ}
                 (Prod Iᶠ Iε (negᶠ φ φε) (negε φ φε))
                 (Prodε Iᶠ Iε (negᶠ φ φε) (negε φ φε))).
 Proof.
-unshelve refine (fun q α => _).
-pose proof (Hφ q α (α · i0ᶠ) (α · i0ε)) as H. destruct H as [Hi0 Hi0ε | Hi0 Hi0ε].
-- unshelve refine (inl_ _ _ _ _ _ _).
-  + unshelve refine (fun r β i iε => _).
-    (* pose proof (Hφ r (α ∘ β) (homotopy_to_0ᶠ i iε) (homotopy_to_0ε i iε)) as Hh. *)
-Admitted.
+pose proof (Hφ p ! i0ᶠ i0ε) as H. destruct H as [Hi0 Hi0ε | Hi0 Hi0ε].
+- unshelve refine (fun q α => inl_ _ _ _ _ _ _).
+  + unshelve refine (α · (fun r β i iε => @ax1_leftᶠ r (β · φ) (β · φε) (β · Hφ) (β · Hφε) (β · Hi0) (β · Hi0ε) i iε _ !)).
+  + unshelve refine (α · (fun r β i iε => @ax1_leftε r (β · φ) (β · φε) (β · Hφ) (β · Hφε) (β · Hi0) (β · Hi0ε) i iε _ !)).
+- unshelve refine (fun q α => inr_ _ _ _ _ _ _).
+  + unshelve refine (α · (fun r β i iε Hφi Hφiε => @ax1_rightᶠ r (β · φ) (β · φε) (β · Hφ) (β · Hφε) (β · Hi0) (β · Hi0ε) i iε Hφi Hφiε _ !)).
+  + unshelve refine (α · (fun r β i iε Hφi Hφiε => @ax1_rightε r (β · φ) (β · φε) (β · Hφ) (β · Hφε) (β · Hi0) (β · Hi0ε) i iε Hφi Hφiε _ !)).
+Defined.
+
+Definition ax1ε {p : ℙ}
+    (φ : @El p (Arr Iᶠ Iε Typeᶠ Typeε))
+    (φε : Elε _ (Arrε Iᶠ Iε Typeᶠ Typeε) φ)
+    (Hφ : @El p (Prod Iᶠ Iε (isdecᶠ φ φε) (isdecε φ φε)))
+    (Hφε : Elε _ (Prodε Iᶠ Iε (isdecᶠ φ φε) (isdecε φ φε)) Hφ) :
+    Elε _ (sumε (Prod Iᶠ Iε φ φε) (Prodε Iᶠ Iε φ φε)
+                (Prod Iᶠ Iε (negᶠ φ φε) (negε φ φε))
+                (Prodε Iᶠ Iε (negᶠ φ φε) (negε φ φε))) (ax1ᶠ φ φε Hφ Hφε).
+Proof.
+unshelve refine (fun q α => _). unfold ax1ᶠ. simpl.
+destruct (Hφ p ! i0ᶠ i0ε) ; unfold cast ; simpl.
+- refine (inlR q _ (α · Prodε Iᶠ Iε φ φε) _ _
+         (α · (fun r β i iε => @ax1_leftᶠ r (β · φ) (β · φε) (β · Hφ) (β · Hφε) (β · x) (β · xε) i iε _ !))
+         (α · (fun r β i iε => @ax1_leftε r (β · φ) (β · φε) (β · Hφ) (β · Hφε) (β · x) (β · xε) i iε _ !))).
+- refine (inrR q _ _ (α · Prod Iᶠ Iε (negᶠ φ φε) (negε φ φε)) _
+         (α · (fun r β i iε Hφi Hφiε => @ax1_rightᶠ r (β · φ) (β · φε) (β · Hφ) (β · Hφε) (β · y) (β · yε) i iε Hφi Hφiε _ !))
+         (α · (fun r β i iε Hφi Hφiε => @ax1_rightε r (β · φ) (β · φε) (β · Hφ) (β · Hφε) (β · y) (β · yε) i iε Hφi Hφiε _ !))).
+Defined.
 
 (* Axiom 2 *)
 
@@ -448,5 +633,3 @@ Proof.
     with  (fun (r : nat) (β : r ≤ q) => maxcube (i p !) (j p !) ∘ α ∘ β).
   constructor.
 Defined.
-
-
