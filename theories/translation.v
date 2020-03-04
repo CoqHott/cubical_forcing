@@ -215,7 +215,7 @@ Definition dappε {p}
            {B : El (Arr A Aε Typeᶠ Typeε)}
            {Bε : Elε _ (Arrε A Aε Typeᶠ Typeε) B}
            (f : El (Prod A Aε B Bε))
-           (fε : Elε _ (Prodε A Aε B Bε) f) 
+           (fε : Elε _ (Prodε A Aε B Bε) f)
            (x : El A) (xε : Elε A Aε x) :
   Elε (appᶠ B x xε) (appε Bε x xε) (@dappᶠ p A Aε B Bε f x xε).
 Proof.
@@ -323,24 +323,11 @@ match b p ! with
 | inr_ _ _ _ _ y yε => (fun q α => @inr_ q (α · A) (α · Aε) (α · B) (α · Bε) (α · y) (α · yε)) ≡ b
 end.
 Proof.
-specialize (bε p !).
-cbn in *.
-assert (e : b p ! ≡ b p !) by reflexivity.
-set (b₀ := b p !) in e at 2.
-change (b p !) with b₀; clearbody b₀.
-change (! · b) with b in bε.
-destruct b₀. all: destruct bε; cbn.
-+ admit.
-+ elimtype sFalse.
-  refine (match e in _ ≡ s return
-    match s with inl_ _ _ _ _ _ _ => sFalse | inr_ _ _ _ _ _ _ => sTrue end
-  with srefl _ => sI end).
-+ elimtype sFalse.
-  refine (match e in _ ≡ s return
-    match s with inl_ _ _ _ _ _ _ => sTrue | inr_ _ _ _ _ _ _ => sFalse end
-  with srefl _ => sI end).
-+ admit.
-Admitted.
+pose proof (bε p !) as bε'. cbn in *.
+change (! · b) with b in bε'. destruct bε'.
+- reflexivity.
+- reflexivity.
+Defined.
 
 Definition sum_elim p : forall
   (A : @El p Typeᶠ)
@@ -506,15 +493,15 @@ Defined.
 
 (* equality *)
 
-Inductive eq_ {p} 
+Inductive eq_ {p}
   (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
-  (x : @El p A) (xε : Elε A Aε x) : 
+  (x : @El p A) (xε : Elε A Aε x) :
   forall (y : @El p A) (yε : Elε A Aε y), Type :=
 | refl_ : eq_ A Aε x xε x xε.
 
 Inductive eqR {p}
   (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
-  (x : @El p A) (xε : Elε A Aε x) : 
+  (x : @El p A) (xε : Elε A Aε x) :
   forall (y : @El p A) (yε : Elε A Aε y),
   (forall (q : ℙ) (α : q ≤ p), eq_ (α · A) (α · Aε) (α · x) (α · xε) (α · y) (α · yε))
   -> SProp :=
@@ -527,8 +514,8 @@ Definition eqᶠ {p}
   @El p Typeᶠ.
 Proof.
 unshelve refine (fun q α => mkTYPE _ _ _).
-+ refine (fun r β => eq_ (α ∘ β · A) (α ∘ β · Aε) 
-                         (α ∘ β · x) (α ∘ β · xε) 
++ refine (fun r β => eq_ (α ∘ β · A) (α ∘ β · Aε)
+                         (α ∘ β · x) (α ∘ β · xε)
                          (α ∘ β · y) (α ∘ β · yε)).
 + refine (eqR (α · A) (α · Aε) (α · x) (α · xε) (α · y) (α · yε)).
 Defined.
@@ -586,7 +573,7 @@ Definition eq_transpε {p}
   @Elε p (appᶠ P y yε) (appε Pε y yε) (eq_transpᶠ A Aε P Pε x xε y yε e eε a aε).
 Proof.
   unfold eq_transpᶠ.
-  set (ep := e p !). 
+  set (ep := e p !).
   clearbody ep. simpl in ep. change (! ∘ ?f) with f in *. change (! · ?f) with f in *.
   destruct ep. simpl.
   exact aε.
@@ -614,10 +601,10 @@ Definition Jᶠ {p}
            )
            {y : @El p A} (yε : Elε A Aε y)
            {e : @El p (eqᶠ A Aε x xε y yε)} (eε : Elε _ (eqε A Aε x xε y yε) e)
-           (H : El  (appᶠ (dappᶠ P x xε) (reflᶠ x xε) (reflε x xε))) 
+           (H : El  (appᶠ (dappᶠ P x xε) (reflᶠ x xε) (reflε x xε)))
   : El (appᶠ (dappᶠ P y yε) e eε) .
 Proof.
-  assert (t := eε p !). 
+  assert (t := eε p !).
   change  (eqR A Aε x xε y yε e) in t. destruct t.
   exact H.
 Defined.
@@ -643,10 +630,67 @@ Definition Jε {p}
            (y : @El p A) (yε : Elε A Aε y)
            (e : @El p (eqᶠ A Aε x xε y yε)) (eε : Elε _ (eqε A Aε x xε y yε) e)
            (H : El (appᶠ (dappᶠ P x xε) (reflᶠ x xε) (reflε x xε)))
-           (Hε : Elε _ (appε (dappε P Pε x xε) (reflᶠ x xε) (reflε x xε)) H) 
+           (Hε : Elε _ (appε (dappε P Pε x xε) (reflᶠ x xε) (reflε x xε)) H)
   : Elε (appᶠ (dappᶠ P y yε) e eε) (appε (dappε P Pε y yε) e eε) (Jᶠ xε Pε yε eε H).
 Proof.
-  assert (t := eε p !). 
+  assert (t := eε p !).
   change  (eqR A Aε x xε y yε e) in t. destruct t.
   exact Hε.
+Defined.
+
+(* Classifying presheaf for SProps *)
+
+Record sieve (p : ℙ) := mkSieve {
+  styp : forall q (α : q ≤ p), SProp;
+  srel : (forall q (α : q ≤ p), styp q α) -> SProp;
+}.
+
+Arguments styp {_}.
+Arguments srel {_}.
+
+Definition Ωᶠ {p} : @El p Typeᶠ.
+Proof.
+unshelve refine (fun q α => mkTYPE _ _ _).
++ unshelve refine (fun r β => sieve r).
++ unshelve refine (fun A =>
+  forall r (β : r ≤ q),
+    (A q !).(styp) r β ≡ (A r β).(styp) r !).
+Defined.
+
+Definition Ωε {p : ℙ} : @Elε p Typeᶠ Typeε Ωᶠ.
+Proof.
+unfold Elε ; cbn.
+reflexivity.
+Defined.
+
+(* squashing prehseaves *)
+
+Inductive squash (X : Type) : SProp :=
+| squashed : forall x : X, squash X.
+
+Inductive squash_ {p : ℙ}
+  (X : @El p Typeᶠ) (Xε : Elε Typeᶠ Typeε X) : SProp :=
+| squashed_ : forall (x : @El p X) (xε : Elε X Xε x), squash_ X Xε.
+
+Inductive squashR {p : ℙ}
+  (X : @El p Typeᶠ) (Xε : Elε Typeᶠ Typeε X) :
+  (forall q (α : q ≤ p), @squash_ q (α · X) (α · Xε)) -> SProp :=
+| squashedR : forall (x : @El p X) (xε : Elε X Xε x),
+  squashR X Xε (fun q (α : q ≤ p) => @squashed_ q (α · X) (α · Xε) (α · x) (α · xε)).
+
+Definition squashᶠ {p : ℙ}
+  (X : @El p Typeᶠ) (Xε : Elε Typeᶠ Typeε X) :
+  @El p Ωᶠ.
+Proof.
+unshelve refine (fun q α => _).
+unshelve econstructor.
+- exact (fun r β => @squash_ r (α ∘ β · X) (α ∘ β · Xε)).
+- exact (fun s => @squashR q (α · X) (α · Xε) s).
+Defined.
+
+Definition squashε {p : ℙ}
+  (X : @El p Typeᶠ) (Xε : Elε Typeᶠ Typeε X) :
+  @Elε p Ωᶠ Ωε (squashᶠ X Xε).
+Proof.
+unfold Elε. simpl. reflexivity.
 Defined.
