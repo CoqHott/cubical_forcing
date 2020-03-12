@@ -3,3 +3,4 @@
 theories/category.v
 theories/translation.v
 theories/interval.v
+theories/lattice.v

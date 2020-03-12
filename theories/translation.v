@@ -694,3 +694,108 @@ Definition squashε {p : ℙ}
 Proof.
 unfold Elε. simpl. reflexivity.
 Defined.
+
+(* composition, because translating λ x . g (f x) is annoying *)
+
+Definition composeᶠ {p : ℙ}
+  {A : @El p Typeᶠ} {Aε : Elε Typeᶠ Typeε A}
+  {B : @El p Typeᶠ} {Bε : Elε Typeᶠ Typeε B}
+  {C : @El p Typeᶠ} {Cε : Elε Typeᶠ Typeε C}
+  (g : @El p (Arr B Bε C Cε)) (gε : Elε _ (Arrε B Bε C Cε) g)
+  (f : @El p (Arr A Aε B Bε)) (fε : Elε _ (Arrε A Aε B Bε) f) :
+  @El p (Arr A Aε C Cε).
+Proof.
+refine (fun q α x xε =>
+         g q α
+           (fun r β => (α · f) r β (β · x) (β · xε))
+           (fun r β => (α · fε) r β (β · x) (β · xε))).
+Defined.
+
+Definition composeε {p : ℙ}
+  {A : @El p Typeᶠ} {Aε : Elε Typeᶠ Typeε A}
+  {B : @El p Typeᶠ} {Bε : Elε Typeᶠ Typeε B}
+  {C : @El p Typeᶠ} {Cε : Elε Typeᶠ Typeε C}
+  (g : @El p (Arr B Bε C Cε)) (gε : Elε _ (Arrε B Bε C Cε) g)
+  (f : @El p (Arr A Aε B Bε)) (fε : Elε _ (Arrε A Aε B Bε) f) :
+  Elε _ (Arrε A Aε C Cε) (composeᶠ g gε f fε).
+Proof.
+refine (fun q α x xε =>
+         gε q α
+           (fun r β => (α · f) r β (β · x) (β · xε))
+           (fun r β => (α · fε) r β (β · x) (β · xε))).
+Defined.
+
+(* homotopic *)
+
+Definition homotopicᶠ {p : ℙ}
+  {A : @El p Typeᶠ} {Aε : Elε Typeᶠ Typeε A}
+  {B : @El p Typeᶠ} {Bε : Elε Typeᶠ Typeε B}
+  (f : @El p (Arr A Aε B Bε)) (fε : Elε _ (Arrε A Aε B Bε) f)
+  (g : @El p (Arr A Aε B Bε)) (gε : Elε _ (Arrε A Aε B Bε) g) :
+  @El p Typeᶠ :=
+Prod A Aε
+  (fun q α x xε => eqᶠ (α · B) (α · Bε) (appᶠ (α · f) x xε) (appε (α · fε) x xε) (appᶠ (α · g) x xε) (appε (α · gε) x xε) q !)
+  (fun q α x xε => eqε (α · B) (α · Bε) (appᶠ (α · f) x xε) (appε (α · fε) x xε) (appᶠ (α · g) x xε) (appε (α · gε) x xε) q !).
+
+Definition homotopicε {p : ℙ}
+  {A : @El p Typeᶠ} {Aε : Elε Typeᶠ Typeε A}
+  {B : @El p Typeᶠ} {Bε : Elε Typeᶠ Typeε B}
+  (f : @El p (Arr A Aε B Bε)) (fε : Elε _ (Arrε A Aε B Bε) f)
+  (g : @El p (Arr A Aε B Bε)) (gε : Elε _ (Arrε A Aε B Bε) g) :
+  @Elε p Typeᶠ Typeε (homotopicᶠ f fε g gε) :=
+Prodε A Aε
+  (fun q α x xε => eqᶠ (α · B) (α · Bε) (appᶠ (α · f) x xε) (appε (α · fε) x xε) (appᶠ (α · g) x xε) (appε (α · gε) x xε) q !)
+  (fun q α x xε => eqε (α · B) (α · Bε) (appᶠ (α · f) x xε) (appε (α · fε) x xε) (appᶠ (α · g) x xε) (appε (α · gε) x xε) q !).
+
+(* Packing of equivalences *)
+
+Definition idᶠ {p : ℙ} {A : @El p Typeᶠ} {Aε : Elε Typeᶠ Typeε A} :
+  @El p (Arr A Aε A Aε) :=
+fun q α x xε => x q !.
+
+Definition idε {p : ℙ} {A : @El p Typeᶠ} {Aε : Elε Typeᶠ Typeε A} :
+  @Elε p _ (Arrε A Aε A Aε) idᶠ :=
+fun q α x xε => xε q !.
+
+Inductive equiv_ {p : ℙ}
+  (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+  (B : @El p Typeᶠ) (Bε : Elε Typeᶠ Typeε B) : Type :=
+| mkEquiv_ : forall (f : @El p (Arr A Aε B Bε)) (fε : Elε _ (Arrε A Aε B Bε) f)
+              (g : @El p (Arr B Bε A Aε)) (gε : Elε _ (Arrε B Bε A Aε) g)
+              (s : @El p (homotopicᶠ idᶠ idε (composeᶠ g gε f fε) (composeε g gε f fε)))
+              (sε : Elε _ (homotopicε idᶠ idε (composeᶠ g gε f fε) (composeε g gε f fε)) s)
+              (r : @El p (homotopicᶠ idᶠ idε (composeᶠ f fε g gε) (composeε f fε g gε)))
+              (rε : Elε _ (homotopicε idᶠ idε (composeᶠ f fε g gε) (composeε f fε g gε)) r),
+              equiv_ A Aε B Bε.
+
+Inductive equivR {p : ℙ}
+  (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+  (B : @El p Typeᶠ) (Bε : Elε Typeᶠ Typeε B) :
+  (forall q α, @equiv_ q (α · A) (α · Aε) (α · B) (α · Bε)) -> SProp :=
+| mkEquivR : forall (f : @El p (Arr A Aε B Bε)) (fε : Elε _ (Arrε A Aε B Bε) f)
+              (g : @El p (Arr B Bε A Aε)) (gε : Elε _ (Arrε B Bε A Aε) g)
+              (s : @El p (homotopicᶠ idᶠ idε (composeᶠ g gε f fε) (composeε g gε f fε)))
+              (sε : Elε _ (homotopicε idᶠ idε (composeᶠ g gε f fε) (composeε g gε f fε)) s)
+              (r : @El p (homotopicᶠ idᶠ idε (composeᶠ f fε g gε) (composeε f fε g gε)))
+              (rε : Elε _ (homotopicε idᶠ idε (composeᶠ f fε g gε) (composeε f fε g gε)) r),
+              equivR A Aε B Bε (fun q α => @mkEquiv_ q (α · A) (α · Aε) (α · B) (α · Bε)
+                (α · f) (α · fε) (α · g) (α · gε) (α · s) (α · sε) (α · r) (α · rε)).
+
+Definition equivᶠ {p : ℙ}
+  (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+  (B : @El p Typeᶠ) (Bε : Elε Typeᶠ Typeε B) :
+  @El p Typeᶠ.
+Proof.
+unshelve refine (fun q α => _).
+unshelve econstructor.
+- exact (fun r β => @equiv_ r (α ∘ β · A) (α ∘ β · Aε) (α ∘ β · B) (α ∘ β · Bε)).
+- exact (fun s => @equivR q (α · A) (α · Aε) (α · B) (α · Bε) s).
+Defined.
+
+Definition equivε {p : ℙ}
+  (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+  (B : @El p Typeᶠ) (Bε : Elε Typeᶠ Typeε B) :
+  @Elε p Typeᶠ Typeε (equivᶠ A Aε B Bε).
+Proof.
+unfold Elε. simpl. reflexivity.
+Defined.
