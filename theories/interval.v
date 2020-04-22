@@ -422,49 +422,31 @@ Defined.
 
 (** Axiom 3 **)
 
-(* Some lemmas relating the translation of eq to eq *)
+(* Some lemmas relating the translation of eqᶠ to eq *)
 
-
-Lemma eq_CubeArr {p : nat} (f g : forall q (α : q ≤ p) (x : cube q), cube 1)
-      (Hf : forall q (α : q ≤ p), increasing (f q α))
-      (Hg : forall q (α : q ≤ p), increasing (g q α)) :
-  f = g -> (fun q α => mkCubeArr _ _ (f q α) (Hf q α)) = (fun q α => mkCubeArr _ _ (g q α) (Hg q α)).
-Proof.
-  intro e.
-  destruct e. reflexivity.
-Defined.
-
-Lemma eqeq_ {p} (Aᶠ : @El p Typeᶠ) (Aε : @Elε p _ Typeε Aᶠ)
-  (a b : @El p Aᶠ) (aε: @Elε p _ Aε a) (bε : @Elε p _ Aε b): a = b -> eq_ _ _ a aε b bε.
-Proof.
-  intro H. destruct H.
-  constructor.
-Defined.
-
-
-Lemma lem_eqeqR {p} (Aᶠ : @El p Typeᶠ) (Aε : @Elε p _ Typeε Aᶠ)
-      (a b : @El p Aᶠ) (aε: @Elε p _ Aε a) (bε : @Elε p _ Aε b) (e : a = b) :
-  (forall (q : ℙ) (α : q ≤ p), eq_ (α · Aᶠ) (α · Aε) (α · a) (α · aε) (α · b) (α · bε)) .
+Lemma mk_eqᶠ  {p} (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+           (x : @El p A) (xε : Elε A Aε x)
+           (y : @El p A) (yε : Elε A Aε y) (e : x ≡ y) :
+      @El p (eqᶠ  A  Aε x  xε  y yε).
 Proof.
   destruct e.
-  intros q α. now constructor.
+  cbn. intros q α. constructor.
 Defined.
 
-Lemma eqeqR {p} (Aᶠ : @El p Typeᶠ) (Aε : @Elε p _ Typeε Aᶠ)
-      (a b : @El p Aᶠ) (aε: @Elε p _ Aε a) (bε : @Elε p _ Aε b) (e : a = b) 
-      (f : forall (q : ℙ) (α : q ≤ p), eq_ (α · Aᶠ) (α · Aε) (α · a) (α · aε) (α · b) (α · bε)) :
-  (lem_eqeqR _ _ a b aε bε e) = f -> 
-  eqR  _ _ a aε b bε f.
+Lemma mk_eqε {p} (A : @El p Typeᶠ) (Aε : Elε Typeᶠ Typeε A)
+           (x : @El p A) (xε : Elε A Aε x)
+           (y : @El p A) (yε : Elε A Aε y) (e : x ≡ y) :
+  @Elε p _ (eqε  A  Aε x  xε  y yε) (mk_eqᶠ A Aε x xε y yε e).
 Proof.
-  intro H. destruct H.
-  now destruct e.
+  destruct e.
+  simpl. intros q α. cbn. constructor.
 Defined.
 
 
-Lemma seq_CubeArr {p : nat} (f g : forall q (α : q ≤ p) (x : cube q), cube 1)
-      (Hf : forall q (α : q ≤ p), increasing (f q α))
-      (Hg : forall q (α : q ≤ p), increasing (g q α)) :
-  f = g -> (fun q α => mkCubeArr _ _ (f q α) (Hf q α)) ≡ (fun q α => mkCubeArr _ _ (g q α) (Hg q α)).
+Lemma seq_CubeArr {p q : nat} (f g : cube p -> cube  q)
+      (Hf : increasing f)
+      (Hg : increasing g) :
+  f ≡ g -> mkCubeArr _ _ f Hf ≡ mkCubeArr _ _ g Hg.
 Proof.
   intro e.
   destruct e. reflexivity.
@@ -484,10 +466,11 @@ Proof.
   - discriminate.
 Defined.
 
+
 Definition mincube {p} (i j : cube_arr p 1) : cube_arr p 1.
 Proof.
   unshelve econstructor.
-  - intros x n. exact (andb (arr i x n) (arr j x n)).
+  -   intros x n. exact (andb (arr i x n) (arr j x n)).
   - intros x y H n.
     remember (arr i x n) as ixn. destruct ixn.
     + remember (arr j x n) as jxn. destruct jxn.
@@ -517,75 +500,119 @@ Defined.
 
 
 
-(** tentative proof of axiom 3 **)
+(** Axiom 3 **)
+Axiom and_par_false : (fun x => false) ≡  (fun x => andb x false).
+Axiom and_par_true : (fun x => x) ≡ (fun x => andb x true).
 
-(* min 0  x = 0 *)
+(* min 0 x = 0 *)
 
-Lemma minI_0x {p} (i : @El p Iᶠ)  : minIᶠ i0ᶠ i = i0ᶠ.
+Lemma mincube_0x {p} (f : p ≤ 1) : cst_0 _ ≡ mincube (cst_0 _) f.
 Proof.
-  now apply eq_CubeArr.
+  reflexivity.
+Defined.
+
+Lemma minI_0x {p} (i : @El p Iᶠ)  : i0ᶠ ≡ minIᶠ i0ᶠ i.
+Proof.
+  change (i0ᶠ ≡ ((fun f (q : nat) α => f  ∘ α) (mincube (cst_0 p) (i p !)))).
+  now destruct (mincube_0x (i p !)).
 Defined.
 
 Definition ax3_0xᶠ {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @El p (eqᶠ Iᶠ Iε (minIᶠ i0ᶠ i) (minIε i0ε iε)  i0ᶠ i0ε).
 Proof.
-  intros q α.
-  cbn. apply eqeq_. now rewrite (@minI_0x p i).
+  apply mk_eqᶠ.
+  now destruct (minI_0x i).
 Defined.
-
 
 Definition ax3_0xε {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @Elε p _ (eqε Iᶠ Iε (minIᶠ i0ᶠ i) (minIε i0ε iε) i0ᶠ i0ε) (ax3_0xᶠ i iε).
 Proof.
-  intros q α. unshelve eapply eqeqR.
-  - now rewrite (@minI_0x p i).
-  - reflexivity.
+  apply mk_eqε.
 Defined.
 
 (* min x 0 = 0 *)
-
-Lemma minI_x0 {p} (i : @El p Iᶠ) (iε : @Elε p _ Iε i) : (minIᶠ i i0ᶠ) ≡ i0ᶠ.
+  
+Lemma mincube_x0 {p} (f : p ≤ 1) : cst_0 _ ≡ mincube f (cst_0 _).
 Proof.
-  specialize (iε p !). cbn in iε.
-  change (! · i) with i in iε. destruct iε.
-  cbn. 
   apply seq_CubeArr. cbn.
-  (* this seems false *)
-Abort.
-
-(* alternative definition of minI2ᶠ. I don't think it works either *)
-
-
-Definition minI2ᶠ {p} (i j : @El p Iᶠ) : @El p Iᶠ.
+  change ((fun _ _ => false) ≡ (fun x n => (fun b => andb b false) (arr f x n))).
+  now destruct (and_par_false).
+Defined.
+  
+Lemma minI_x0 {p} (i : @El p Iᶠ): i0ᶠ ≡ (minIᶠ i i0ᶠ).
 Proof.
-  intros q α.
-  specialize (i q α). specialize (j q α).
-  unfold Iᶠ in i,j. simpl in i,j.
-  unshelve econstructor.
-  - intros x u. exact (andb (arr i x u) (arr j x u)).
-  - intros x y H u.
-    remember (arr i x u) as ixu.
-    remember (arr j x u) as jxu.
-    destruct ixu.
-    +  destruct jxu.
-       * destruct (increase_impliesb i x y H u Heqixu).
-         now destruct (increase_impliesb j x y H u Heqjxu).
-       * constructor.
-    + constructor.
+  change (i0ᶠ ≡ ((fun f (q : nat) α => f ∘ α) (mincube (i p !) (cst_0 p)))).
+  now destruct (mincube_x0 (i p !)).
 Defined.
 
-Definition minI2ε {p} {i j : @El p Iᶠ} (iε : Elε Iᶠ Iε i) (jε : Elε Iᶠ Iε j) : @Elε p Iᶠ Iε (minI2ᶠ i j).
+Definition ax3_x0ᶠ {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @El p (eqᶠ Iᶠ Iε (minIᶠ i i0ᶠ) (minIε iε i0ε) i0ᶠ i0ε).
 Proof.
-  intros q α.
-  unfold cast. simpl.
-  change (α · minI2ᶠ i j) with (minI2ᶠ (α · i) (α · j)).
-  specialize (iε q α).
-  specialize (jε q α).
-  unfold cast in *. simpl in *. 
-  destruct iε, jε. 
-  (* This seems false *)
-Abort.
+  apply mk_eqᶠ.
+  now destruct (minI_x0 i).
+Defined.
 
+Definition ax3_x0ε {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @Elε p _ (eqε Iᶠ Iε (minIᶠ i i0ᶠ) (minIε iε i0ε) i0ᶠ i0ε) (ax3_x0ᶠ i iε).
+Proof.
+ apply mk_eqε.
+Defined.
+      
+
+(* min 1 x = x *)
+
+
+Lemma mincube_1x {p} (f : p ≤ 1) : f ≡ mincube (cst_1 _) f.
+Proof.
+  reflexivity.
+Defined.
+
+Lemma minI_1x {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : i ≡ minIᶠ i1ᶠ i.
+Proof.
+  change (i ≡ ((fun f (q : nat) α => f  ∘ α) (mincube (cst_1 p) (i p !)))).
+  destruct (mincube_1x (i p !)).
+  specialize (iε p !). cbn in iε. change (! · i) with i in iε.
+  now destruct iε. 
+Defined.
+
+Definition ax3_1xᶠ {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @El p (eqᶠ Iᶠ Iε (minIᶠ i1ᶠ i) (minIε i1ε iε)  i iε).
+Proof.
+  apply mk_eqᶠ.
+  now destruct (minI_1x i).
+Defined.
+
+Definition ax3_1xε {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @Elε p _ (eqε Iᶠ Iε (minIᶠ i1ᶠ i) (minIε i1ε iε) i iε) (ax3_1xᶠ i iε).
+Proof.
+  apply mk_eqε.
+Defined.
+
+
+(* min x 1 = x *)
+
+Lemma mincube_x1 {p} (f : p ≤ 1) : f ≡ mincube f (cst_1 _).
+Proof.
+  apply seq_CubeArr. cbn.
+  change (arr f ≡ (fun x n => (fun b => andb b true) (arr f x n))).
+  now destruct (and_par_true).
+Defined.
+  
+Lemma minI_x1 {p} (i : @El p Iᶠ)  (iε : @Elε p Iᶠ Iε i) : i ≡ (minIᶠ i i1ᶠ).
+Proof.
+  change (i ≡ ((fun f (q : nat) α => f ∘ α) (mincube (i p !) (cst_1 p)))).
+  destruct (mincube_x1 (i p !)).
+  specialize (iε p !). cbn in iε. change (! · i) with i in iε.
+  now destruct iε. 
+Defined.
+
+Definition ax3_x1ᶠ {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @El p (eqᶠ Iᶠ Iε (minIᶠ i i1ᶠ) (minIε iε i1ε) i iε).
+Proof.
+  apply mk_eqᶠ.
+  now destruct (minI_x1 i).
+Defined.
+
+Definition ax3_x1ε {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @Elε p _ (eqε Iᶠ Iε (minIᶠ i i1ᶠ) (minIε iε i1ε) i iε) (ax3_x1ᶠ i iε).
+Proof.
+ apply mk_eqε.
+Defined.
 
 (** Axiom 4 **)
+
 
 Definition maxcube {p} (i j : cube_arr p 1) : cube_arr p 1.
 Proof.
@@ -608,7 +635,7 @@ Proof.
   exact (t ∘ α).
 Defined.
 
-Definition maxIε {p} (i j : @El p Iᶠ)
+Definition maxIε {p} {i j : @El p Iᶠ}
            (iε : Elε Iᶠ Iε i) (jε : Elε Iᶠ Iε j) : @Elε p Iᶠ Iε (maxIᶠ i j).
 Proof.
   intros q α.
@@ -616,4 +643,116 @@ Proof.
   change (α · maxIᶠ i j)
     with  (fun (r : nat) (β : r ≤ q) => maxcube (i p !) (j p !) ∘ α ∘ β).
   constructor.
+Defined.
+
+
+(** Axiom 4 **)
+Axiom or_par_false : (fun x => x) ≡  (fun x => orb x false).
+Axiom or_par_true : (fun x => true) ≡ (fun x => orb x true).
+
+(* max 0 x = x *)
+
+Lemma maxcube_0x {p} (f : p ≤ 1) : f ≡ maxcube (cst_0 _) f.
+Proof.
+  reflexivity.
+Defined.
+
+Lemma maxI_0x {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : i ≡ maxIᶠ i0ᶠ i.
+Proof.
+  change (i ≡ ((fun f (q : nat) α => f  ∘ α) (maxcube (cst_0 p) (i p !)))).
+  destruct (maxcube_0x (i p !)).
+  specialize (iε p !). cbn in iε. change (! · i) with i in iε.
+  now destruct iε. 
+Defined.
+
+Definition ax4_0xᶠ {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @El p (eqᶠ Iᶠ Iε (maxIᶠ i0ᶠ i) (maxIε i0ε iε)  i iε).
+Proof.
+  apply mk_eqᶠ.
+  now destruct (maxI_0x i).
+Defined.
+
+Definition ax4_0xε {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @Elε p _ (eqε Iᶠ Iε (maxIᶠ i0ᶠ i) (maxIε i0ε iε) i iε) (ax4_0xᶠ i iε).
+Proof.
+  apply mk_eqε.
+Defined.
+
+(* max x 0 = x *)
+  
+Lemma maxcube_x0 {p} (f : p ≤ 1) : f ≡ maxcube f (cst_0 _).
+Proof.
+  apply seq_CubeArr. cbn.
+  change (arr f ≡ (fun x n => (fun b => orb b false) (arr f x n))).
+  now destruct (or_par_false).
+Defined.
+  
+Lemma maxI_x0 {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i): i ≡ (maxIᶠ i i0ᶠ).
+Proof.
+  change (i ≡ ((fun f (q : nat) α => f ∘ α) (maxcube (i p !) (cst_0 p)))).
+  destruct (maxcube_x0 (i p !)).
+  specialize (iε p !). cbn in iε. change (! · i) with i in iε.
+  now destruct iε. 
+Defined.
+
+Definition ax4_x0ᶠ {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @El p (eqᶠ Iᶠ Iε (maxIᶠ i i0ᶠ) (maxIε iε i0ε) i iε).
+Proof.
+  apply mk_eqᶠ.
+  now destruct (maxI_x0 i).
+Defined.
+
+Definition ax4_x0ε {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @Elε p _ (eqε Iᶠ Iε (maxIᶠ i i0ᶠ) (maxIε iε i0ε) i iε) (ax4_x0ᶠ i iε).
+Proof.
+ apply mk_eqε.
+Defined.
+      
+
+(* max 1 x = 1 *)
+
+
+Lemma maxcube_1x {p} (f : p ≤ 1) : cst_1 _ ≡ maxcube (cst_1 _) f.
+Proof.
+  reflexivity.
+Defined.
+
+Lemma maxI_1x {p} (i : @El p Iᶠ)  : i1ᶠ ≡ maxIᶠ i1ᶠ i.
+Proof.
+  change (i1ᶠ ≡ ((fun f (q : nat) α => f  ∘ α) (maxcube (cst_1 p) (i p !)))).
+  now destruct (mincube_1x (i p !)).
+Defined.
+
+Definition ax4_1xᶠ {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @El p (eqᶠ Iᶠ Iε (maxIᶠ i1ᶠ i) (maxIε i1ε iε)  i1ᶠ i1ε).
+Proof.
+  apply mk_eqᶠ.
+  now destruct (maxI_1x i).
+Defined.
+
+Definition ax4_1xε {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @Elε p _ (eqε Iᶠ Iε (maxIᶠ i1ᶠ i) (maxIε i1ε iε) i1ᶠ i1ε) (ax4_1xᶠ i iε).
+Proof.
+  apply mk_eqε.
+Defined.
+
+
+(* min x 1 = 1 *)
+
+Lemma maxcube_x1 {p} (f : p ≤ 1) : cst_1 _  ≡ maxcube f (cst_1 _).
+Proof.
+  apply seq_CubeArr. cbn.
+  change ((fun _ _ => true) ≡ (fun x n => (fun b => orb b true) (arr f x n))).
+  now destruct (or_par_true).
+Defined.
+  
+Lemma maxI_x1 {p} (i : @El p Iᶠ) : i1ᶠ ≡ (maxIᶠ i i1ᶠ).
+Proof.
+  change (i1ᶠ ≡ ((fun f (q : nat) α => f ∘ α) (maxcube (i p !) (cst_1 p)))).
+  now destruct (maxcube_x1 (i p !)).
+Defined.
+
+Definition ax4_x1ᶠ {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @El p (eqᶠ Iᶠ Iε (maxIᶠ i i1ᶠ) (maxIε iε i1ε) i1ᶠ i1ε).
+Proof.
+  apply mk_eqᶠ.
+  now destruct (maxI_x1 i).
+Defined.
+
+Definition ax4_x1ε {p} (i : @El p Iᶠ) (iε : @Elε p Iᶠ Iε i) : @Elε p _ (eqε Iᶠ Iε (maxIᶠ i i1ᶠ) (maxIε iε i1ε) i1ᶠ i1ε) (ax4_x1ᶠ i iε).
+Proof.
+ apply mk_eqε.
 Defined.
