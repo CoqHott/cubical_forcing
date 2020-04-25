@@ -320,4 +320,146 @@ unshelve refine (fun q α => _).
 exact (boolr true).
 Defined.
 
+Definition side_0 {p : ℙ} : p ≤ S p.
+Proof.
+unshelve refine (mkCubeArr _ _ _ _).
+- unshelve refine (fun c n => _).
+  destruct n as [n nε]. destruct n as [|n'].
+  + exact false.
+  + apply c. unshelve refine (mkFinset p n' _).
+    apply le_to_sle. apply le_S_n. apply sle_to_le. exact nε.
+- intros c d Hcd n. destruct n as [n nε]. destruct n.
+  + exact sI.
+  + refine (Hcd _).
+Defined.
+
+Definition side_1 {p : ℙ} : p ≤ S p.
+Proof.
+unshelve refine (mkCubeArr _ _ _ _).
+- unshelve refine (fun c n => _).
+  destruct n as [n nε]. destruct n as [|n'].
+  + exact true.
+  + apply c. unshelve refine (mkFinset p n' _).
+    apply le_to_sle. apply le_S_n. apply sle_to_le. exact nε.
+- intros c d Hcd n. destruct n as [n nε]. destruct n.
+  + exact sI.
+  + refine (Hcd _).
+Defined.
+
+Definition squish {p : ℙ} : S p ≤ p.
+Proof.
+unshelve refine (mkCubeArr _ _ _ _).
+- refine (fun c n => c (finsucc n)).
+- intros c d Hcd n.
+  exact (Hcd (finsucc n)).
+Defined.
+
+Definition promote {p q : ℙ} (α : q ≤ p) : S q ≤ S p.
+Proof.
+unshelve refine (mkCubeArr _ _ _ _).
+- unshelve refine (fun c n => _).
+  destruct n as [n nε]. destruct n as [| n'].
+  + apply c. exact finzero.
+  + destruct α as [α αε]. apply α.
+    * refine (fun n => _). apply c. apply finsucc. exact n.
+    * unshelve refine (mkFinset p n' _).
+      apply le_to_sle. apply le_S_n. apply sle_to_le. exact nε.
+- intros c d Hcd n.
+  destruct n as [n nε]. destruct n as [| n'].
+  + eapply Hcd.
+  + destruct α as [α αε]. eapply αε.
+    unfold le_cube. intro m. eapply Hcd.
+Defined.
+
+(* All of the following hold definitionally *)
+
+Lemma arrow_eq_0 {p : ℙ} : (@squish p) ∘ side_0 = !.
+Proof.
+reflexivity.
+Defined.
+
+Lemma arrow_eq_1 {p : ℙ} : (@squish p) ∘ side_1 = !.
+Proof.
+reflexivity.
+Defined.
+
+Lemma arrow_eq_2 {p q : ℙ} (α : q ≤ p) :
+  promote α ∘ side_0 = side_0 ∘ α.
+Proof.
+reflexivity.
+Defined.
+
+Lemma arrow_eq_3 {p q : ℙ} (α : q ≤ p) :
+  promote α ∘ side_1 = side_1 ∘ α.
+Proof.
+reflexivity.
+Defined.
+
+Lemma arrow_eq_4 {p q : ℙ} (α : q ≤ p) :
+  squish ∘ promote α = α ∘ squish.
+Proof.
+reflexivity.
+Defined.
+
+Inductive path {p} (A0 : @El0 p Type0) :
+  (El0 A0) -> (El0 A0) -> Type :=
+| path_c : forall (x : El0 (squish · A0)), path A0 (side_0 · x) (side_1 · x).
+
+Definition path_funct {p} {A0 : @El0 p Type0}
+  {x0 : El0 A0} {y0 : El0 A0} {q} (α : q ≤ p) :
+  path A0 x0 y0 -> path (α · A0) (α · x0) (α · y0).
+Proof.
+intros [x].
+(* definitional equations are of utmost importance here *)
+exact (path_c (α · A0) (promote α · x)).
+Defined.
+
+Inductive pathR {p} (A0 : @El0 p Type0) :
+ forall (x0 : El0 A0) (y0 : El0 A0)
+ (p : forall q (α : q ≤ p), path (α · A0) (α · x0) (α · y0)), SProp :=
+| pathr : forall (x : El0 (squish · A0)),
+  pathR A0 (side_0 · x) (side_1 · x) (fun q α => path_c (α · A0) ((promote α) · x)).
+
+Definition eq0 {p}
+  (A0 : @El0 p Type0)
+  (x0 : El0 A0)
+  (y0 : El0 A0) :
+  @El0 p Type0.
+Proof.
+unshelve refine (fun q α => mkYFT _ _ _ _).
+- unshelve refine (fun r β => _).
+  exact (path ((α ∘ β) · A0) ((α ∘ β) · x0) ((α ∘ β) · y0)).
+- unshelve refine (fun r β s => _). simpl in s.
+  exact (pathR ((α ∘ β) · A0) ((α ∘ β) · x0) ((α ∘ β) · y0) s).
+- easy. (** TODO **)
+Defined.
+
+Definition eq1 {p}
+  (A0 : @El0 p Type0)
+  (x0 : El0 A0)
+  (y0 : El0 A0) :
+  @El1 p Type0 Type1 (eq0 A0 x0 y0).
+Proof.
+unshelve refine (fun q α r β => _). reflexivity.
+Defined.
+
+Definition refl0 {p}
+  (A0 : @El0 p Type0)
+  (x0 : El0 A0) :
+  @El0 p (eq0 A0 x0 x0).
+Proof.
+unshelve refine (fun q α => _). simpl.
+exact (path_c (α · A0) ((α ∘ squish) · x0)).
+Defined.
+
+Definition refl1 {p}
+  (A0 : @El0 p Type0)
+  (x0 : El0 A0) :
+  @El1 p (eq0 A0 x0 x0) (eq1 A0 x0 x0) (refl0 A0 x0).
+Proof.
+unshelve refine (fun q α => _).
+exact (pathr (α · A0) (α ∘ squish · x0)).
+Defined.
+
+
 (* etc etc *)
