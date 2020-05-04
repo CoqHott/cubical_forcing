@@ -4,11 +4,14 @@ Set Primitive Projections.
 Set Universe Polymorphism.
 Set Polymorphic Inductive Cumulativity.
 
-(* Notation "α ⋅ x" := (fun r β => x r (α ∘ β)) (at level 40). *)
+Notation "α ⋅ x" := (fun r β => x r (α ∘ β)) (at level 40).
 
 (* This is still work in progress *)
 
 Definition falso@{i} : forall X : Type@{i}, X.
+Admitted.
+
+Definition sfalso@{i} : forall X : SProp, X.
 Admitted.
 
 (* Type of strict presheaves *)
@@ -27,30 +30,123 @@ mkEl {
   el1 : forall q (α : q ≤ p), f.(psh1) q (α · el0);
 }.
 
+Arguments el0 {_ _}.
+Arguments el1 {_ _}.
+
+Definition seq_El {p : ℙ} {f : Psh} {s t : El p f} :
+  el0 s ≡ el0 t -> s ≡ t.
+Proof.
+  intro H.
+  unshelve refine (J_seqs _ (el0 s)
+    (fun t0 e0 => s ≡ {| el0 := t0 ; el1 := J_seqs _ (el0 s) (fun u0 _ => forall q (α : q ≤ p), f.(psh1) q (α ⋅ u0)) (el1 s) t0 e0 |})
+    (srefl _) (el0 t) H).
+Defined.
+
+(* Functoriality *)
+
+Definition funct@{i} {p q} {f : Psh@{i}} (α : q ≤ p) :
+  El@{i} p f -> El@{i} q f :=
+fun s => mkEl q f (α ⋅ s.(el0)) (α ⋅ s.(el1)).
+
+(* Type of strict presheaves over yoneda(p) *)
+
+Record yt@{i} (p : ℙ) := mkYT {
+  yt0 : forall q (α : q ≤ p), Type@{i};
+  yt1 : forall q (α : q ≤ p), (forall r (β : r ≤ q), yt0 r (α ∘ β)) -> SProp;
+}.
+
+Arguments yt0 {_}.
+Arguments yt1 {_}.
+
+(* This is a strict presheaf *)
+
+Definition yt_funct@{i} {p q} (α : q ≤ p) (f : yt@{i} p) : yt@{i} q :=
+mkYT@{i} q (α ⋅ f.(yt0)) (α ⋅ f.(yt1)).
+
+(* Sections *)
+
+Record ytEl@{i j} {p : ℙ} (f : yt@{i} p) : Type@{j} :=
+mkYtEl {
+  ytel0 : forall q (α : q ≤ p), f.(yt0) q α;
+  ytel1 : forall q (α : q ≤ p), f.(yt1) q α (α · ytel0);
+}.
+
+Arguments ytel0 {_ _}.
+Arguments ytel1 {_ _}.
+
+Definition seq_ytEl {p : ℙ} {f : yt p} {s t : ytEl f} :
+  ytel0 s ≡ ytel0 t -> s ≡ t.
+Proof.
+  intro H.
+  unshelve refine (J_seqs _ (ytel0 s)
+    (fun t0 e0 => s ≡ {| ytel0 := t0 ; ytel1 := J_seqs _ (ytel0 s) (fun u0 _ => forall q (α : q ≤ p), f.(yt1) q α (α ⋅ u0)) (ytel1 s) t0 e0 |})
+    (srefl _) (ytel0 t) H).
+Defined.
+
+Definition ytEl_funct@{i j} {p q} {f : yt@{i} p} (α : q ≤ p) :
+  ytEl@{i j} f -> ytEl@{i j} (yt_funct@{i} α f) :=
+fun s => mkYtEl@{i j} q (yt_funct α f) (α ⋅ s.(ytel0)) (α ⋅ s.(ytel1)).
+
+(* now let us focus on what is a fibration structure... *)
+
+Definition boxtype@{i j} {p : ℙ} (f : yt@{i} (S p)) :=
+  ytEl@{i j} (yt_funct@{i} side_0 f).
+
+Record filler@{i j} {p : ℙ}
+  {f : yt@{i} (S p)}
+  (t : boxtype@{i j} f) :=
+mkFiller {
+  fillert : ytEl@{i j} f;
+  fillerc : ytEl_funct@{i j} side_0 fillert ≡ t ;
+}.
+
+Record fibstruct@{i j} (p : ℙ)
+  (f0 : forall q (α : q ≤ p), Type@{i})
+  (f1 : forall q (α : q ≤ p) (s : forall r (β : r ≤ q), f0 r (α ∘ β)), SProp)
+  : Type@{i} :=
+mkFibStruct {
+  lift : forall q (α : S q ≤ p)
+    (t : boxtype@{i j} (mkYT (S q) (α · f0) (α · f1))),
+    filler@{i j} t;
+  uniformity : sTrue; (* todo *)
+}.
+
+Definition fibstruct_funct@{i j} {p q : ℙ} (α : q ≤ p)
+  {f0 : forall q (α : q ≤ p), Type@{i}}
+  {f1 : forall q (α : q ≤ p) (s : forall r (β : r ≤ q), f0 r (α ∘ β)), SProp}
+  : fibstruct@{i j} p f0 f1 -> fibstruct@{i j} q (α ⋅ f0) (α ⋅ f1).
+Proof.
+  unshelve refine (fun f => _).
+  unshelve refine (mkFibStruct _ _ _ _ _).
+  - unshelve refine (fun r β t => _).
+    unshelve refine (lift _ _ _ f r (α ∘ β) t).
+  - easy. (** todo **)
+Defined.
+
 (* Type of fibrant strict presheaves over yoneda(p) *)
 
-Record yft@{i} (p : ℙ) := mkYFT {
+Record yft@{i j} (p : ℙ) := mkYFT {
   yft0 : forall q (α : q ≤ p), Type@{i};
   yft1 : forall q (α : q ≤ p), (forall r (β : r ≤ q), yft0 r (α ∘ β)) -> SProp;
-  fibstruct : sTrue; (** TODO **)
+  yftfib : fibstruct@{i j} p yft0 yft1; (** TODO **)
 }.
 
 Arguments yft0 {_}.
 Arguments yft1 {_}.
-Arguments fibstruct {_}.
+Arguments yftfib {_}.
 
-Definition yft_funct@{i} {p q : ℙ} (α : q ≤ p) :
-  yft@{i} p -> yft@{i} q :=
+Definition yft_funct@{i j} {p q : ℙ} (α : q ≤ p) :
+  yft@{i j} p -> yft@{i j} q :=
 fun f =>
 {|
   yft0 := α · yft0 f;
-  yft1 := fun r β s => yft1 f r (α ∘ β) s;
-  fibstruct := sI  (** TODO **)
+  yft1 := α ⋅ yft1 f;
+  yftfib := fibstruct_funct α (yftfib f);
 |}.
 
-Definition yftR@{i j} {p : ℙ} (s : forall q : nat, q ≤ p -> yft@{i} q) : SProp :=
+Definition yftR@{i j k} {p : ℙ} (s : forall q : nat, q ≤ p -> yft@{i j} q) : SProp :=
 forall q (α : q ≤ p),
-seq@{j} (s q α) (yft_funct@{i} α (s p !)).
+seq@{k} (s q α) (yft_funct@{i j} α (s p !)).
 
 Definition cast0 {p : ℙ}
   (A0 : forall q (α : q ≤ p), yft q)
@@ -67,8 +163,8 @@ Defined.
 
 (* Universe of fibrant types *)
 
-Definition Uᶠ@{i j k} : Psh@{j} :=
-mkPsh@{j} yft@{i} (fun p s => yftR@{i k} s).
+Definition Uᶠ@{i j k l} : Psh@{l} :=
+mkPsh@{l} yft@{i j} (fun p s => yftR@{i j k} s).
 
 (* Uᶠ is an element of Uᶠ *)
 
@@ -77,7 +173,12 @@ Proof.
 unshelve econstructor.
 - exact (fun q α => yft q).
 - refine (fun q α s => yftR s).
-- easy. (** TODO **)
+- unshelve refine (mkFibStruct _ _ _ _ _).
+  + unshelve refine (fun q α t => _).
+    unshelve refine (mkFiller _ _ _ _ _).
+    apply falso.
+    apply sfalso.
+  + easy.
 Defined.
 
 Definition U1 (p : ℙ) : psh1 Uᶠ p (fun q α => U0 q).
@@ -123,6 +224,47 @@ Defined.
    * Type0 p : El0 p (Type0 p)
    * Type1 p : El1 p (Type0 p) (Type1 p) *)
 
+(* Translation of bool *)
+
+Inductive boolR {p} : (forall q (α : q ≤ p), bool) -> SProp :=
+| boolr : forall (b : bool), boolR (fun q α => b).
+
+Definition bool0 {p} : @El0 p Type0.
+Proof.
+unshelve refine (fun q α => mkYFT _ _ _ _).
+- unshelve refine (fun r β => bool).
+- unshelve refine (fun r β s => boolR s).
+- unshelve refine (mkFibStruct _ _ _ _ _).
+  + unshelve refine (fun q α t => _).
+    unshelve refine (mkFiller _ _ _ _ _).
+    unfold boxtype in t. unfold yt_funct in t. simpl in t.
+    unshelve refine (mkYtEl _ _ (fun r β => _) (fun r β => _)) ; simpl.
+    exact (t.(ytel0) q !).
+    exact (boolr (t.(ytel0) q !)).
+    apply seq_ytEl. simpl.
+    pose proof (ytel1 t q !) as H. simpl in H.
+    change (! ⋅ ytel0 t) with (ytel0 t) in H. destruct H.
+    reflexivity.
+  + easy. (** TODO **)
+Defined.
+
+Definition bool1 {p} : @El1 p Type0 Type1 bool0.
+Proof.
+unshelve refine (fun q α r β => _).
+reflexivity.
+Defined.
+
+Definition true0 {p} : @El0 p bool0.
+Proof.
+unshelve refine (fun q α => true).
+Defined.
+
+Definition true1 {p} : @El1 p bool0 bool1 true0.
+Proof.
+unshelve refine (fun q α => _).
+exact (boolr true).
+Defined.
+
 (* Translation of Arrow types *)
 
 Definition Arr0 {p}
@@ -147,7 +289,7 @@ unshelve refine (fun q α => mkYFT _ _ _ _).
   (B0 r (α ∘ β)).(yft1) r ! (fun r' β' => _)).
   unshelve refine (cast0 B0 B1 (α ∘ β) β' _).
   exact (f r' β' (β' · x0) (β' · x1)).
-+ easy. (** TODO **)
++ apply falso.
 Defined.
 
 Definition Arr1 {p}
@@ -290,35 +432,7 @@ Proof.
   exact (f1 q α (α · x0) (α · x1)).
 Defined.
 
-(* Translation of bool *)
-
-Inductive boolR {p} : (forall q (α : q ≤ p), bool) -> SProp :=
-| boolr : forall (b : bool), boolR (fun q α => b).
-
-Definition bool0 {p} : @El0 p Type0.
-Proof.
-unshelve refine (fun q α => mkYFT _ _ _ _).
-+ unshelve refine (fun r β => bool).
-+ unshelve refine (fun r β s => boolR s).
-+ easy. (** TODO **)
-Defined.
-
-Definition bool1 {p} : @El1 p Type0 Type1 bool0.
-Proof.
-unshelve refine (fun q α r β => _).
-reflexivity.
-Defined.
-
-Definition true0 {p} : @El0 p bool0.
-Proof.
-unshelve refine (fun q α => true).
-Defined.
-
-Definition true1 {p} : @El1 p bool0 bool1 true0.
-Proof.
-unshelve refine (fun q α => _).
-exact (boolr true).
-Defined.
+(* Translation of equality *)
 
 Inductive path {p} (A0 : @El0 p Type0) :
   (El0 A0) -> (El0 A0) -> Type :=
@@ -379,6 +493,37 @@ Proof.
 unshelve refine (fun q α => _).
 exact (pathr (α · A0) (α ∘ squish · x0)).
 Defined.
+
+(* The full transp0 will just be like □transp0_aux *)
+Definition transp0_aux {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
+  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (x0 : El0 (app0 P0 a0 a1))
+  (x1 : El1 _ (app1 P1 a0 a1) x0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 a0 b0))
+  (e1 : El1 _ (eq1 A0 a0 b0) e0) :
+  (app0 P0 b0 b1 p !).(yft0) p !.
+Proof.
+  unfold El0 in A0. simpl in A0.
+  (* unfold El1 in A1. simpl in A1. unfold cast0 in A1. simpl in A1. *)
+  unfold El0 in P0. simpl in P0.
+  (* unfold El1 in P1. simpl in P1. unfold cast0 in P1. simpl in P1. *)
+  unfold El0 in a0.
+  unfold El0 in x0. unfold app0 in x0.
+  unfold El0 in e0. simpl in e0.
+  unfold app0.
+  unshelve refine (
+    match (e0 p !) with
+    | path_c _ z0 => _
+    end
+  ).
+  unfold El0 in z0.
 
 
 (* etc etc *)
