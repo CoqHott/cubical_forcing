@@ -128,7 +128,7 @@ Defined.
 Record yft@{i j} (p : ℙ) := mkYFT {
   yft0 : forall q (α : q ≤ p), Type@{i};
   yft1 : forall q (α : q ≤ p), (forall r (β : r ≤ q), yft0 r (α ∘ β)) -> SProp;
-  yftfib : fibstruct@{i j} p yft0 yft1; (** TODO **)
+  yftfib : fibstruct@{i j} p yft0 yft1;
 }.
 
 Arguments yft0 {_}.
@@ -176,9 +176,11 @@ unshelve econstructor.
 - unshelve refine (mkFibStruct _ _ _ _ _).
   + unshelve refine (fun q α t => _).
     unshelve refine (mkFiller _ _ _ _ _).
-    apply falso.
-    apply sfalso.
-  + easy.
+    unshelve refine (mkYtEl _ _ (fun r β => _) (fun r β => _)) ; simpl.
+    unshelve refine (ytel0 t r (squish ∘ β)).
+    unshelve refine (ytel1 t r (squish ∘ β)).
+    reflexivity.
+  + easy. (** TODO **)
 Defined.
 
 Definition U1 (p : ℙ) : psh1 Uᶠ p (fun q α => U0 q).
