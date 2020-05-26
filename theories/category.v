@@ -19,11 +19,23 @@ intros A x P p y e.
 refine (match e in _ ≡ z as e return P _ e with srefl _ => p end).
 Defined.
 
+Lemma transp_seq {A : Type} {x : A} (P : A -> Type)
+  (a : P x) {y : A} (e : x ≡ y) : P y.
+Proof.
+refine (match e in _ ≡ z as e return P _ with srefl _ => a end).
+Defined.
+
 Lemma J_seqs : forall (A : Type) (x : A) (P : forall y, x ≡ y -> SProp),
   P x (srefl _) -> forall y e, P y e.
 Proof.
 intros A x P p y e.
 refine (match e in _ ≡ z as e return P _ e with srefl _ => p end).
+Defined.
+
+Lemma transp_seqs {A : Type} {x : A} (P : A -> SProp)
+  (a : P x) {y : A} (e : x ≡ y) : P y.
+Proof.
+refine (match e in _ ≡ z as e return P _ with srefl _ => a end).
 Defined.
 
 Definition ssym {A} {x y : A} (e : x ≡ y) : (y ≡ x).
@@ -261,3 +273,32 @@ Lemma arrow_eq_4 {p q : ℙ} (α : q ≤ p) :
 Proof.
 reflexivity.
 Defined.
+
+(* 
+(* scott domain of flat booleans *)
+
+Inductive flatbool :=
+| flattrue : flatbool
+| flatfalse : flatbool
+| flatbot : flatbool.
+
+Definition le_flatbool : flatbool -> flatbool -> SProp.
+Proof.
+unshelve refine (fun a b => _).
+destruct a, b.
+exact sTrue. exact sFalse. exact sFalse.
+exact sFalse. exact sFalse. exact sTrue.
+exact sTrue. exact sTrue. exact sTrue.
+Defined.
+
+(* domain of faces of a d dimensional cube *)
+
+Definition face (n : ℙ) := finset n -> flatbool.
+
+Definition le_face {n : ℙ} : face n -> face n -> SProp :=
+fun f g =>
+  forall m : finset n, le_flatbool (f m) (g m).
+
+ *)
+
+
