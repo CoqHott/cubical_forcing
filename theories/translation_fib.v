@@ -112,12 +112,12 @@ Admitted.
 
 (* Partial sections of a presheaf over yoneda(p) *)
 
-Record partialEl@{i j} {p : ℙ} (t : yt@{i} p) 
+Record partialEl@{i j} {p : ℙ} (t : yt@{i} p)
   (domain : forall q (α : q ≤ p), bool) :=
 mkPartialEl {
-  pe_el : forall q (α : q ≤ p) (Hα : domain q α ≡ true), 
+  pe_el : forall q (α : q ≤ p) (Hα : domain q α ≡ true),
     ytEl@{i j} (yt_funct@{i} α t) ;
-  pe_compat : forall q (α : q ≤ p) (Hα : domain q α ≡ true) 
+  pe_compat : forall q (α : q ≤ p) (Hα : domain q α ≡ true)
     r (β : r ≤ q) (Hβ : domain r (α ∘ β) ≡ true),
     ytEl_funct β (pe_el q α Hα) ≡ pe_el r (α ∘ β) Hβ ;
 }.
@@ -129,11 +129,11 @@ Definition tubeEl@{i j} {p : ℙ} (t : yt@{i} (S p))
   (b : cofib p)
  := partialEl t (fun q α => tubeface b α).
 
-Record lidEl@{i j} {p : ℙ} {t : yt@{i} (S p)} 
+Record lidEl@{i j} {p : ℙ} {t : yt@{i} (S p)}
   {b : cofib p} (e : tubeEl@{i j} t b) (l : lid p) :=
 mkLidEl {
   le_el : ytEl@{i j} (yt_funct@{i} (lidface l) t) ;
-  le_compat : forall q (α : q ≤ p) 
+  le_compat : forall q (α : q ≤ p)
     (Hα : tubeface b ((lidface l) ∘ α) ≡ true),
     ytEl_funct α le_el ≡ e.(pe_el) q ((lidface l) ∘ α) Hα ;
 }.
@@ -192,14 +192,14 @@ Definition seq_yftAlt {p : ℙ}
 Proof.
 intro H. apply seq_ytEl.
 pose proof (ytel1 t1 p !) as H1 ; simpl in H1.
-refine (J_seqs _ _ 
+refine (J_seqs _ _
   (fun x _ => x ≡ ytel0 t2) _ (ytel0 t1) (ssym H1)).
-refine (J_seqs _ (ytel0 t2 p !) 
-  (fun x _ => (fun q α => yft_funct α x) ≡ ytel0 t2) 
+refine (J_seqs _ (ytel0 t2 p !)
+  (fun x _ => (fun q α => yft_funct α x) ≡ ytel0 t2)
   _ (ytel0 t1 p !) (ssym H)).
 pose proof (ytel1 t2 p !) as H2 ; simpl in H2.
 refine (J_seqs _ _
-  (fun x _ => (fun q α => yft_funct α (ytel0 t2 p !)) ≡ x) 
+  (fun x _ => (fun q α => yft_funct α (ytel0 t2 p !)) ≡ x)
   (srefl _) (ytel0 t2) (ssym H2)).
 Defined.
 
@@ -229,14 +229,14 @@ fun s => mkYftEl@{i j k} q (yft_funct α f) (α ⋅ s.(yftel0)) (α ⋅ s.(yftel
 
 (* Partial fibrant presheaves over yoneda(S p) *)
 
-Definition partialYft@{i j k l} {p : ℙ} 
+Definition partialYft@{i j k l} {p : ℙ}
   (domain : forall q (α : q ≤ p), bool) :=
-  partialEl@{k l} 
+  partialEl@{k l}
     {| yt0 := fun q (_ : q ≤ p) => yft@{i j} q ;
        yt1 := fun q (_ : q ≤ p) s => yftR s ; |} domain.
 
 Definition tubeYft@{i j k l} {p : ℙ} (b : cofib p) :=
-  tubeEl@{k l} 
+  tubeEl@{k l}
     {| yt0 := fun q (_ : q ≤ S p) => yft@{i j} q ;
        yt1 := fun q (_ : q ≤ S p) s => yftR s ; |} b.
 
@@ -249,7 +249,7 @@ Definition lidYft@{i j k l} {p : ℙ} {b : cofib p}
    extensional. It is quite possible we will need to make it
    list-based so that partial types satisfy some extensionality *)
 
-(* Definition boxYftEq {p : ℙ} {b : box p} (t : boxYft b) 
+(* Definition boxYftEq {p : ℙ} {b : box p} (t : boxYft b)
   {q : ℙ} (α : q ≤ S p) (Hα : boxface b α ≡ true)
   {r : ℙ} (β : r ≤ q) (Hβ : boxface b (α ∘ β) ≡ true) :
   ytel0 (be_el t r (α ∘ β) Hβ) r ! ≡ yft_funct β (ytel0 (be_el t q α Hα) q !).
@@ -265,7 +265,7 @@ mkBoxYftEl {
   bye0 : forall q (α : q ≤ S p) (Hα : boxface b α ≡ true),
     yftEl (ytel0 (t.(be_el) q α Hα) q !) ;
   bye1 : forall q (α : q ≤ S p) (Hα : boxface b α ≡ true)
-    r (β : r ≤ q) (Hβ : boxface b (α ∘ β) ≡ true), 
+    r (β : r ≤ q) (Hβ : boxface b (α ∘ β) ≡ true),
     yftEl_funct β (bye0 q α Hα) ≡ transp_seq yftEl (bye0 r (α ∘ β) Hβ) (boxYftEq t α Hα β Hβ) ;
 }.
 
@@ -282,14 +282,14 @@ Defined. *)
 (* *)
 
 Definition tubeGlue@{i j k l} {p : ℙ}
-  {b : cofib p} (t : tubeYft@{i j k l} b) 
+  {b : cofib p} (t : tubeYft@{i j k l} b)
   {l : lid p} (lt : lidYft@{i j k l} t l)
   (l' : lid p) {q} (α : q ≤ p) : Type@{i}.
 Proof.
 Admitted.
 
 Definition tubeGlue_funct@{i j k l} {p : ℙ}
-  {b : cofib p} {t : tubeYft@{i j k l} b} 
+  {b : cofib p} {t : tubeYft@{i j k l} b}
   {l : lid p} {lt : lidYft@{i j k l} t l}
   {l' : lid p} {q} {α : q ≤ p}
   {r} (β : r ≤ q) :
@@ -298,7 +298,7 @@ Proof.
 Admitted.
 
 Definition tubeGlueR@{i j k l} {p : ℙ}
-  {b : cofib p} (t : tubeYft@{i j k l} b) 
+  {b : cofib p} (t : tubeYft@{i j k l} b)
   {l : lid p} (lt : lidYft@{i j k l} t l)
   (l' : lid p) {q} (α : q ≤ p) :
   (forall r (β : r ≤ q), tubeGlue t lt l' (α ∘ β)) -> SProp.
@@ -308,16 +308,16 @@ exact (forall r (β : r ≤ q), s r β ≡ tubeGlue_funct β (s q !)).
 Defined.
 
 Definition tubeGlueFib@{i j k l} {p : ℙ}
-  {b : cofib p} (t : tubeYft@{i j k l} b) 
+  {b : cofib p} (t : tubeYft@{i j k l} b)
   {l : lid p} (lt : lidYft@{i j k l} t l)
   (l' : lid p) {q} (α : S q ≤ p) :
-  fibstruct q (fun _ β => tubeGlue t lt l' (α ∘ β)) 
+  fibstruct q (fun _ β => tubeGlue t lt l' (α ∘ β))
     (fun _ β => tubeGlueR t lt l' (α ∘ β)).
 Proof.
 Admitted.
 
-Definition tubeGlueLid@{i j k l} {p : ℙ} 
-  {b : cofib p} (t : tubeYft@{i j k l} b) 
+Definition tubeGlueLid@{i j k l} {p : ℙ}
+  {b : cofib p} (t : tubeYft@{i j k l} b)
   {l : lid p} (lt : lidYft@{i j k l} t l)
   (l' : lid p) :
   lidYft@{i j k l} t l'.
@@ -329,7 +329,7 @@ unshelve econstructor.
     * admit. (* refine (fun r β => tubeGlue@{i j k l} t lt l' (α ∘ β)). *)
     * admit. (*  refine (fun r β => tubeGlueR@{i j k l} t lt l' (α ∘ β)). *)
     * admit. (* refine (fun r β => tubeGlueFib t lt l' (α ∘ β)). *)
-  + refine (fun q α => _). 
+  + refine (fun q α => _).
     unfold yftR. unfold yft_funct ; simpl. admit. (* reflexivity. *)
 - unshelve refine (fun q α Hα => _).
   unfold ytEl_funct ; simpl.
@@ -396,31 +396,26 @@ Defined.
 
 (* Translation of bool *)
 
-Inductive boolR {p} : (forall q (α : q ≤ p), bool) -> SProp :=
-| boolr : forall (b : bool), boolR (fun q α => b).
+Definition boolR {p} : (forall q (α : q ≤ p), bool) -> SProp :=
+fun s => s ≡ fun q α => s p !.
 
 Definition bool0 {p} : @El0 p Type0.
 Proof.
 unshelve refine (fun q α => mkYFT _ _ _ _).
 - unshelve refine (fun r β => bool).
 - unshelve refine (fun r β s => boolR s).
-- unshelve refine (mkFibStruct _ _ _ _ _).
-  + unshelve refine (fun q α t => _).
-    unshelve refine (mkFiller _ _ _ _ _).
-    unfold boxtype in t. unfold yt_funct in t. simpl in t.
-    unshelve refine (mkYtEl _ _ (fun r β => _) (fun r β => _)) ; simpl.
-    exact (t.(ytel0) q !).
-    exact (boolr (t.(ytel0) q !)).
-    apply seq_ytEl. simpl.
-    pose proof (ytel1 t q !) as H. simpl in H.
-    change (! ⋅ ytel0 t) with (ytel0 t) in H. destruct H.
-    reflexivity.
-  + easy. (** TODO **)
+- unshelve refine (fun r β b e l le l' => _).
+  unshelve econstructor.
+  + unfold yt_funct ; simpl.
+    unshelve econstructor ; simpl.
+    apply falso.
+    apply sfalso.
+  + apply sfalso.
 Defined.
 
 Definition bool1 {p} : @El1 p Type0 Type1 bool0.
 Proof.
-unshelve refine (fun q α r β => _).
+unshelve refine (fun q α => _).
 reflexivity.
 Defined.
 
@@ -432,7 +427,7 @@ Defined.
 Definition true1 {p} : @El1 p bool0 bool1 true0.
 Proof.
 unshelve refine (fun q α => _).
-exact (boolr true).
+reflexivity.
 Defined.
 
 (* Translation of Arrow types *)
@@ -459,15 +454,18 @@ unshelve refine (fun q α => mkYFT _ _ _ _).
   (B0 r (α ∘ β)).(yft1) r ! (fun r' β' => _)).
   unshelve refine (cast0 B0 B1 (α ∘ β) β' _).
   exact (f r' β' (β' · x0) (β' · x1)).
-- unshelve refine (mkFibStruct _ _ _ _ _).
-  + unshelve refine (fun q α t => _).
-    unshelve refine (mkFiller _ _ _ _ _).
-    unshelve refine (mkYtEl _ _ (fun r β => _) (fun r β => _)) ; simpl.
-    unshelve refine (fun x0 x1 => _).
-    apply falso.
+- unshelve refine (fun r β b e l le l' => _).
+  unshelve econstructor.
+  + unfold yt_funct ; simpl.
+    unshelve econstructor ; simpl.
+    * refine (fun r0 β0 x0 x1 => _).
+      apply falso.
+    * refine (fun r0 β0 x0 x1 => _).
+      apply sfalso.
+  + refine (fun r0 β0 Hβ0 => _).
+    unfold ytEl_funct ; simpl.
+    apply seq_ytEl ; simpl.
     apply sfalso.
-    apply sfalso.
-  + easy. 
 Defined.
 
 Definition Arr1 {p}
@@ -477,7 +475,7 @@ Definition Arr1 {p}
   (B1 : @El1 p Type0 Type1 B0) :
   @El1 p Type0 Type1 (Arr0 A0 A1 B0 B1).
 Proof.
-unshelve refine (fun q α r β => _).
+unshelve refine (fun q α => _).
 reflexivity.
 Defined.
 
@@ -515,67 +513,440 @@ Proof.
 refine (fun q α => f1 _ _ (α · x0) (α · x1)).
 Defined.
 
-(* Translation of equality *)
+(* Translation of sigmas *)
 
-Inductive path {p} (A0 : @El0 p Type0) :
-  (El0 A0) -> (El0 A0) -> Type :=
-| path_c : forall (x : El0 (squish · A0)), path A0 (side_0 · x) (side_1 · x).
+Inductive SigmaT {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
+  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0) :
+  Type :=
+| Sigma_c : forall (a0 : El0 A0) (a1 : El1 A0 A1 a0)
+  (b0 : El0 (app0 P0 a0 a1)) (b1 : El1 _ (app1 P1 a0 a1) b0),
+  SigmaT A0 A1 P0 P1.
 
-Definition path_funct {p} {A0 : @El0 p Type0}
-  {x0 : El0 A0} {y0 : El0 A0} {q} (α : q ≤ p) :
-  path A0 x0 y0 -> path (α · A0) (α · x0) (α · y0).
+Definition SigmaT_funct {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  {q} (α : q ≤ p) :
+  SigmaT A0 A1 P0 P1 -> SigmaT (α ⋅ A0) (α ⋅ A1) (α ⋅ P0) (α ⋅ P1).
 Proof.
-intros [x].
-(* definitional equations are of utmost importance here *)
-exact (path_c (α · A0) (promote α · x)).
+intros [a0 a1 b0 b1].
+exact (Sigma_c _ _ _ _ (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1)).
 Defined.
 
-Inductive pathR {p} (A0 : @El0 p Type0) :
- forall (x0 : El0 A0) (y0 : El0 A0)
- (p : forall q (α : q ≤ p), path (α · A0) (α · x0) (α · y0)), SProp :=
-| pathr : forall (x : El0 (squish · A0)),
-  pathR A0 (side_0 · x) (side_1 · x) (fun q α => path_c (α · A0) ((promote α) · x)).
+Definition SigmaR {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
+  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
+  : (forall q (α : q ≤ p), SigmaT (α ⋅ A0) (α ⋅ A1) (α ⋅ P0) (α ⋅ P1)) -> SProp :=
+fun s => s ≡ fun q α => SigmaT_funct α (s p !).
+
+Definition Sigma0 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
+  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0) :
+  @El0 p Type0.
+Proof.
+refine (fun q α => _).
+unshelve econstructor.
+- refine (fun r β => _).
+  exact (SigmaT (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ P0) (α ∘ β ⋅ P1)).
+- refine (fun r β => _).
+  exact (SigmaR (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ P0) (α ∘ β ⋅ P1)).
+- refine (fun r β b e l le l' => _).
+  apply falso.
+Defined.
+
+Definition Sigma1 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
+  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0) :
+  @El1 p Type0 Type1 (Sigma0 A0 A1 P0 P1).
+Proof.
+refine (fun q α => _).
+reflexivity.
+Defined.
+
+Definition fst0 {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (x0 : El0 (Sigma0 A0 A1 P0 P1)) :
+  El0 A0.
+Proof.
+destruct (x0 p !) as [a0 a1 b0 b1].
+exact a0.
+Defined.
+
+Definition fst1 {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (x0 : El0 (Sigma0 A0 A1 P0 P1)) :
+  El1 A0 A1 (fst0 x0).
+Proof.
+unfold fst0.
+destruct (x0 p !) as [a0 a1 b0 b1].
+exact a1.
+Defined.
+
+Definition snd0 {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (x0 : El0 (Sigma0 A0 A1 P0 P1)) :
+  El0 (app0 P0 (fst0 x0) (fst1 x0)).
+Proof.
+unfold fst0. unfold fst1.
+destruct (x0 p !) as [a0 a1 b0 b1].
+exact b0.
+Defined.
+
+Definition snd1 {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (x0 : El0 (Sigma0 A0 A1 P0 P1)) :
+  El1 _ (app1 P1 (fst0 x0) (fst1 x0)) (snd0 x0).
+Proof.
+unfold fst0. unfold fst1. unfold snd0.
+destruct (x0 p !) as [a0 a1 b0 b1].
+exact b1.
+Defined.
+
+Definition seq_Sigma_transp {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  {a0 : El0 (Sigma0 A0 A1 P0 P1)}
+  {b0 : El0 (Sigma0 A0 A1 P0 P1)}
+  : fst0 a0 ≡ fst0 b0 ->
+    El0 (app0 P0 (fst0 a0) (fst1 a0)) ->
+    El0 (app0 P0 (fst0 b0) (fst1 b0)).
+Proof.
+refine (fun H x => _).
+refine (J_seq _ (fst0 a0)
+  (fun x e => El0 (app0 P0 x
+    (J_seqs _ (fst0 a0) (fun y _ => El1 A0 A1 y) (fst1 a0) x e)))
+  x (fst0 b0) H).
+Defined.
+
+Definition seq_Sigma {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (a0 : El0 (Sigma0 A0 A1 P0 P1))
+  (a1 : El1 _ (Sigma1 A0 A1 P0 P1) a0)
+  (b0 : El0 (Sigma0 A0 A1 P0 P1))
+  (b1 : El1 _ (Sigma1 A0 A1 P0 P1) b0)
+  : forall (e0 : fst0 a0 ≡ fst0 b0)
+    (e1 : seq_Sigma_transp e0 (snd0 a0) ≡ snd0 b0),
+    a0 ≡ b0.
+Proof.
+refine (fun H0 H1 => _).
+refine (J_seqs _ _ (fun x _ => x ≡ b0) _ a0 (ssym (a1 p !))).
+unfold cast0 ; simpl.
+assert (a0 p ! ≡ b0 p !).
+admit.
+refine (J_seqs _ _ (fun x _ => (fun q α => SigmaT_funct α x) ≡ b0) _ _ (ssym H)).
+exact (ssym (b1 p !)).
+Admitted.
+
+Definition dpair0 {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 (app0 P0 a0 a1))
+  (b1 : El1 _ (app1 P1 a0 a1) b0)
+  : El0 (Sigma0 A0 A1 P0 P1).
+Proof.
+refine (fun q α => _) ; simpl.
+exact (Sigma_c _ _ _ _ (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1)).
+Defined.
+
+Definition dpair1 {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 (app0 P0 a0 a1))
+  (b1 : El1 _ (app1 P1 a0 a1) b0)
+  : El1 _ (Sigma1 A0 A1 P0 P1) (dpair0 a0 a1 b0 b1).
+Proof.
+refine (fun q α => _) ; simpl.
+reflexivity.
+Defined.
+
+(* Translation of equality *)
+
+Record path {p} (A0 : @El0 p Type0) (A1 : @El1 p Type0 Type1 A0)
+  (x0 : El0 A0) (y0 : El0 A0) : Type :=
+mkPath {
+  path_f0 : El0 (squish ⋅ A0) ;
+  path_f1 : El1 (squish ⋅ A0) (squish ⋅ A1) path_f0 ;
+  path_s : side_0 ⋅ path_f0 ≡ x0 ;
+  path_t : side_1 ⋅ path_f0 ≡ y0 ;
+}.
+
+Arguments path_f0 {_ _ _ _ _}.
+Arguments path_f1 {_ _ _ _ _}.
+Arguments path_s {_ _ _ _ _}.
+Arguments path_t {_ _ _ _ _}.
+
+Definition path_funct {p} {A0 : @El0 p Type0} {A1 : @El1 p Type0 Type1 A0}
+  {x0 : El0 A0} {y0 : El0 A0} {q} (α : q ≤ p) :
+  path A0 A1 x0 y0 -> path (α · A0) (α ⋅ A1) (α · x0) (α · y0).
+Proof.
+unshelve refine (fun x => _).
+unshelve econstructor.
+- exact (promote α ⋅ x.(path_f0)).
+- exact (promote α ⋅ x.(path_f1)).
+- refine (J_seqs _ _ (fun u _ => _ ≡ α ⋅ u) (srefl _) x0 (x.(path_s))).
+- refine (J_seqs _ _ (fun u _ => _ ≡ α ⋅ u) (srefl _) y0 (x.(path_t))).
+Defined.
+
+Definition pathR {p} (A0 : @El0 p Type0) (A1 : @El1 p Type0 Type1 A0)
+ (x0 : El0 A0) (y0 : El0 A0) :
+ (forall q (α : q ≤ p), path (α · A0) (α ⋅ A1) (α · x0) (α · y0)) -> SProp :=
+fun s => s ≡ fun q α => path_funct α (s p !).
 
 Definition eq0 {p}
   (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
   (x0 : El0 A0)
   (y0 : El0 A0) :
   @El0 p Type0.
 Proof.
 unshelve refine (fun q α => mkYFT _ _ _ _).
 - unshelve refine (fun r β => _).
-  exact (path ((α ∘ β) · A0) ((α ∘ β) · x0) ((α ∘ β) · y0)).
+  exact (path ((α ∘ β) · A0) ((α ∘ β) · A1) ((α ∘ β) · x0) ((α ∘ β) · y0)).
 - unshelve refine (fun r β s => _). simpl in s.
-  exact (pathR ((α ∘ β) · A0) ((α ∘ β) · x0) ((α ∘ β) · y0) s).
-- easy. (** TODO **)
+  exact (pathR ((α ∘ β) · A0) ((α ∘ β) · A1) ((α ∘ β) · x0) ((α ∘ β) · y0) s).
+- unshelve refine (fun r β b e l le l' => _).
+  apply falso. (** TODO **)
 Defined.
 
 Definition eq1 {p}
   (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
   (x0 : El0 A0)
   (y0 : El0 A0) :
-  @El1 p Type0 Type1 (eq0 A0 x0 y0).
+  @El1 p Type0 Type1 (eq0 A0 A1 x0 y0).
 Proof.
-unshelve refine (fun q α r β => _). reflexivity.
+unshelve refine (fun q α => _). reflexivity.
 Defined.
 
 Definition refl0 {p}
   (A0 : @El0 p Type0)
-  (x0 : El0 A0) :
-  @El0 p (eq0 A0 x0 x0).
+  (A1 : @El1 p Type0 Type1 A0)
+  (x0 : El0 A0)
+  (x1 : El1 A0 A1 x0) :
+  @El0 p (eq0 A0 A1 x0 x0).
 Proof.
 unshelve refine (fun q α => _). simpl.
-exact (path_c (α · A0) ((α ∘ squish) · x0)).
+unshelve econstructor.
+- exact ((α ∘ squish) ⋅ x0).
+- exact ((α ∘ squish) ⋅ x1).
+- reflexivity.
+- reflexivity.
 Defined.
 
 Definition refl1 {p}
   (A0 : @El0 p Type0)
-  (x0 : El0 A0) :
-  @El1 p (eq0 A0 x0 x0) (eq1 A0 x0 x0) (refl0 A0 x0).
+  (A1 : @El1 p Type0 Type1 A0)
+  (x0 : El0 A0)
+  (x1 : El1 A0 A1 x0) :
+  @El1 p (eq0 A0 A1 x0 x0) (eq1 A0 A1 x0 x0) (refl0 A0 A1 x0 x1).
 Proof.
 unshelve refine (fun q α => _).
-exact (pathr (α · A0) (α ∘ squish · x0)).
+reflexivity.
 Defined.
+
+Definition contr_filler0 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 b0))
+  (e1 : El1 _ (eq1 A0 A1 a0 b0) e0)
+  : El0 (squish ∘ squish ⋅ A0).
+Proof.
+Admitted.
+
+Definition contr_filler1 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 b0))
+  (e1 : El1 _ (eq1 A0 A1 a0 b0) e0)
+  : El1 _ (squish ∘ squish ⋅ A1) (contr_filler0 A0 A1 a0 a1 b0 b1 e0 e1).
+Proof.
+Admitted.
+
+Definition contr_eq0 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 b0))
+  (e1 : El1 _ (eq1 A0 A1 a0 b0) e0)
+  : side_0 ⋅ (contr_filler0 A0 A1 a0 a1 b0 b1 e0 e1) ≡ squish ⋅ a0.
+Proof.
+Admitted.
+
+Definition contr_eq1 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 b0))
+  (e1 : El1 _ (eq1 A0 A1 a0 b0) e0)
+  : promote side_0 ⋅ (contr_filler0 A0 A1 a0 a1 b0 b1 e0 e1) ≡ squish ⋅ a0.
+Proof.
+Admitted.
+
+Definition contr_eq2 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 b0))
+  (e1 : El1 _ (eq1 A0 A1 a0 b0) e0)
+  : promote side_1 ⋅ (contr_filler0 A0 A1 a0 a1 b0 b1 e0 e1) ≡ (e0 p !).(path_f0).
+Proof.
+Admitted.
+
+Definition decorated_contr_filler0 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 b0))
+  (e1 : El1 _ (eq1 A0 A1 a0 b0) e0)
+  : El0 (squish ⋅ Sigma0 A0 A1
+    (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) x0 q !)
+    (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) x0 q !)).
+Proof.
+refine (fun q α => _) ; simpl.
+unshelve econstructor.
+- change (El0 (α ⋅ (side_1 ⋅ (squish ∘ squish ⋅ A0)))).
+  exact (α ⋅ (side_1 ⋅ (contr_filler0 A0 A1 a0 a1 b0 b1 e0 e1))).
+- exact (α ⋅ (side_1 ⋅ (contr_filler1 A0 A1 a0 a1 b0 b1 e0 e1))).
+- refine (fun r β => _) ; simpl.
+  unshelve econstructor.
+  + change (El0 (squish ∘ α ∘ β ∘ squish ⋅ A0)).
+    change (El0 ((promote α) ∘ (promote β) ⋅ (squish ∘ squish ⋅ A0))).
+    exact (promote α ∘ promote β ⋅ (contr_filler0 A0 A1 a0 a1 b0 b1 e0 e1)).
+  + exact (promote α ∘ promote β ⋅ (contr_filler1 A0 A1 a0 a1 b0 b1 e0 e1)).
+  + change (α ∘ β ⋅ (side_0 ⋅ contr_filler0 A0 A1 a0 a1 b0 b1 e0 e1) ≡ α ∘ β ⋅ (squish ⋅ a0)).
+    refine (J_seqs _ _ (fun x _ => α ∘ β ⋅ x ≡ _) (srefl _) _
+      (ssym (contr_eq0 A0 A1 a0 a1 b0 b1 e0 e1))).
+  + reflexivity.
+- refine (fun r0 β0 => _) ; simpl.
+  reflexivity.
+Defined.
+
+Definition decorated_contr_filler1 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 b0))
+  (e1 : El1 _ (eq1 A0 A1 a0 b0) e0)
+  : El1 _ (squish ⋅ Sigma1 A0 A1
+    (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) x0 q !)
+    (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) x0 q !))
+    (decorated_contr_filler0 A0 A1 a0 a1 b0 b1 e0 e1).
+Proof.
+refine (fun q α => _).
+reflexivity.
+Defined.
+
+Definition singl_contr {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 b0))
+  (e1 : El1 _ (eq1 A0 A1 a0 b0) e0)
+  : El0 (eq0
+    (Sigma0 A0 A1 (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) x0 q !) (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) x0 q !))
+    (Sigma1 A0 A1 (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) x0 q !) (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) x0 q !))
+    (dpair0 a0 a1 (refl0 A0 A1 a0 a1) (refl1 A0 A1 a0 a1))
+    (dpair0 b0 b1 e0 e1)).
+Proof.
+refine (fun q α => _) ; simpl.
+unshelve econstructor.
+- exact (decorated_contr_filler0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1) (α ⋅ e0) (α ⋅ e1)).
+- exact (decorated_contr_filler1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1) (α ⋅ e0) (α ⋅ e1)).
+- apply ssym.
+  unshelve refine (@seq_Sigma q
+    _ _ (fun r β x0 x1 => eq0 (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ a0) x0 r !) (fun r β x0 x1 => eq1 (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ a0) x0 r !)
+    _ (α ⋅ dpair1 a0 a1 (refl0 A0 A1 a0 a1) (refl1 A0 A1 a0 a1))
+    _ (side_0 ⋅ decorated_contr_filler1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1) (α ⋅ e0) (α ⋅ e1))
+    _ _).
+  + unfold decorated_contr_filler0 ; unfold fst0 ; simpl.
+    change (α ⋅ a0 ≡ side_1 ⋅ (promote side_0 ⋅ contr_filler0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1) (α ⋅ e0) (α ⋅ e1))).
+    refine (J_seqs _ _ (fun x _ => α ⋅ a0 ≡ side_1 ⋅ x) (srefl _) _
+      (ssym (contr_eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1) (α ⋅ e0) (α ⋅ e1)))).
+  + unfold decorated_contr_filler0 ; unfold snd0 ; simpl.
+    unfold seq_Sigma_transp ; unfold fst0 ; simpl.
+    admit.
+    (* RHS should be
+    - first equated to (promote side_0 ⋅ contr_filler0) through contr_filler1
+    - then equated to refl through contr_eq1 *)
+- apply ssym.
+  unshelve refine (@seq_Sigma q
+    _ _ (fun r β x0 x1 => eq0 (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ a0) x0 r !) (fun r β x0 x1 => eq1 (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ a0) x0 r !)
+    _ (α ⋅ dpair1 b0 b1 e0 e1)
+    _ (side_1 ⋅ decorated_contr_filler1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1) (α ⋅ e0) (α ⋅ e1))
+    _ _).
+  + unfold decorated_contr_filler0 ; unfold fst0 ; simpl.
+    change (α ⋅ b0 ≡ side_1 ⋅ (promote side_1 ⋅ contr_filler0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1) (α ⋅ e0) (α ⋅ e1))).
+    refine (J_seqs _ _ (fun x _ => α ⋅ b0 ≡ side_1 ⋅ x) _ _
+      (ssym (contr_eq2 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1) (α ⋅ e0) (α ⋅ e1)))).
+    apply ssym.
+    exact ((e0 q α).(path_t)).
+  + unfold decorated_contr_filler0 ; unfold snd0 ; simpl.
+    admit.
+    (* RHS should be
+    - first equated to (promote side_1 ⋅ contr_filler0) through contr_filler1
+    - then equated to refl through contr_eq2 *)
+Admitted.
 
 (* The full transp0 will just be like □transp0_aux *)
 Definition transp0_aux {p}
@@ -707,58 +1078,3 @@ Defined.
 
 
 (* etc etc *)
-
-(* Definition of the face lattice as upward closed subsets of face *)
-
-Definition upward_closed {n : ℙ} (P : face n -> SProp) : SProp :=
-forall (f g : face n) (_ : le_face f g), P f -> P g.
-
-Record face_lattice (n : ℙ) : Type :=
-mkFaceLattice {
-  flpred : face n -> SProp ;
-  flε : upward_closed flpred ;
-}.
-
-(* note that a predicate being upward closed implies that
-   only its image on a finite number of canonical faces
-   is important *)
-
-(* one could do a list-based encoding to get decidable 
-   equality... *)
-
-(* Functoriality *)
-
-Definition bool_meet : bool -> bool -> flatbool.
-Proof.
-unshelve refine (fun a b => _).
-destruct a, b.
-exact flattrue.
-exact flatbot.
-exact flatbot.
-exact flatfalse. 
-Defined.
-
-Definition cube_meet {n : ℙ} : cube n -> cube n -> face n :=
-fun c d m => bool_meet (c m) (d m).
-
-Definition face_boundary0 {n : ℙ} : face n -> cube n :=
-fun f m => 
-  match (f m) with
-  | flattrue => true
-  | flatbot => false
-  | flatfalse => false
-  end.
-
-Definition face_boundary1 {n : ℙ} : face n -> cube n :=
-fun f m => 
-  match (f m) with
-  | flattrue => true
-  | flatbot => true
-  | flatfalse => false
-  end.
-
-Definition facearrow {n m : ℙ} (α : n ≤ m) : face n -> face m :=
-fun f => cube_meet (α.(arr) (face_boundary0 f)) (α.(arr) (face_boundary1 f)).
-
-Definition fl_funct {n m : ℙ} (α : n ≤ m) : face_lattice n -> face_lattice m.
-Admitted.
