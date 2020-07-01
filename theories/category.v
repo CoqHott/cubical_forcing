@@ -98,6 +98,24 @@ unshelve refine (mkFinset _ _ _).
 + apply le_to_sle. apply le_n_S. apply sle_to_le. exact nε.
 Defined.
 
+Definition finmatch {m : nat} (P : finset (S m) -> Type)
+  (P0 : P finzero) (PS : forall n, P (finsucc n)) : forall n, P n.
+Proof.
+refine (fun n => _). destruct n as [v ε]. revert ε.
+destruct v.
+- refine (fun ε => P0).
+- refine (fun ε => PS {| val := v ; eps_val := le_to_sle (le_S_n _ _ (sle_to_le ε)) |}).
+Defined.
+
+Definition sfinmatch {m : nat} (P : finset (S m) -> SProp)
+  (P0 : P finzero) (PS : forall n, P (finsucc n)) : forall n, P n.
+Proof.
+refine (fun n => _). destruct n as [v ε]. revert ε.
+destruct v.
+- refine (fun ε => P0).
+- refine (fun ε => PS {| val := v ; eps_val := le_to_sle (le_S_n _ _ (sle_to_le ε)) |}).
+Defined.
+
 Arguments val {_}.
 Arguments eps_val {_}.
 
@@ -227,6 +245,14 @@ unshelve refine (mkCubeArr _ _ _ _).
   exact (Hcd (finsucc n)).
 Defined.
 
+Definition antisquish {p : ℙ} : S p ≤ 1.
+Proof.
+unshelve econstructor.
+- refine (fun c n => c finzero).
+- intros c d Hcd n.
+  exact (Hcd finzero).
+Defined.
+
 Definition promote {p q : ℙ} (α : q ≤ p) : S q ≤ S p.
 Proof.
 unshelve refine (mkCubeArr _ _ _ _).
@@ -242,6 +268,19 @@ unshelve refine (mkCubeArr _ _ _ _).
   + eapply Hcd.
   + destruct α as [α αε]. eapply αε.
     unfold le_cube. intro m. eapply Hcd.
+Defined.
+
+Definition merge {p q : ℙ} (α : q ≤ p) (β : q ≤ 1) : q ≤ S p.
+Proof.
+unshelve econstructor.
+- refine (fun c => _). 
+  refine (finmatch (fun _ => bool) _ _).
+  + refine (β.(arr) c finzero).
+  + refine (fun n => α.(arr) c n).
+- intros c d Hcd.
+  refine (sfinmatch _ _ _) ; simpl.
+  + exact (β.(eps_arr) c d Hcd finzero).
+  + refine (fun n => α.(eps_arr) c d Hcd n).
 Defined.
 
 (* All of the following hold definitionally *)
@@ -274,31 +313,19 @@ Proof.
 reflexivity.
 Defined.
 
-(* 
-(* scott domain of flat booleans *)
-
-Inductive flatbool :=
-| flattrue : flatbool
-| flatfalse : flatbool
-| flatbot : flatbool.
-
-Definition le_flatbool : flatbool -> flatbool -> SProp.
+Lemma arrow_eq_5 {p q : ℙ} (α : q ≤ p) (β : q ≤ 1) : 
+  squish ∘ (merge α β) ≡ α.
 Proof.
-unshelve refine (fun a b => _).
-destruct a, b.
-exact sTrue. exact sFalse. exact sFalse.
-exact sFalse. exact sFalse. exact sTrue.
-exact sTrue. exact sTrue. exact sTrue.
+reflexivity.
 Defined.
 
-(* domain of faces of a d dimensional cube *)
+(* this one, however, requires η for nat. 
+  without it, we can only get an extensional equality. tough luck *)
 
-Definition face (n : ℙ) := finset n -> flatbool.
-
-Definition le_face {n : ℙ} : face n -> face n -> SProp :=
-fun f g =>
-  forall m : finset n, le_flatbool (f m) (g m).
-
- *)
-
+Lemma arrow_eq_fail {p q : ℙ} (α : q ≤ S p) : 
+  forall c n, (merge (squish ∘ α) (antisquish ∘ α)).(arr) c n ≡ α.(arr) c n.
+Proof.
+refine (fun c n => _). revert n.
+refine (sfinmatch _ _ _) ; reflexivity.
+Defined.
 
