@@ -319,6 +319,12 @@ Proof.
 reflexivity.
 Defined.
 
+Lemma arrow_eq_6 {p q r : ℙ} (α : q ≤ p) (β : q ≤ 1) (γ : r ≤ q) : 
+  (merge α β) ∘ γ ≡ merge (α ∘ γ) (β ∘ γ).
+Proof.
+reflexivity.
+Defined.
+
 (* this one, however, requires η for nat. 
   without it, we can only get an extensional equality. tough luck *)
 

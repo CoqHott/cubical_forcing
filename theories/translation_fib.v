@@ -931,11 +931,29 @@ Defined.
 Proof.
 refine (fun q α => _).
 unshelve econstructor.
-- refine (fun r β x0 x1 => _). 
-  pose proof ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_f0)). change (El0 (α ∘ squish ∘ β ∘ squish ⋅ B0)) in X.
-  pose proof ((h1 r (α ∘ squish ∘ β) x0 x1)). simpl in H. unfold cube_eqR in H. 
-  unfold cast0 in H ; simpl in H.
-  unfold ce_funct in H.  *)
+- refine (fun r β x0 x1 => _).
+  refine ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_f0) r (merge ! (antisquish ∘ β))).
+  (* pose proof ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_f0)). change (El0 (α ∘ squish ∘ β ∘ squish ⋅ B0)) in X.
+  refine (X r (merge ! (antisquish ∘ β))). *)
+- refine (fun r β x0 x1 => _).
+  change (yft1 (B0 r (α ∘ squish ∘ β)) r !
+    (fun r0 β0 => cast0 B0 B1 (α ∘ squish ∘ β) β0
+      (ce_f0 (h0 r0 (α ∘ squish ∘ β ∘ β0) (β0 ⋅ x0) (β0 ⋅ x1)) r0 (merge ! (antisquish ∘ β ∘ β0))))).
+  pose proof ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_f1) r (merge ! (antisquish ∘ β))).
+  change (yft1 (B0 r (α ∘ squish ∘ β)) r !
+    (fun r0 β0 => cast0 (α ∘ squish ∘ β ∘ squish ⋅ B0) (α ∘ squish ∘ β ∘ squish ⋅ B1) (merge ! (antisquish ∘ β)) β0
+      (ce_f0 (h0 r (α ∘ squish ∘ β) x0 x1) r0 (merge ! (antisquish ∘ β) ∘ β0)))) in H.
+  assert (
+    (fun r0 β0 => ce_f0 (h0 r0 (α ∘ squish ∘ β ∘ β0) (β0 ⋅ x0) (β0 ⋅ x1)) r0 (merge ! (antisquish ∘ β ∘ β0)))
+  ≡ (fun r0 β0 => ce_f0 (h0 r (α ∘ squish ∘ β) x0 x1) r0 (merge ! (antisquish ∘ β) ∘ β0))
+  ) as Hnat.
+  { admit. }
+  refine (J_seqs _ _ (fun x _ => yft1 (B0 r (α ∘ squish ∘ β)) r ! (fun r0 β0 => cast0 B0 B1 (α ∘ squish ∘ β) β0 (x r0 β0))) H _ (ssym Hnat)).
+- simpl.
+  change ((fun r β x0 x1 => ce_f0 (h0 r (α ∘ β) x0 x1) r side_0) ≡ α ⋅ f0).
+  (* looks like it wont work tbh *)
+Abort.
+ *)
 
 
 (* Axioms for interval-types, à la CubicalTT *)
@@ -982,9 +1000,25 @@ Definition itype_out0_2 {p} {A : Type} {B : A -> SProp}
 Proof.
 Admitted.
 
+Definition itype_out0_3 {A : Type} {B : A -> Type}
+  {p : forall (a : A) (b : B a), nat}
+  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
+  {x : forall (a : A) (b : B a), itype (p a b) (X a b) (y a b) (z a b)} :
+  (fun a b => itype_out (x a b) side0) ≡ y.
+Proof.
+Admitted.
+
 Definition itype_out1_2 {p} {A : Type} {B : A -> SProp}
   {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
   {x : forall (a : A) (b : B a), itype p (X a b) (y a b) (z a b)} :
+  (fun a b => itype_out (x a b) side1) ≡ z.
+Proof.
+Admitted.
+
+Definition itype_out1_3 {A : Type} {B : A -> Type}
+  {p : forall (a : A) (b : B a), nat}
+  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
+  {x : forall (a : A) (b : B a), itype (p a b) (X a b) (y a b) (z a b)} :
   (fun a b => itype_out (x a b) side1) ≡ z.
 Proof.
 Admitted.
@@ -1325,6 +1359,8 @@ unfold SigmaR ; unfold cast0 ; simpl.
 Admitted.
 
 (* comparing eq and path *)
+(* we get functions both ways, but they do not form an equivalence without funext/η, since
+   α ≠ merge (squish ∘ α) (antisquish ∘ α) *)
 
 Definition compare0 {p}
   (A0 : @El0 p Type0)
@@ -1344,9 +1380,9 @@ unshelve econstructor.
 - refine (fun r β => _).
   refine (e1 r (α ∘ squish ∘ β) (antisquish ∘ β)).
 - change ((fun r β => itype_out (e0 r (α ∘ β)) (side0)) ≡ α ⋅ x0).
-  apply sfalso. (* easy *)
+  eapply itype_out0_3.
 - change ((fun r β => itype_out (e0 r (α ∘ β)) (side1)) ≡ α ⋅ y0).
-  apply sfalso. (* easy *)
+  eapply itype_out1_3.
 Defined.
 
 Definition compare1 {p}
@@ -1376,12 +1412,8 @@ Definition anticompare0 {p}
   : El0 (path0 A0 A1 x0 x1 y0 y1).
 Proof.
 refine (fun q α => _). simpl.
-assert (x0 q α ≡ (e0 p !).(ce_f0) q (merge α side0)) as H0.
-{ refine (J_seqs _ _ (fun x _ => x q α ≡ _) (srefl _) x0 ((e0 p !).(ce_s))). }
-assert (y0 q α ≡ (e0 p !).(ce_f0) q (merge α side1)) as H1.
-{ refine (J_seqs _ _ (fun x _ => x q α ≡ _) (srefl _) y0 ((e0 p !).(ce_t))). }
-refine (J_seq _ _ (fun x _ => itype q _ x _) _ _ (ssym H0)).
-refine (J_seq _ _ (fun x _ => itype q _ _ x) _ _ (ssym H1)).
+refine (J_seq _ _ (fun x _ => itype q _ (x q α) _) _ _ ((e0 p !).(ce_s))).
+refine (J_seq _ _ (fun x _ => itype q _ _ (x q α)) _ _ ((e0 p !).(ce_t))).
 refine (@itype_in q (yft0 (A0 q α) q !) (fun αi => (e0 p !).(ce_f0) q (merge α αi))).
 Defined.
 
@@ -1396,8 +1428,98 @@ Definition anticompare1 {p}
   (e1 : El1 _ (eq1 A0 A1 x0 x1 y0 y1) e0)
   : El1 _ (path1 A0 A1 x0 x1 y0 y1) (anticompare0 A0 A1 x0 x1 y0 y1 e0 e1).
 Proof.
-refine (fun q α αi => _). unfold cast0 ; simpl.
+refine (fun q α αi => _).
+change (yft1 (A0 q α) q ! (fun r β => cast0 A0 A1 α β (itype_out (anticompare0 A0 A1 x0 x1 y0 y1 e0 e1 r (α ∘ β)) (αi ∘ β)))).
 unfold anticompare0.
-Admitted.
+refine (J_seqs _ (side_1 ⋅ ce_f0 (e0 p !)) (fun X E =>
+  yft1 (A0 q α) q ! (fun r β => cast0 A0 A1 α β (itype_out 
+    (J_seq _ _
+      (fun x (_ : side_0 ⋅ ce_f0 (e0 p !) ≡ x) =>
+        itype r (yft0 (A0 r ((! ∘ !) ∘ (squish ∘ (side_0 ∘ (α ∘ β))))) r !)
+          (x r (α ∘ β)) (X r ((α ∘ β) ∘ !)))
+      (J_seq _ _
+        (fun x (_ : side_1 ⋅ ce_f0 (e0 p !) ≡ x) =>
+          itype r (yft0 (A0 r ((! ∘ !) ∘ (squish ∘ (side_1 ∘ (α ∘ β))))) r !)
+            (ce_f0 (e0 p !) r (side_0 ∘ (α ∘ β))) (x r (α ∘ β)))
+        (@itype_in r (yft0 (A0 r (α ∘ β)) r !) (fun αi0 : r ≤ 1 => ce_f0 (e0 p !) r (merge (α ∘ β) αi0)))
+        X E) 
+      x0 (ce_s (e0 p !))) 
+    (αi ∘ β)))) _ y0 (ce_t (e0 p !))). simpl.
+refine (J_seqs _ (side_0 ⋅ ce_f0 (e0 p !)) (fun X E =>
+  yft1 (A0 q α) q ! (fun r β => cast0 A0 A1 α β (itype_out
+    (J_seq _ _
+      (fun x (_ : side_0 ⋅ ce_f0 (e0 p !) ≡ x) =>
+        itype r (yft0 (A0 r ((! ∘ !) ∘ (squish ∘ (side_0 ∘ (α ∘ β))))) r !) (x r (α ∘ β)) 
+          (ce_f0 (e0 p !) r (side_1 ∘ ((α ∘ β) ∘ !))))
+      (@itype_in r (yft0 (A0 r (α ∘ β)) r !)
+        (fun αi0 : r ≤ 1 => ce_f0 (e0 p !) r (merge (α ∘ β) αi0)))
+      X E) 
+    (αi ∘ β)))) _ x0 (ce_s (e0 p !))). simpl.
+refine (J_seqs _ _
+  (fun x _ => yft1 (A0 q α) q ! (fun r β => cast0 A0 A1 α β (x r (yft0 (A0 r (α ∘ β)) r !) (fun αi0 : r ≤ 1 => ce_f0 (e0 p !) r (merge (α ∘ β) αi0)) (αi ∘ β)))) _ _
+               (ssym itype_inout)).
+refine ((e0 p !).(ce_f1) q (merge α αi)).
+Defined.
 
-
+Definition eq_funext {p}
+(A0 : @El0 p Type0)
+(A1 : @El1 p Type0 Type1 A0)
+(B0 : @El0 p Type0)
+(B1 : @El1 p Type0 Type1 B0)
+(f0 : El0 (Arr0 A0 A1 B0 B1))
+(f1 : El1 _ (Arr1 A0 A1 B0 B1) f0)
+(g0 : El0 (Arr0 A0 A1 B0 B1))
+(g1 : El1 _ (Arr1 A0 A1 B0 B1) g0)
+(h0 : El0 (Prod0 A0 A1
+  (fun q α x0 x1 => eq0 (α ⋅ B0) (α ⋅ B1)
+    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
+    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
+  (fun q α x0 x1 => eq1 (α ⋅ B0) (α ⋅ B1)
+    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
+    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
+  ))
+(h1 : El1 _ (Prod1 A0 A1
+  (fun q α x0 x1 => eq0 (α ⋅ B0) (α ⋅ B1)
+    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
+    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
+  (fun q α x0 x1 => eq1 (α ⋅ B0) (α ⋅ B1)
+    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
+    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
+  ) h0)
+: El0 (eq0 (Arr0 A0 A1 B0 B1) (Arr1 A0 A1 B0 B1) f0 f1 g0 g1).
+Proof.
+unshelve refine (compare0 (Arr0 A0 A1 B0 B1) (Arr1 A0 A1 B0 B1) f0 f1 g0 g1 _ _).
+unshelve refine (path_funext0 A0 A1 B0 B1 f0 f1 g0 g1 _ _).
+refine (fun q α x0 x1 => _).
+refine (anticompare0 (α ⋅ B0) (α ⋅ B1) 
+  (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1) 
+  (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1)
+  (@dapp0 q _ _ 
+    (fun r β y0 y1 => eq0 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (fun r β y0 y1 => eq1 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !) 
+    (α ⋅ h0) x0 x1) 
+  (dapp1 (α ⋅ h0) (α ⋅ h1) x0 x1) q !).
+refine (fun q α x0 x1 => _).
+refine (anticompare1 (α ⋅ B0) (α ⋅ B1) 
+  (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1) 
+  (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1)
+  (@dapp0 q _ _ 
+    (fun r β y0 y1 => eq0 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (fun r β y0 y1 => eq1 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !) 
+    (α ⋅ h0) x0 x1) 
+  (@dapp1 q _ _ 
+  (fun r β y0 y1 => eq0 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+    (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+    (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+  (fun r β y0 y1 => eq1 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+    (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+    (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+  (α ⋅ h0) (α ⋅ h1) x0 x1) q !).
