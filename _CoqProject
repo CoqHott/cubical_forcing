@@ -1,6 +1,5 @@
 -R theories/ Theories
 
 theories/category.v
-theories/translation.v
-theories/interval.v
-theories/lattice.v
+theories/translation_fib.v
+theories/translation_fib_path.v
