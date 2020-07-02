@@ -1412,9 +1412,9 @@ Definition anticompare0 {p}
   : El0 (path0 A0 A1 x0 x1 y0 y1).
 Proof.
 refine (fun q α => _). simpl.
-refine (J_seq _ _ (fun x _ => itype q _ (x q α) _) _ _ ((e0 p !).(ce_s))).
-refine (J_seq _ _ (fun x _ => itype q _ _ (x q α)) _ _ ((e0 p !).(ce_t))).
-refine (@itype_in q (yft0 (A0 q α) q !) (fun αi => (e0 p !).(ce_f0) q (merge α αi))).
+refine (J_seq _ _ (fun x _ => itype q _ (x q !) _) _ _ ((e0 q α).(ce_s))).
+refine (J_seq _ _ (fun x _ => itype q _ _ (x q !)) _ _ ((e0 q α).(ce_t))).
+refine (@itype_in q (yft0 (A0 q α) q !) (fun αi => (e0 q α).(ce_f0) q (merge ! αi))).
 Defined.
 
 Definition anticompare1 {p}
@@ -1431,35 +1431,80 @@ Proof.
 refine (fun q α αi => _).
 change (yft1 (A0 q α) q ! (fun r β => cast0 A0 A1 α β (itype_out (anticompare0 A0 A1 x0 x1 y0 y1 e0 e1 r (α ∘ β)) (αi ∘ β)))).
 unfold anticompare0.
-refine (J_seqs _ (side_1 ⋅ ce_f0 (e0 p !)) (fun X E =>
-  yft1 (A0 q α) q ! (fun r β => cast0 A0 A1 α β (itype_out 
-    (J_seq _ _
-      (fun x (_ : side_0 ⋅ ce_f0 (e0 p !) ≡ x) =>
-        itype r (yft0 (A0 r ((! ∘ !) ∘ (squish ∘ (side_0 ∘ (α ∘ β))))) r !)
-          (x r (α ∘ β)) (X r ((α ∘ β) ∘ !)))
-      (J_seq _ _
-        (fun x (_ : side_1 ⋅ ce_f0 (e0 p !) ≡ x) =>
-          itype r (yft0 (A0 r ((! ∘ !) ∘ (squish ∘ (side_1 ∘ (α ∘ β))))) r !)
-            (ce_f0 (e0 p !) r (side_0 ∘ (α ∘ β))) (x r (α ∘ β)))
-        (@itype_in r (yft0 (A0 r (α ∘ β)) r !) (fun αi0 : r ≤ 1 => ce_f0 (e0 p !) r (merge (α ∘ β) αi0)))
-        X E) 
-      x0 (ce_s (e0 p !))) 
-    (αi ∘ β)))) _ y0 (ce_t (e0 p !))). simpl.
-refine (J_seqs _ (side_0 ⋅ ce_f0 (e0 p !)) (fun X E =>
+pose proof (e1 q α). simpl in H. unfold cube_eqR in H. unfold cast0 in H. simpl in H.
+refine (J_seqs _ _ (fun X _ =>
   yft1 (A0 q α) q ! (fun r β => cast0 A0 A1 α β (itype_out
     (J_seq _ _
-      (fun x (_ : side_0 ⋅ ce_f0 (e0 p !) ≡ x) =>
-        itype r (yft0 (A0 r ((! ∘ !) ∘ (squish ∘ (side_0 ∘ (α ∘ β))))) r !) (x r (α ∘ β)) 
-          (ce_f0 (e0 p !) r (side_1 ∘ ((α ∘ β) ∘ !))))
-      (@itype_in r (yft0 (A0 r (α ∘ β)) r !)
-        (fun αi0 : r ≤ 1 => ce_f0 (e0 p !) r (merge (α ∘ β) αi0)))
-      X E) 
-    (αi ∘ β)))) _ x0 (ce_s (e0 p !))). simpl.
+      (fun x (_ : side_0 ⋅ ce_f0 (X r β) ≡ x) =>
+        itype r (yft0 (A0 r (α ∘ β)) r !)
+          (x r !) (y0 r ((α ∘ β) ∘ !)))
+      (J_seq _ _
+        (fun x (_ : side_1 ⋅ ce_f0 (X r β) ≡ x) =>
+          itype r (yft0 (A0 r (α ∘ β)) r !)
+            (ce_f0 (X r β) r side_0) (x r !))
+        (@itype_in r (yft0 (A0 r (α ∘ β)) r !) (fun αi0 : r ≤ 1 => ce_f0 (X r β) r (merge ! αi0)))
+        (α ∘ β ⋅ y0) (ce_t (X r β)))
+      (α ∘ β ⋅ x0) (ce_s (X r β)))
+    (αi ∘ β)))) _ _ (ssym H)). simpl.
+pose proof (ce_t (e0 q α)).
+refine (J_seqs _ _ (fun X E =>
+  yft1 (A0 q α) q !
+    (fun (r : nat) (β : r ≤ q) =>
+     cast0 A0 A1 α β
+       (itype_out
+          (J_seq _ _
+             (fun (x : forall (x2 : nat) (x3 : x2 ≤ r), yft0 (A0 x2 ((α ∘ β) ∘ (squish ∘ (side_0 ∘ x3)))) x2 !)
+                (_ : (fun (r0 : nat) (β0 : r0 ≤ r) => ce_f0 (e0 q (α ∘ !)) r0 (promote β ∘ (side_0 ∘ β0))) ≡ x)
+              => itype r (yft0 (A0 r (α ∘ β)) r !) (x r !) (X r β))
+             (J_seq _ _
+                (fun
+                   (x : forall (x2 : nat) (x3 : x2 ≤ r), yft0 (A0 x2 ((α ∘ β) ∘ (squish ∘ (side_1 ∘ x3)))) x2 !)
+                   (_ : (fun (r0 : nat) (β0 : r0 ≤ r) => ce_f0 (e0 q (α ∘ !)) r0 (promote β ∘ (side_1 ∘ β0))) ≡ x)
+                 => itype r (yft0 (A0 r (α ∘ β)) r !) (ce_f0 (e0 q (α ∘ !)) r (promote β ∘ side_0)) (x r !))
+                (@itype_in r (yft0 (A0 r (α ∘ β)) r !)
+                   (fun αi0 : r ≤ 1 => ce_f0 (e0 q (α ∘ !)) r (promote β ∘ merge ! αi0)))
+                (β ⋅ X)
+                (J_seqs _ _
+                   (fun (u : forall (x2 : nat) (x3 : x2 ≤ q), yft0 (A0 x2 ((α ∘ !) ∘ (! ∘ x3))) x2 !)
+                      (_ : side_1 ⋅ ce_f0 (e0 q (α ∘ !)) ≡ u) =>
+                    (fun (r0 : nat) (β0 : r0 ≤ r) => ce_f0 (e0 q (α ∘ !)) r0 (side_1 ∘ (β ∘ β0))) ≡ β ⋅ u)
+                   (srefl (fun (r0 : nat) (β0 : r0 ≤ r) => ce_f0 (e0 q (α ∘ !)) r0 (side_1 ∘ (β ∘ β0))))
+                   X E))
+             (α ∘ β ⋅ x0)
+             (J_seqs _ _
+                (fun (u : forall (x2 : nat) (x3 : x2 ≤ q), yft0 (A0 x2 ((α ∘ !) ∘ (! ∘ x3))) x2 !)
+                   (_ : side_0 ⋅ ce_f0 (e0 q (α ∘ !)) ≡ u) =>
+                 (fun (r0 : nat) (β0 : r0 ≤ r) => ce_f0 (e0 q (α ∘ !)) r0 (side_0 ∘ (β ∘ β0))) ≡ β ⋅ u)
+                (srefl (fun (r0 : nat) (β0 : r0 ≤ r) => ce_f0 (e0 q (α ∘ !)) r0 (side_0 ∘ (β ∘ β0))))
+                (fun (r0 : nat) (β0 : r0 ≤ q) => x0 r0 ((α ∘ !) ∘ (! ∘ β0))) (ce_s (e0 q (α ∘ !)))))
+          (αi ∘ β)))) _ _ (ce_t (e0 q α))). simpl.
+refine (J_seqs _ _ (fun X E =>
+  yft1 (A0 q α) q !
+    (fun (r : nat) (β : r ≤ q) =>
+     cast0 A0 A1 α β
+       (itype_out
+          (J_seq (forall (x2 : nat) (x3 : x2 ≤ r), yft0 (A0 x2 ((α ∘ β) ∘ (squish ∘ (side_0 ∘ x3)))) x2 !)
+             (fun (r0 : nat) (β0 : r0 ≤ r) => ce_f0 (e0 q (α ∘ !)) r0 (promote β ∘ (side_0 ∘ β0)))
+             (fun (x : forall (x2 : nat) (x3 : x2 ≤ r), yft0 (A0 x2 ((α ∘ β) ∘ (squish ∘ (side_0 ∘ x3)))) x2 !)
+                (_ : (fun (r0 : nat) (β0 : r0 ≤ r) => ce_f0 (e0 q (α ∘ !)) r0 (promote β ∘ (side_0 ∘ β0))) ≡ x)
+              => itype r (yft0 (A0 r (α ∘ β)) r !) (x r !) (ce_f0 (e0 q (α ∘ !)) r (side_1 ∘ β)))
+             (@itype_in r (yft0 (A0 r (α ∘ β)) r !)
+                (fun αi0 : r ≤ 1 => ce_f0 (e0 q (α ∘ !)) r (promote β ∘ merge ! αi0)))
+             (β ⋅ X)
+             (J_seqs (forall (x2 : nat) (x3 : x2 ≤ q), yft0 (A0 x2 ((α ∘ !) ∘ (! ∘ x3))) x2 !)
+                (side_0 ⋅ ce_f0 (e0 q (α ∘ !)))
+                (fun (u : forall (x2 : nat) (x3 : x2 ≤ q), yft0 (A0 x2 ((α ∘ !) ∘ (! ∘ x3))) x2 !)
+                   (_ : side_0 ⋅ ce_f0 (e0 q (α ∘ !)) ≡ u) =>
+                 (fun (r0 : nat) (β0 : r0 ≤ r) => ce_f0 (e0 q (α ∘ !)) r0 (side_0 ∘ (β ∘ β0))) ≡ β ⋅ u)
+                (srefl (fun (r0 : nat) (β0 : r0 ≤ r) => ce_f0 (e0 q (α ∘ !)) r0 (side_0 ∘ (β ∘ β0))))
+                X E))
+          (αi ∘ β)))) _ _ (ce_s (e0 q α))). simpl.
 refine (J_seqs _ _
-  (fun x _ => yft1 (A0 q α) q ! (fun r β => cast0 A0 A1 α β (x r (yft0 (A0 r (α ∘ β)) r !) (fun αi0 : r ≤ 1 => ce_f0 (e0 p !) r (merge (α ∘ β) αi0)) (αi ∘ β)))) _ _
+  (fun x _ => yft1 (A0 q α) q ! (fun r β => cast0 A0 A1 α β (x r (yft0 (A0 r (α ∘ β)) r !) (fun αi0 : r ≤ 1 => ce_f0 (e0 q α) r (promote β ∘ merge ! αi0)) (αi ∘ β)))) _ _
                (ssym itype_inout)).
-refine ((e0 p !).(ce_f1) q (merge α αi)).
+refine ((e0 q α).(ce_f1) q (merge ! αi)).
 Defined.
+
 
 Definition eq_funext {p}
 (A0 : @El0 p Type0)
@@ -1491,31 +1536,38 @@ Proof.
 unshelve refine (compare0 (Arr0 A0 A1 B0 B1) (Arr1 A0 A1 B0 B1) f0 f1 g0 g1 _ _).
 unshelve refine (path_funext0 A0 A1 B0 B1 f0 f1 g0 g1 _ _).
 refine (fun q α x0 x1 => _).
-refine (anticompare0 (α ⋅ B0) (α ⋅ B1) 
-  (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1) 
+refine (anticompare0 (α ⋅ B0) (α ⋅ B1)
+  (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
   (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1)
-  (@dapp0 q _ _ 
+  (@dapp0 q (α ⋅ A0) (α ⋅ A1)
     (fun r β y0 y1 => eq0 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
       (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
       (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
     (fun r β y0 y1 => eq1 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
       (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
-      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !) 
-    (α ⋅ h0) x0 x1) 
-  (dapp1 (α ⋅ h0) (α ⋅ h1) x0 x1) q !).
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (α ⋅ h0) x0 x1)
+  (@dapp1 q (α ⋅ A0) (α ⋅ A1)
+    (fun r β y0 y1 => eq0 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (fun r β y0 y1 => eq1 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (α ⋅ h0) (α ⋅ h1) x0 x1) q !).
 refine (fun q α x0 x1 => _).
-refine (anticompare1 (α ⋅ B0) (α ⋅ B1) 
-  (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1) 
+refine (anticompare1 (α ⋅ B0) (α ⋅ B1)
+  (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
   (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1)
-  (@dapp0 q _ _ 
+  (@dapp0 q (α ⋅ A0) (α ⋅ A1)
     (fun r β y0 y1 => eq0 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
       (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
       (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
     (fun r β y0 y1 => eq1 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
       (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
-      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !) 
-    (α ⋅ h0) x0 x1) 
-  (@dapp1 q _ _ 
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (α ⋅ h0) x0 x1)
+  (@dapp1 q (α ⋅ A0) (α ⋅ A1)
   (fun r β y0 y1 => eq0 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
     (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
     (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
@@ -1523,3 +1575,43 @@ refine (anticompare1 (α ⋅ B0) (α ⋅ B1)
     (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
     (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
   (α ⋅ h0) (α ⋅ h1) x0 x1) q !).
+unshelve refine (path_funext1 A0 A1 B0 B1 f0 f1 g0 g1
+  (fun q α x0 x1 => anticompare0 (α ⋅ B0) (α ⋅ B1)
+  (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
+  (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1)
+  (@dapp0 q (α ⋅ A0) (α ⋅ A1)
+    (fun r β y0 y1 => eq0 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (fun r β y0 y1 => eq1 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (α ⋅ h0) x0 x1)
+  (@dapp1 q (α ⋅ A0) (α ⋅ A1)
+    (fun r β y0 y1 => eq0 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (fun r β y0 y1 => eq1 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (α ⋅ h0) (α ⋅ h1) x0 x1) q !)
+   (fun q α x0 x1 => anticompare1 (α ⋅ B0) (α ⋅ B1)
+  (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
+  (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1)
+  (@dapp0 q (α ⋅ A0) (α ⋅ A1)
+    (fun r β y0 y1 => eq0 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (fun r β y0 y1 => eq1 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+      (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+      (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+    (α ⋅ h0) x0 x1)
+  (@dapp1 q (α ⋅ A0) (α ⋅ A1)
+  (fun r β y0 y1 => eq0 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+    (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+    (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+  (fun r β y0 y1 => eq1 (α ∘ β ⋅ B0) (α ∘ β ⋅ B1)
+    (app0 (α ∘ β ⋅ f0) y0 y1) (app1 (α ∘ β ⋅ f1) y0 y1)
+    (app0 (α ∘ β ⋅ g0) y0 y1) (app1 (α ∘ β ⋅ g1) y0 y1) r !)
+  (α ⋅ h0) (α ⋅ h1) x0 x1) q !)).
+Defined.
