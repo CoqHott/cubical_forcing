@@ -972,11 +972,11 @@ Admitted.
 
 
 (* With itypes, a direct proof of funext should be possible.
-   I don't really know how to do it, though. It is possible to define it
-   through another equivalent path type, see translation_fib_path.v
+   It is also possible to define it through another equivalent path type
+   see translation_fib_path.v for a working version
  *)
 
-(* Definition eq_funext {p}
+Definition eq_funext {p}
 (A0 : @El0 p Type0)
 (A1 : @El1 p Type0 Type1 A0)
 (B0 : @El0 p Type0)
@@ -1006,25 +1006,103 @@ Proof.
 refine (fun q α => _).
 unshelve econstructor.
 - refine (fun r β x0 x1 => _).
-  refine ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_f0) r (merge ! (antisquish ∘ β))).
-  (* pose proof ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_f0)). change (El0 (α ∘ squish ∘ β ∘ squish ⋅ B0)) in X.
-  refine (X r (merge ! (antisquish ∘ β))). *)
-- refine (fun r β x0 x1 => _).
-  change (yft1 (B0 r (α ∘ squish ∘ β)) r !
-    (fun r0 β0 => cast0 B0 B1 (α ∘ squish ∘ β) β0
-      (ce_f0 (h0 r0 (α ∘ squish ∘ β ∘ β0) (β0 ⋅ x0) (β0 ⋅ x1)) r0 (merge ! (antisquish ∘ β ∘ β0))))).
-  pose proof ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_f1) r (merge ! (antisquish ∘ β))).
-  change (yft1 (B0 r (α ∘ squish ∘ β)) r !
-    (fun r0 β0 => cast0 (α ∘ squish ∘ β ∘ squish ⋅ B0) (α ∘ squish ∘ β ∘ squish ⋅ B1) (merge ! (antisquish ∘ β)) β0
-      (ce_f0 (h0 r (α ∘ squish ∘ β) x0 x1) r0 (merge ! (antisquish ∘ β) ∘ β0)))) in H.
-  assert (
-    (fun r0 β0 => ce_f0 (h0 r0 (α ∘ squish ∘ β ∘ β0) (β0 ⋅ x0) (β0 ⋅ x1)) r0 (merge ! (antisquish ∘ β ∘ β0)))
-  ≡ (fun r0 β0 => ce_f0 (h0 r (α ∘ squish ∘ β) x0 x1) r0 (merge ! (antisquish ∘ β) ∘ β0))
-  ) as Hnat.
-  { admit. }
-  refine (J_seqs _ _ (fun x _ => yft1 (B0 r (α ∘ squish ∘ β)) r ! (fun r0 β0 => cast0 B0 B1 (α ∘ squish ∘ β) β0 (x r0 β0))) H _ (ssym Hnat)).
-- simpl.
-  change ((fun r β x0 x1 => ce_f0 (h0 r (α ∘ β) x0 x1) r side_0) ≡ α ⋅ f0).
-  (* looks like it wont work tbh *)
+  refine (@itype_out r (yft0 (B0 r (α ∘ squish ∘ β)) r !)
+    (f0 r (α ∘ squish ∘ β) x0 x1) (g0 r (α ∘ squish ∘ β) x0 x1)
+    _ (antisquish ∘ β)).
+  refine (J_seq _ _ (fun X _ => itype _ _ (X r !) _) _ _ ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_s))).
+  refine (J_seq _ _ (fun X _ => itype _ _ _ (X r !)) _ _ ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_t))).
+  refine (@itype_in r (yft0 (B0 r (α ∘ squish ∘ β)) r !) (fun αi => (h0 r (α ∘ squish ∘ β) x0 x1).(ce_f0) r (merge ! αi))).
+- refine (fun r β x0 x1 => _). admit.
+- simpl. (* use the cbv property for itype_out *) admit.
+- simpl. (* use the cbv property for itype_out *) admit.
 Abort.
- *)
+
+Definition path_transp0 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
+  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (x0 : El0 (app0 P0 a0 a1))
+  (x1 : El1 _ (app1 P1 a0 a1) x0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
+  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0) :
+  El0 (app0 P0 b0 b1).
+Proof.
+refine (fun q α => _).
+(* this is the family above the path *)
+unshelve refine (let Q0 : @El0 (S q) Type0 := _ in _).
+{ exact (@app0 (S q) _ _ Type0 Type1 (α ∘ squish ⋅ P0) (ce_f0 (e0 q α)) (ce_f1 (e0 q α))). }
+unshelve refine (let Q1 : El1 Type0 Type1 Q0 := _ in _).
+{ exact (@app1 (S q) _ _ Type0 Type1 (α ∘ squish ⋅ P0) (α ∘ squish ⋅ P1) (ce_f0 (e0 q α)) (ce_f1 (e0 q α))). }
+(* now we inhabit it on side_0 *)
+unshelve refine (let s0 : El0 (side_0 ⋅ Q0) := _ in _).
+{ refine (fun r β => _). unfold Q0 ; unfold app0 ; simpl.
+  refine (J_seq _ _
+    (fun X E => yft0 (P0 r (α ∘ β) (β ⋅ X)
+      (J_seqs _ _ (fun Y _ => El1 (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (β ⋅ Y)) (α ∘ β ⋅ a1) X E))
+      r !)
+    _ _ (ssym (ce_s (e0 q α)))). simpl.
+  refine (x0 r (α ∘ β)). }
+unshelve refine (let s1 : El1 (side_0 ⋅ Q0) (side_0 ⋅ Q1) s0 := _ in _).
+{ refine (fun r β => _).
+  unfold Q0 ; unfold Q1 ; unfold app0 ; unfold app1 ; unfold s0 ; simpl.
+  refine (J_seq _ _ (fun X' E' => (fun (Y' : El1 (α ⋅ A0) (α ⋅ A1) X') =>
+    yft1 (P0 r (α ∘ β) (β ⋅ X') (β ⋅ Y')) r !
+    (fun (r0 : nat) (β0 : r0 ≤ r) =>
+     cast0
+       (fun (r1 : nat) (β1 : r1 ≤ q) => P0 r1 (α ∘ β1) (β1 ⋅ X') (β1 ⋅ Y'))
+       (fun (r1 : nat) (β1 : r1 ≤ q) => P1 r1 (α ∘ β1) (β1 ⋅ X') (β1 ⋅ Y')) β β0
+       (J_seq _ _
+          (fun X (E : α ⋅ a0 ≡ X) =>
+           yft0
+             (P0 r0 (α ∘ (β ∘ β0)) (β ∘ β0 ⋅ X)
+                (J_seqs _ _
+                   (fun Y (_ : α ∘ ! ⋅ a0 ≡ Y) => El1 (α ∘ (β ∘ β0) ⋅ A0) (α ∘ (β ∘ β0) ⋅ A1) (β ∘ β0 ⋅ Y))
+                   (α ∘ (β ∘ β0) ⋅ a1) X E)) r0 !) (x0 r0 (α ∘ (β ∘ β0))) X' E'))) (J_seqs _ _ (fun Z _ => El1 (α ⋅ A0) (α ⋅ A1) Z) (α ⋅ a1) X' E'))
+   _ _ (ssym (ce_s (e0 q α)))). simpl.
+  refine (x1 r (α ∘ β)). }
+(* now we use fibrancy of Q to inhabit it on side_1 *)
+unshelve refine (let t0 : El0 (side_1 ⋅ Q0) := _ in _).
+{ admit. }
+unshelve refine (let t1 : El1 (side_1 ⋅ Q0) (side_1 ⋅ Q1) t0 := _ in _).
+{ admit. }
+(* and use t to conclude *)
+unfold app0 ; simpl.
+pose proof (ce_t (e0 q α)).
+refine (J_seq _ _
+  (fun X E => yft0 (P0 q α X
+    (J_seqs _ _ (fun Y _ => El1 (α ⋅ A0) (α ⋅ A1) Y) (side_1 ⋅ ce_f1 (e0 q α)) X E))
+      q !)
+    _ _ (ce_t (e0 q α))). simpl.
+refine (t0 q !).
+Admitted.
+
+Definition path_transp1 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
+  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (x0 : El0 (app0 P0 a0 a1))
+  (x1 : El1 _ (app1 P1 a0 a1) x0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
+  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0) :
+  El1 (app0 P0 b0 b1) (app1 P1 b0 b1) (path_transp0 A0 A1 P0 P1 a0 a1 x0 x1 b0 b1 e0 e1).
+Proof.
+refine (fun q α => _).
+Admitted.
+
+Definition weakunivalence0 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (B0 : @El0 p Type0)
+  (B1 : @El1 p Type0 Type1 B0)
+  : El0 (eq0 Type0 Type1 A0 A1 B0 B1).
+Admitted.
