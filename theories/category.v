@@ -383,39 +383,3 @@ Definition itype_out1 :
   (fun p (X : Type) (y z : X) (x : itype p X y z) => itype_out x i1) ≡ (fun p X y z x => z).
 Admitted.
 
-(* Definition itype_out0 {p} {A : Type}
-  {X : A -> Type} {y z : forall a : A, X a}
-  {x : forall a : A, itype p (X a) (y a) (z a)} :
-  (fun a => itype_out (x a) i0) ≡ y.
-Admitted.
-
-Definition itype_out0_2 {p} {A : Type} {B : A -> SProp}
-  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
-  {x : forall (a : A) (b : B a), itype p (X a b) (y a b) (z a b)} :
-  (fun a b => itype_out (x a b) i0) ≡ y.
-Proof.
-refine (J_seqs _ _ (fun T _ => (fun a b => T p (X a b) (y a b) (z a b) (x a b)) ≡ y) (srefl _) _ (ssym itype_out00)).
-Admitted.
-
-Definition itype_out0_3 {A : Type} {B : A -> Type}
-  {p : forall (a : A) (b : B a), nat}
-  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
-  {x : forall (a : A) (b : B a), itype (p a b) (X a b) (y a b) (z a b)} :
-  (fun a b => itype_out (x a b) side0) ≡ y.
-Proof.
-Admitted.
-
-Definition itype_out1_2 {p} {A : Type} {B : A -> SProp}
-  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
-  {x : forall (a : A) (b : B a), itype p (X a b) (y a b) (z a b)} :
-  (fun a b => itype_out (x a b) side1) ≡ z.
-Proof.
-Admitted.
-
-Definition itype_out1_3 {A : Type} {B : A -> Type}
-  {p : forall (a : A) (b : B a), nat}
-  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
-  {x : forall (a : A) (b : B a), itype (p a b) (X a b) (y a b) (z a b)} :
-  (fun a b => itype_out (x a b) side1) ≡ z.
-Proof.
-Admitted. *)
