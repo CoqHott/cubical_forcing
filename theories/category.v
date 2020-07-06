@@ -335,3 +335,87 @@ refine (fun c n => _). revert n.
 refine (sfinmatch _ _ _) ; reflexivity.
 Defined.
 
+(* Axioms for interval-types, à la CubicalTT *)
+
+Definition i0 {p} : p ≤ 1.
+Proof.
+unshelve econstructor.
+- refine (fun c n => false).
+- refine (fun c d Hcd n => _). easy.
+Defined.
+
+Definition i1 {p} : p ≤ 1.
+Proof.
+unshelve econstructor.
+- refine (fun c n => true).
+- refine (fun c d Hcd n => _). easy.
+Defined.
+
+Definition is_i0 {p} : p ≤ 1 -> bool.
+Admitted.
+
+Definition is_i0_i0 {p} : is_i0 (@i0 p) ≡ true.
+Admitted.
+
+Definition is_i0_i1 {p} : is_i0 (@i1 p) ≡ false.
+Admitted.
+
+Definition itype (p : ℙ) (A : Type) (x y : A) : Type.
+Admitted.
+
+Definition itype_in {p} {A : Type} (z : p ≤ 1 -> A) :
+  itype p A (z i0) (z i1).
+Admitted.
+
+Definition itype_out {p} {A : Type} {x y : A} :
+  itype p A x y -> p ≤ 1 -> A.
+Admitted.
+
+Definition itype_inout :
+  (fun p A (x : p ≤ 1 -> A) y => itype_out (itype_in x) y) ≡ fun p A x y => x y.
+Admitted.
+
+Definition itype_out0 :
+  (fun p (X : Type) (y z : X) (x : itype p X y z) => itype_out x i0) ≡ (fun p X y z x => y).
+Admitted.
+
+Definition itype_out1 :
+  (fun p (X : Type) (y z : X) (x : itype p X y z) => itype_out x i1) ≡ (fun p X y z x => z).
+Admitted.
+
+(* Definition itype_out0 {p} {A : Type}
+  {X : A -> Type} {y z : forall a : A, X a}
+  {x : forall a : A, itype p (X a) (y a) (z a)} :
+  (fun a => itype_out (x a) i0) ≡ y.
+Admitted.
+
+Definition itype_out0_2 {p} {A : Type} {B : A -> SProp}
+  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
+  {x : forall (a : A) (b : B a), itype p (X a b) (y a b) (z a b)} :
+  (fun a b => itype_out (x a b) i0) ≡ y.
+Proof.
+refine (J_seqs _ _ (fun T _ => (fun a b => T p (X a b) (y a b) (z a b) (x a b)) ≡ y) (srefl _) _ (ssym itype_out00)).
+Admitted.
+
+Definition itype_out0_3 {A : Type} {B : A -> Type}
+  {p : forall (a : A) (b : B a), nat}
+  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
+  {x : forall (a : A) (b : B a), itype (p a b) (X a b) (y a b) (z a b)} :
+  (fun a b => itype_out (x a b) side0) ≡ y.
+Proof.
+Admitted.
+
+Definition itype_out1_2 {p} {A : Type} {B : A -> SProp}
+  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
+  {x : forall (a : A) (b : B a), itype p (X a b) (y a b) (z a b)} :
+  (fun a b => itype_out (x a b) side1) ≡ z.
+Proof.
+Admitted.
+
+Definition itype_out1_3 {A : Type} {B : A -> Type}
+  {p : forall (a : A) (b : B a), nat}
+  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
+  {x : forall (a : A) (b : B a), itype (p a b) (X a b) (y a b) (z a b)} :
+  (fun a b => itype_out (x a b) side1) ≡ z.
+Proof.
+Admitted. *)

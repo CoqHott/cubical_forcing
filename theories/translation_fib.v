@@ -813,7 +813,7 @@ Proof.
 Defined.
 
 
-(* first version of equality *)
+(* cubical equality *)
 
 Record cube_eq {p} (A0 : @El0 p Type0) (A1 : @El1 p Type0 Type1 A0)
   (x0 : El0 A0) (y0 : El0 A0) : Type :=
@@ -902,120 +902,7 @@ unshelve refine (fun q α => _).
 reflexivity.
 Defined.
 
-
-(* Axioms for interval-types, à la CubicalTT *)
-
-Definition side0 {p} : p ≤ 1.
-Proof.
-unshelve econstructor.
-- refine (fun c n => false).
-- refine (fun c d Hcd n => _). easy.
-Defined.
-
-Definition side1 {p} : p ≤ 1.
-Proof.
-unshelve econstructor.
-- refine (fun c n => true).
-- refine (fun c d Hcd n => _). easy.
-Defined.
-
-Definition itype (p : ℙ) (A : Type) (x y : A) : Type.
-Admitted.
-
-Definition itype_in {p} {A : Type} (z : p ≤ 1 -> A) :
-  itype p A (z side0) (z side1).
-Admitted.
-
-Definition itype_out {p} {A : Type} {x y : A} :
-  itype p A x y -> p ≤ 1 -> A.
-Admitted.
-
-Definition itype_inout :
-  (fun p A (x : p ≤ 1 -> A) y => itype_out (itype_in x) y) ≡ fun p A x y => x y.
-Admitted.
-
-Definition itype_out0 {p} {A : Type}
-  {X : A -> Type} {y z : forall a : A, X a}
-  {x : forall a : A, itype p (X a) (y a) (z a)} :
-  (fun a => itype_out (x a) side0) ≡ y.
-Admitted.
-
-Definition itype_out0_2 {p} {A : Type} {B : A -> SProp}
-  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
-  {x : forall (a : A) (b : B a), itype p (X a b) (y a b) (z a b)} :
-  (fun a b => itype_out (x a b) side0) ≡ y.
-Proof.
-Admitted.
-
-Definition itype_out0_3 {A : Type} {B : A -> Type}
-  {p : forall (a : A) (b : B a), nat}
-  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
-  {x : forall (a : A) (b : B a), itype (p a b) (X a b) (y a b) (z a b)} :
-  (fun a b => itype_out (x a b) side0) ≡ y.
-Proof.
-Admitted.
-
-Definition itype_out1_2 {p} {A : Type} {B : A -> SProp}
-  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
-  {x : forall (a : A) (b : B a), itype p (X a b) (y a b) (z a b)} :
-  (fun a b => itype_out (x a b) side1) ≡ z.
-Proof.
-Admitted.
-
-Definition itype_out1_3 {A : Type} {B : A -> Type}
-  {p : forall (a : A) (b : B a), nat}
-  {X : forall (a : A) (b : B a), Type} {y z : forall (a : A) (b : B a), X a b}
-  {x : forall (a : A) (b : B a), itype (p a b) (X a b) (y a b) (z a b)} :
-  (fun a b => itype_out (x a b) side1) ≡ z.
-Proof.
-Admitted.
-
-
-(* With itypes, a direct proof of funext should be possible.
-   It is also possible to define it through another equivalent path type
-   see translation_fib_path.v for a working version
- *)
-
-Definition eq_funext {p}
-(A0 : @El0 p Type0)
-(A1 : @El1 p Type0 Type1 A0)
-(B0 : @El0 p Type0)
-(B1 : @El1 p Type0 Type1 B0)
-(f0 : El0 (Arr0 A0 A1 B0 B1))
-(f1 : El1 _ (Arr1 A0 A1 B0 B1) f0)
-(g0 : El0 (Arr0 A0 A1 B0 B1))
-(g1 : El1 _ (Arr1 A0 A1 B0 B1) g0)
-(h0 : El0 (Prod0 A0 A1
-  (fun q α x0 x1 => eq0 (α ⋅ B0) (α ⋅ B1)
-    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
-    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
-  (fun q α x0 x1 => eq1 (α ⋅ B0) (α ⋅ B1)
-    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
-    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
-  ))
-(h1 : El1 _ (Prod1 A0 A1
-  (fun q α x0 x1 => eq0 (α ⋅ B0) (α ⋅ B1)
-    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
-    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
-  (fun q α x0 x1 => eq1 (α ⋅ B0) (α ⋅ B1)
-    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
-    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
-  ) h0)
-: El0 (eq0 (Arr0 A0 A1 B0 B1) (Arr1 A0 A1 B0 B1) f0 f1 g0 g1).
-Proof.
-refine (fun q α => _).
-unshelve econstructor.
-- refine (fun r β x0 x1 => _).
-  refine (@itype_out r (yft0 (B0 r (α ∘ squish ∘ β)) r !)
-    (f0 r (α ∘ squish ∘ β) x0 x1) (g0 r (α ∘ squish ∘ β) x0 x1)
-    _ (antisquish ∘ β)).
-  refine (J_seq _ _ (fun X _ => itype _ _ (X r !) _) _ _ ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_s))).
-  refine (J_seq _ _ (fun X _ => itype _ _ _ (X r !)) _ _ ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_t))).
-  refine (@itype_in r (yft0 (B0 r (α ∘ squish ∘ β)) r !) (fun αi => (h0 r (α ∘ squish ∘ β) x0 x1).(ce_f0) r (merge ! αi))).
-- refine (fun r β x0 x1 => _). admit.
-- simpl. (* use the cbv property for itype_out *) admit.
-- simpl. (* use the cbv property for itype_out *) admit.
-Abort.
+(* transport *)
 
 Definition path_transp0 {p}
   (A0 : @El0 p Type0)
@@ -1099,10 +986,125 @@ Proof.
 refine (fun q α => _).
 Admitted.
 
+(* contractibility of singletons *)
+
+Definition singl_contr0 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
+  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0)
+  : El0 (eq0
+    (Sigma0 A0 A1 (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !) (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !))
+    (Sigma1 A0 A1 (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !) (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !))
+    (dpair0 a0 a1 (eq_refl0 A0 A1 a0 a1) (eq_refl1 A0 A1 a0 a1))
+    (dpair1 a0 a1 (eq_refl0 A0 A1 a0 a1) (eq_refl1 A0 A1 a0 a1))
+    (dpair0 b0 b1 e0 e1)
+    (dpair1 b0 b1 e0 e1)).
+Proof.
+Admitted.
+
+Definition singl_contr1 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (a0 : El0 A0)
+  (a1 : El1 A0 A1 a0)
+  (b0 : El0 A0)
+  (b1 : El1 A0 A1 b0)
+  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
+  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0)
+  : El1 _ (eq1
+    (Sigma0 A0 A1 (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !) (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !))
+    (Sigma1 A0 A1 (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !) (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !))
+    (dpair0 a0 a1 (eq_refl0 A0 A1 a0 a1) (eq_refl1 A0 A1 a0 a1))
+    (dpair1 a0 a1 (eq_refl0 A0 A1 a0 a1) (eq_refl1 A0 A1 a0 a1))
+    (dpair0 b0 b1 e0 e1)
+    (dpair1 b0 b1 e0 e1))
+    (singl_contr0 A0 A1 a0 a1 b0 b1 e0 e1).
+Proof.
+Admitted.
+
+(* weak univalence *)
+
+Definition glueTypeAux (p : ℙ) (A B : Type) : (p ≤ 1) -> Type :=
+fun αi => if (is_i0 αi) then A else B.
+
+Definition glueTypeAux_i0 {p : ℙ} {A B : Type} : glueTypeAux p A B i0 ≡ A :=
+J_seqs bool true (fun X _ => (if X then A else B) ≡ A) (srefl _) (is_i0 i0) (ssym is_i0_i0).
+
+Definition glueTypeAux_i1 {p : ℙ} {A B : Type} : glueTypeAux p A B i1 ≡ B :=
+J_seqs bool false (fun X _ => (if X then A else B) ≡ B) (srefl _) (is_i0 i1) (ssym is_i0_i1).
+
+Definition glueType (p : ℙ) (A B : Type) : itype p Type A B.
+Proof.
+refine (J_seq _ (glueTypeAux p A B i0) (fun X _ => itype p Type X B) _ _ (glueTypeAux_i0)).
+refine (J_seq _ (glueTypeAux p A B i1) (fun X _ => itype p Type (glueTypeAux p A B i0) X) _ _ (glueTypeAux_i1)).
+refine (itype_in (glueTypeAux p A B)).
+Defined.
+
 Definition weakunivalence0 {p}
   (A0 : @El0 p Type0)
   (A1 : @El1 p Type0 Type1 A0)
   (B0 : @El0 p Type0)
   (B1 : @El1 p Type0 Type1 B0)
   : El0 (eq0 Type0 Type1 A0 A1 B0 B1).
+Proof.
+refine (fun q α => _).
+unshelve econstructor.
+- refine (fun r β => _).
+  unshelve econstructor.
+  + refine (fun r0 β0 => _).
+    refine (itype_out (glueType r0 (yft0 (A0 r0 (α ∘ squish ∘ β ∘ β0)) r0 !) (yft0 (B0 r0 (α ∘ squish ∘ β ∘ β0)) r0 !)) (antisquish ∘ β ∘ β0)).
+  + refine (fun r0 β0 s => _) ; simpl in s.
+    admit.
+  + refine (fun r0 β0 a b c d e => _).
+    admit.
+- refine (fun r β r0 β0 => _). unfold cast0 ; simpl. reflexivity.
+- simpl.
 Admitted.
+
+(* incomplete funext proof. for complete proof, see translation_fib_path.v *)
+
+Definition eq_funext {p}
+(A0 : @El0 p Type0)
+(A1 : @El1 p Type0 Type1 A0)
+(B0 : @El0 p Type0)
+(B1 : @El1 p Type0 Type1 B0)
+(f0 : El0 (Arr0 A0 A1 B0 B1))
+(f1 : El1 _ (Arr1 A0 A1 B0 B1) f0)
+(g0 : El0 (Arr0 A0 A1 B0 B1))
+(g1 : El1 _ (Arr1 A0 A1 B0 B1) g0)
+(h0 : El0 (Prod0 A0 A1
+  (fun q α x0 x1 => eq0 (α ⋅ B0) (α ⋅ B1)
+    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
+    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
+  (fun q α x0 x1 => eq1 (α ⋅ B0) (α ⋅ B1)
+    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
+    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
+  ))
+(h1 : El1 _ (Prod1 A0 A1
+  (fun q α x0 x1 => eq0 (α ⋅ B0) (α ⋅ B1)
+    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
+    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
+  (fun q α x0 x1 => eq1 (α ⋅ B0) (α ⋅ B1)
+    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
+    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
+  ) h0)
+: El0 (eq0 (Arr0 A0 A1 B0 B1) (Arr1 A0 A1 B0 B1) f0 f1 g0 g1).
+Proof.
+refine (fun q α => _).
+unshelve econstructor.
+- refine (fun r β x0 x1 => _).
+  refine (@itype_out r (yft0 (B0 r (α ∘ squish ∘ β)) r !)
+    (f0 r (α ∘ squish ∘ β) x0 x1) (g0 r (α ∘ squish ∘ β) x0 x1)
+    _ (antisquish ∘ β)).
+  refine (J_seq _ _ (fun X _ => itype _ _ (X r !) _) _ _ ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_s))).
+  refine (J_seq _ _ (fun X _ => itype _ _ _ (X r !)) _ _ ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_t))).
+  refine (@itype_in r (yft0 (B0 r (α ∘ squish ∘ β)) r !) (fun αi => (h0 r (α ∘ squish ∘ β) x0 x1).(ce_f0) r (merge ! αi))).
+- refine (fun r β x0 x1 => _). admit.
+- simpl. (* use the cbv property for itype_out *) admit.
+- simpl. (* use the cbv property for itype_out *) admit.
+Abort.
