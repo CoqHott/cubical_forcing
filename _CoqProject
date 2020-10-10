@@ -2,4 +2,7 @@
 
 theories/category.v
 theories/translation_fib.v
-theories/translation_fib_path.v
+theories/transport.v
+theories/singletons.v
+theories/univalence.v
+theories/funext.v

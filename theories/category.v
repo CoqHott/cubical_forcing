@@ -213,28 +213,28 @@ Notation "α · x" := (fun r β => x r (α ∘ β)) (at level 40).
 
 Definition side_0 {p : ℙ} : p ≤ S p.
 Proof.
-unshelve refine (mkCubeArr _ _ _ _).
-- unshelve refine (fun c n => _).
-  destruct n as [n nε]. destruct n as [|n'].
+unshelve econstructor.
+- unshelve refine (fun c => _).
+  refine (finmatch (fun _ => bool) _ _).
   + exact false.
-  + apply c. unshelve refine (mkFinset p n' _).
-    apply le_to_sle. apply le_S_n. apply sle_to_le. exact nε.
-- intros c d Hcd n. destruct n as [n nε]. destruct n.
+  + refine (fun n => c n).
+- intros c d Hcd.
+  refine (sfinmatch _ _ _) ; simpl.
   + exact sI.
-  + refine (Hcd _).
+  + refine (fun n => _). refine (Hcd _).
 Defined.
 
 Definition side_1 {p : ℙ} : p ≤ S p.
 Proof.
-unshelve refine (mkCubeArr _ _ _ _).
-- unshelve refine (fun c n => _).
-  destruct n as [n nε]. destruct n as [|n'].
+unshelve econstructor.
+- unshelve refine (fun c => _).
+  refine (finmatch (fun _ => bool) _ _).
   + exact true.
-  + apply c. unshelve refine (mkFinset p n' _).
-    apply le_to_sle. apply le_S_n. apply sle_to_le. exact nε.
-- intros c d Hcd n. destruct n as [n nε]. destruct n.
+  + refine (fun n => c n).
+- intros c d Hcd.
+  refine (sfinmatch _ _ _) ; simpl.
   + exact sI.
-  + refine (Hcd _).
+  + refine (fun n => _). refine (Hcd _).
 Defined.
 
 Definition squish {p : ℙ} : S p ≤ p.
@@ -256,18 +256,16 @@ Defined.
 Definition promote {p q : ℙ} (α : q ≤ p) : S q ≤ S p.
 Proof.
 unshelve refine (mkCubeArr _ _ _ _).
-- unshelve refine (fun c n => _).
-  destruct n as [n nε]. destruct n as [| n'].
-  + apply c. exact finzero.
-  + destruct α as [α αε]. apply α.
-    * refine (fun n => _). apply c. apply finsucc. exact n.
-    * unshelve refine (mkFinset p n' _).
-      apply le_to_sle. apply le_S_n. apply sle_to_le. exact nε.
-- intros c d Hcd n.
-  destruct n as [n nε]. destruct n as [| n'].
+- unshelve refine (fun c => _).
+  refine (finmatch (fun _ => bool) _ _).
+  + exact (c finzero).
+  + apply (arr α).
+    refine (fun n => c (finsucc n)).
+- intros c d Hcd.
+  refine (sfinmatch _ _ _) ; simpl.
   + eapply Hcd.
-  + destruct α as [α αε]. eapply αε.
-    unfold le_cube. intro m. eapply Hcd.
+  + eapply (eps_arr α). 
+    refine (fun m => _). eapply Hcd.
 Defined.
 
 Definition merge {p q : ℙ} (α : q ≤ p) (β : q ≤ 1) : q ≤ S p.
@@ -281,6 +279,36 @@ unshelve econstructor.
   refine (sfinmatch _ _ _) ; simpl.
   + exact (β.(eps_arr) c d Hcd finzero).
   + refine (fun n => α.(eps_arr) c d Hcd n).
+Defined.
+
+Definition vee {p : ℙ} : S (S p) ≤ S p.
+Proof.
+unshelve econstructor.
+- refine (fun c => _).
+  refine (finmatch (fun _ => bool) _ _).
+  + exact (orb (c finzero) (c (finsucc finzero))).
+  + refine (fun n' => _).
+    exact (c (finsucc (finsucc n'))).
+- intros c d Hcd.
+  refine (sfinmatch _ _ _) ; simpl.
+  + pose proof (Hcd finzero) as H0. pose proof (Hcd (finsucc finzero)) as H1.
+    revert H0 H1. destruct (c finzero) ; destruct (c (finsucc finzero)) ; destruct (d finzero) ; destruct (d (finsucc finzero)) ; simpl ; easy.
+  + refine (fun n => _). eapply Hcd.
+Defined.
+
+Definition wedge {p : ℙ} : S (S p) ≤ S p.
+Proof.
+unshelve econstructor.
+- refine (fun c => _).
+  refine (finmatch (fun _ => bool) _ _).
+  + exact (andb (c finzero) (c (finsucc finzero))).
+  + refine (fun n' => _).
+    exact (c (finsucc (finsucc n'))).
+- intros c d Hcd.
+  refine (sfinmatch _ _ _) ; simpl.
+  + pose proof (Hcd finzero) as H0. pose proof (Hcd (finsucc finzero)) as H1.
+    revert H0 H1. destruct (c finzero) ; destruct (c (finsucc finzero)) ; destruct (d finzero) ; destruct (d (finsucc finzero)) ; simpl ; easy.
+  + refine (fun n => _). eapply Hcd.
 Defined.
 
 (* All of the following hold definitionally *)
@@ -325,14 +353,58 @@ Proof.
 reflexivity.
 Defined.
 
-(* this one, however, requires η for nat. 
+Lemma arrow_eq_7 {p : ℙ} : squish ∘ squish ≡ squish ∘ (@wedge p).
+Proof.
+reflexivity.
+Defined.
+
+Lemma arrow_eq_8 {p : ℙ} : squish ∘ squish ≡ squish ∘ (@vee p).
+Proof.
+reflexivity.
+Defined.
+
+(* these ones, however, requires η for nat. 
   without it, we can only get an extensional equality. tough luck *)
 
-Lemma arrow_eq_fail {p q : ℙ} (α : q ≤ S p) : 
+Lemma arrow_eq_fail1 {p q : ℙ} (α : q ≤ S p) : 
   forall c n, (merge (squish ∘ α) (antisquish ∘ α)).(arr) c n ≡ α.(arr) c n.
 Proof.
 refine (fun c n => _). revert n.
 refine (sfinmatch _ _ _) ; reflexivity.
+Defined.
+
+Lemma arrow_eq_fail2 {p : ℙ} : 
+  forall c n, (wedge ∘ (@side_1 (S p))).(arr) c n ≡ !.(arr) c n.
+Proof.
+refine (fun c n => _). revert n.
+refine (sfinmatch _ _ _) ; reflexivity.
+Defined.
+
+Lemma arrow_eq_fail3 {p : ℙ} : 
+  forall c n, (wedge ∘ (@side_0 (S p))).(arr) c n ≡ (side_0 ∘ squish).(arr) c n.
+Proof.
+refine (fun c n => _). revert n.
+refine (sfinmatch _ _ _) ; reflexivity.
+Defined.
+
+Lemma arrow_eq_fail4 {p : ℙ} : 
+  forall c n, (wedge ∘ (promote (@side_1 p))).(arr) c n ≡ !.(arr) c n.
+Proof.
+refine (fun c n => _). revert n.
+refine (sfinmatch _ _ _).
+- unfold vee ; unfold promote ; unfold side_1 ; simpl. 
+  destruct (c finzero) ; easy.
+- easy.
+Defined.
+
+Lemma arrow_eq_fail5 {p : ℙ} : 
+  forall c n, (wedge ∘ (promote (@side_0 p))).(arr) c n ≡ (side_0 ∘ squish).(arr) c n.
+Proof.
+refine (fun c n => _). revert n.
+refine (sfinmatch _ _ _).
+- unfold vee ; unfold promote ; unfold side_0 ; simpl. 
+  destruct (c finzero) ; easy.
+- easy.
 Defined.
 
 (* Axioms for interval-types, à la CubicalTT *)
@@ -350,15 +422,6 @@ unshelve econstructor.
 - refine (fun c n => true).
 - refine (fun c d Hcd n => _). easy.
 Defined.
-
-Definition is_i0 {p} : p ≤ 1 -> bool.
-Admitted.
-
-Definition is_i0_i0 {p} : is_i0 (@i0 p) ≡ true.
-Admitted.
-
-Definition is_i0_i1 {p} : is_i0 (@i1 p) ≡ false.
-Admitted.
 
 Definition itype (p : ℙ) (A : Type) (x y : A) : Type.
 Admitted.

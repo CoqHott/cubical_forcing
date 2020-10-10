@@ -569,6 +569,155 @@ intros [a0 a1 b0 b1].
 exact (Sigma_c _ _ _ _ (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1)).
 Defined.
 
+Definition SigmaR {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
+  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
+  : (forall q (α : q ≤ p), SigmaT (α ⋅ A0) (α ⋅ A1) (α ⋅ P0) (α ⋅ P1)) -> SProp :=
+fun s => s ≡ fun q α => SigmaT_funct α (s p !).
+
+Definition Sigma0 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
+  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0) :
+  @El0 p Type0.
+Proof.
+refine (fun q α => _).
+unshelve econstructor.
+- refine (fun r β => _).
+  exact (SigmaT (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ P0) (α ∘ β ⋅ P1)).
+- refine (fun r β => _).
+  exact (SigmaR (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ P0) (α ∘ β ⋅ P1)).
+- refine (fun r β b e l le l' => _).
+  apply falso.
+Defined.
+
+Definition Sigma1 {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
+  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0) :
+  @El1 p Type0 Type1 (Sigma0 A0 A1 P0 P1).
+Proof.
+refine (fun q α => _).
+reflexivity.
+Defined.
+
+Definition fst0 {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (x0 : El0 (Sigma0 A0 A1 P0 P1)) :
+  El0 A0.
+Proof.
+destruct (x0 p !) as [a0 a1 b0 b1].
+exact a0.
+Defined.
+
+Definition fst1 {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (x0 : El0 (Sigma0 A0 A1 P0 P1)) :
+  El1 A0 A1 (fst0 x0).
+Proof.
+unfold fst0.
+destruct (x0 p !) as [a0 a1 b0 b1].
+exact a1.
+Defined.
+
+Definition snd0 {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (x0 : El0 (Sigma0 A0 A1 P0 P1)) :
+  El0 (app0 P0 (fst0 x0) (fst1 x0)).
+Proof.
+unfold fst0. unfold fst1.
+destruct (x0 p !) as [a0 a1 b0 b1].
+exact b0.
+Defined.
+
+Definition snd1 {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (x0 : El0 (Sigma0 A0 A1 P0 P1)) :
+  El1 _ (app1 P1 (fst0 x0) (fst1 x0)) (snd0 x0).
+Proof.
+unfold fst0. unfold fst1. unfold snd0.
+destruct (x0 p !) as [a0 a1 b0 b1].
+exact b1.
+Defined.
+
+Definition seq_Sigma_transp {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  {a0 : El0 (Sigma0 A0 A1 P0 P1)}
+  {b0 : El0 (Sigma0 A0 A1 P0 P1)}
+  : fst0 a0 ≡ fst0 b0 ->
+    El0 (app0 P0 (fst0 a0) (fst1 a0)) ->
+    El0 (app0 P0 (fst0 b0) (fst1 b0)).
+Proof.
+refine (fun H x => _).
+refine (J_seq _ (fst0 a0)
+  (fun x e => El0 (app0 P0 x
+    (J_seqs _ (fst0 a0) (fun y _ => El1 A0 A1 y) (fst1 a0) x e)))
+  x (fst0 b0) H).
+Defined.
+
+Definition seq_Sigma {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  (a0 : El0 (Sigma0 A0 A1 P0 P1))
+  (a1 : El1 _ (Sigma1 A0 A1 P0 P1) a0)
+  (b0 : El0 (Sigma0 A0 A1 P0 P1))
+  (b1 : El1 _ (Sigma1 A0 A1 P0 P1) b0)
+  : forall (e0 : fst0 a0 ≡ fst0 b0)
+    (e1 : seq_Sigma_transp e0 (snd0 a0) ≡ snd0 b0),
+    a0 ≡ b0.
+Proof.
+refine (fun H0 H1 => _).
+refine (J_seqs _ _ (fun x _ => x ≡ b0) _ a0 (ssym (a1 p !))).
+unfold cast0 ; simpl.
+assert (a0 p ! ≡ b0 p !).
+admit.
+refine (J_seqs _ _ (fun x _ => (fun q α => SigmaT_funct α x) ≡ b0) _ _ (ssym H)).
+exact (ssym (b1 p !)).
+Admitted.
+
+(* Inductive SigmaT {p}
+  (A0 : @El0 p Type0)
+  (A1 : @El1 p Type0 Type1 A0)
+  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
+  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0) :
+  Type :=
+| Sigma_c : forall (a0 : El0 A0) (a1 : El1 A0 A1 a0)
+  (b0 : El0 (app0 P0 a0 a1)) (b1 : El1 _ (app1 P1 a0 a1) b0),
+  SigmaT A0 A1 P0 P1.
+
+Definition SigmaT_funct {p}
+  {A0 : @El0 p Type0}
+  {A1 : @El1 p Type0 Type1 A0}
+  {P0 : El0 (Arr0 A0 A1 Type0 Type1)}
+  {P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0}
+  {q} (α : q ≤ p) :
+  SigmaT A0 A1 P0 P1 -> SigmaT (α ⋅ A0) (α ⋅ A1) (α ⋅ P0) (α ⋅ P1).
+Proof.
+intros [a0 a1 b0 b1].
+exact (Sigma_c _ _ _ _ (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1)).
+Defined.
+
 Definition fst0_SigmaT {p}
   {A0 : @El0 p Type0}
   {A1 : @El1 p Type0 Type1 A0}
@@ -683,7 +832,7 @@ Definition Sigma1 {p}
 Proof.
 refine (fun q α => _).
 reflexivity.
-Defined.
+Defined. *)
 
 Definition dpair0 {p}
   {A0 : @El0 p Type0}
@@ -901,424 +1050,3 @@ unshelve refine (fun q α => _).
 reflexivity.
 Defined.
 
-(* shifted types *)
-
-Record shifted_ty {p} : Type :=
-mkST {
-  st_t0 : @El0 (S p) (squish ⋅ Type0) ;
-  st_t1 : @El1 (S p) (squish ⋅ Type0) (squish ⋅ Type1) st_t0 ;
-}.
-
-Definition st_funct {p} {q} (α : q ≤ p) :
-  @shifted_ty p -> @shifted_ty q.
-Proof.
-unshelve refine (fun x => _).
-unshelve econstructor.
-- exact (promote α ⋅ x.(st_t0)).
-- exact (promote α ⋅ x.(st_t1)).
-Defined.
-
-Definition shifted_tyR {p} :
- (forall q (α : q ≤ p), @shifted_ty q) -> SProp :=
-fun s => s ≡ fun q α => st_funct α (s p !).
-
-Definition shiftedType0 {p}
-  : @El0 p Type0.
-Proof.
-unshelve refine (fun q α => mkYFT _ _ _ _).
-- unshelve refine (fun r β => _).
-  exact (@shifted_ty r).
-- unshelve refine (fun r β s => _). simpl in s.
-  exact (shifted_tyR s).
-- unshelve refine (fun r β b e l le l' => _).
-  apply falso. (** TODO **)
-Defined.
-
-Definition shiftedType1 {p}
-  : @El1 p Type0 Type1 shiftedType0.
-Proof.
-refine (fun q α => _). reflexivity.
-Defined.
-
-Definition shiftedTypeStart0 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0) :
-  @El0 p Type0.
-Proof.
-refine (fun q α => _).
-refine ((side_0 ⋅ st_t0 (A0 q α)) q !). 
-Defined.
-
-Definition shiftedTypeStart1 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0) :
-  @El1 p Type0 Type1 (shiftedTypeStart0 A0 A1).
-Proof.
-refine (fun q α => _). 
-refine (J_seqs _ _ (fun X _ => yftR (fun r β => st_t0 (X r β) r side_0 )) _ (α ⋅ A0) (ssym (A1 q α))).
-refine ((side_0 ⋅ st_t1 (A0 q α)) q !).
-Defined.
-
-Definition shiftedTypeEnd0 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0) :
-  @El0 p Type0.
-Proof.
-refine (fun q α => _).
-refine ((side_1 ⋅ st_t0 (A0 q α)) q !). 
-Defined.
-
-Definition shiftedTypeEnd1 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0) :
-  @El1 p Type0 Type1 (shiftedTypeEnd0 A0 A1).
-Proof.
-refine (fun q α => _). 
-refine (J_seqs _ _ (fun X _ => yftR (fun r β => st_t0 (X r β) r side_1)) _ (α ⋅ A0) (ssym (A1 q α))).
-refine ((side_1 ⋅ st_t1 (A0 q α)) q !).
-Defined.
-
-(* a predicate over an equality is a shifted type *)
-
-Definition eqToShiftedType0 {p}
-  (A0 : @El0 p Type0)
-  (A1 : @El1 p Type0 Type1 A0)
-  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
-  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
-  (a0 : El0 A0)
-  (a1 : El1 A0 A1 a0)
-  (b0 : El0 A0)
-  (b1 : El1 A0 A1 b0)
-  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
-  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0) :
-  @El0 p shiftedType0.
-Proof.
-refine (fun q α => _).
-unshelve econstructor.
-- refine (fun r β => P0 r (α ∘ squish ∘ β) (β ⋅ (ce_f0 (e0 q α))) (β ⋅ ce_f1 (e0 q α))).
-- refine (@app1 (S q) _ _ Type0 Type1 (α ∘ squish ⋅ P0) (α ∘ squish ⋅ P1) (ce_f0 (e0 q α)) (ce_f1 (e0 q α))).
-Defined.
-
-Definition eqToShiftedType1 {p}
-  (A0 : @El0 p Type0)
-  (A1 : @El1 p Type0 Type1 A0)
-  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
-  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
-  (a0 : El0 A0)
-  (a1 : El1 A0 A1 a0)
-  (b0 : El0 A0)
-  (b1 : El1 A0 A1 b0)
-  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
-  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0) :
-  @El1 p shiftedType0 shiftedType1 (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1).
-Proof.
-refine (fun q α => _).
-unfold cast0 ; simpl. unfold shifted_tyR ; simpl.
-change (eqToShiftedType0 (α ⋅ A0) (α ⋅ A1) (α ⋅ P0) (α ⋅ P1) (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1) (α ⋅ e0) (α ⋅ e1) ≡ (fun r β => st_funct β (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1 q α))).
-pose proof (e1 q α) as He. unfold cast0 in He ; simpl in He.
-unfold cube_eqR in He.
-refine (J_seqs _ _ 
-  (fun X e => eqToShiftedType0 _ _ _ _ _ _ _ _ X 
-    (J_seqs _ _ (fun Y _ => El1 _ (eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1)) Y) 
-      (J_seqs _ (α ⋅ e0) (fun Z _ => El1 _ (eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) (α ⋅ b0) (α ⋅ b1)) Z) (α ⋅ e1) _ He) 
-      X e) 
-    ≡ _) 
-  _ (α ⋅ e0) (ssym He)).
-reflexivity.
-Defined.
-
-(* transport boils down to a statement about shifted types *)
-
-Definition transp0 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0)
-  (s0 : El0 (shiftedTypeStart0 A0 A1))
-  (s1 : El1 _ (shiftedTypeStart1 A0 A1) s0)
-  : El0 (shiftedTypeEnd0 A0 A1).
-Proof.
-refine (fun q α => _).
-unfold shiftedTypeEnd0 ; simpl.
-unfold El0 in s0 ; unfold shiftedTypeStart0 in s0 ; simpl in s0. 
-change (forall q α, yft0 (st_t0 (A0 q α) q side_0) q !) in s0.
-unfold El0 in A0 ; simpl in A0.
-
-refine (J_seq _ _ (fun X _ => yft0 (X q side_1) q !) _ _ (ssym (st_t1 (A0 q α) (S q) !))).
-change (yft0 (st_t0 (A0 q α) (S q) !) q side_1).
-
-unshelve refine (let s'0 : yft0 (st_t0 (A0 q α) (S q) !) q side_0 := _ in _).
-{ pose proof (st_t1 (A0 q α) (S q) !) as H. change (yftR (st_t0 (A0 q α))) in H. unfold yftR in H.
-  refine (J_seq _ _ (fun X _ => yft0 (X q side_0) q !) _ _ H).
-  refine (s0 q α). }
-
-Admitted.
-
-Definition transp1 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0)
-  (s0 : El0 (shiftedTypeStart0 A0 A1))
-  (s1 : El1 _ (shiftedTypeStart1 A0 A1) s0)
-  : El1 _ (shiftedTypeEnd1 A0 A1) (transp0 A0 A1 s0 s1).
-Proof.
-Admitted.
-
-Definition transport_aux1_0 {p}
-  (A0 : @El0 p Type0)
-  (A1 : @El1 p Type0 Type1 A0)
-  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
-  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
-  (a0 : El0 A0)
-  (a1 : El1 A0 A1 a0)
-  (x0 : El0 (app0 P0 a0 a1))
-  (x1 : El1 _ (app1 P1 a0 a1) x0)
-  (b0 : El0 A0)
-  (b1 : El1 A0 A1 b0)
-  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
-  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0) :
-  El0 (shiftedTypeStart0 (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1) (eqToShiftedType1 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1)).
-Proof.
-refine (fun q α => _).
-change (yft0 (P0 q α (side_0 ⋅ ce_f0 (e0 q α)) (side_0 ⋅ ce_f1 (e0 q α))) q !).
-refine (J_seq _ (α ⋅ a0) 
-  (fun X E => yft0 (P0 q α X 
-    (J_seqs _ _ (fun Y _ => El1 (α ⋅ A0) (α ⋅ A1) Y) (α ⋅ a1) X E)) 
-    q !)
-  _ _ (ssym (ce_s (e0 q α)))).
-refine (x0 q α).
-Defined.
-
-Definition transport_aux1_1 {p}
-  (A0 : @El0 p Type0)
-  (A1 : @El1 p Type0 Type1 A0)
-  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
-  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
-  (a0 : El0 A0)
-  (a1 : El1 A0 A1 a0)
-  (x0 : El0 (app0 P0 a0 a1))
-  (x1 : El1 _ (app1 P1 a0 a1) x0)
-  (b0 : El0 A0)
-  (b1 : El1 A0 A1 b0)
-  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
-  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0) :
-  El1 _ (shiftedTypeStart1 (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1) (eqToShiftedType1 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1)) (transport_aux1_0 A0 A1 P0 P1 a0 a1 x0 x1 b0 b1 e0 e1).
-Proof.
-refine (fun q α => _). 
-unfold transport_aux1_0 ; simpl.
-unfold shiftedTypeStart0 ; unfold eqToShiftedType0 at 1 2 ; simpl.
-(* unfolding shiftedTypeStart1 unleashes hell *)
-Admitted.
-
-Definition transport_aux2_0 {p}
-  (A0 : @El0 p Type0)
-  (A1 : @El1 p Type0 Type1 A0)
-  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
-  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
-  (a0 : El0 A0)
-  (a1 : El1 A0 A1 a0)
-  (b0 : El0 A0)
-  (b1 : El1 A0 A1 b0)
-  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
-  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0)
-  (x0 : El0 (shiftedTypeEnd0 (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1) (eqToShiftedType1 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1)))
-  (x1 : El1 _ (shiftedTypeEnd1 (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1) (eqToShiftedType1 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1)) x0) :
-  El0 (app0 P0 b0 b1).
-Proof.
-refine (fun q α => _).
-change (yft0 (P0 q α (α ⋅ b0) (α ⋅ b1)) q !).
-refine (J_seq _ _ 
-  (fun X E => yft0 (P0 q α X 
-    (J_seqs _ _ (fun Y _ => El1 (α ⋅ A0) (α ⋅ A1) Y) 
-      (J_seqs _ (α ⋅ b0) (fun Z _ => El1 (α ⋅ A0) (α ⋅ A1) Z) (α ⋅ b1) _ (ssym (ce_t (e0 q α)))) X E)) 
-    q !)
-  _ (α ⋅ b0) (ce_t (e0 q α))).
-change (yft0 (P0 q α (side_1 ⋅ ce_f0 (e0 q α)) (side_1 ⋅ ce_f1 (e0 q α))) q !).
-refine (x0 q α).
-Defined.
-
-Definition transport_aux2_1 {p}
-  (A0 : @El0 p Type0)
-  (A1 : @El1 p Type0 Type1 A0)
-  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
-  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
-  (a0 : El0 A0)
-  (a1 : El1 A0 A1 a0)
-  (b0 : El0 A0)
-  (b1 : El1 A0 A1 b0)
-  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
-  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0)
-  (x0 : El0 (shiftedTypeEnd0 (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1) (eqToShiftedType1 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1)))
-  (x1 : El1 _ (shiftedTypeEnd1 (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1) (eqToShiftedType1 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1)) x0) :
-  El1 (app0 P0 b0 b1) (app1 P1 b0 b1) (transport_aux2_0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1 x0 x1).
-Proof.
-Admitted.
-
-Definition transport0 {p}
-  (A0 : @El0 p Type0)
-  (A1 : @El1 p Type0 Type1 A0)
-  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
-  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
-  (a0 : El0 A0)
-  (a1 : El1 A0 A1 a0)
-  (x0 : El0 (app0 P0 a0 a1))
-  (x1 : El1 _ (app1 P1 a0 a1) x0)
-  (b0 : El0 A0)
-  (b1 : El1 A0 A1 b0)
-  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
-  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0) :
-  El0 (app0 P0 b0 b1).
-Proof.
-refine (transport_aux2_0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1 
-  (transp0 (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1) (eqToShiftedType1 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1)
-    (transport_aux1_0 A0 A1 P0 P1 a0 a1 x0 x1 b0 b1 e0 e1)
-    (transport_aux1_1 A0 A1 P0 P1 a0 a1 x0 x1 b0 b1 e0 e1))
-  (transp1 (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1) (eqToShiftedType1 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1)
-    (transport_aux1_0 A0 A1 P0 P1 a0 a1 x0 x1 b0 b1 e0 e1)
-    (transport_aux1_1 A0 A1 P0 P1 a0 a1 x0 x1 b0 b1 e0 e1))).
-Defined.
-
-Definition transport1 {p}
-  (A0 : @El0 p Type0)
-  (A1 : @El1 p Type0 Type1 A0)
-  (P0 : El0 (Arr0 A0 A1 Type0 Type1))
-  (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0)
-  (a0 : El0 A0)
-  (a1 : El1 A0 A1 a0)
-  (x0 : El0 (app0 P0 a0 a1))
-  (x1 : El1 _ (app1 P1 a0 a1) x0)
-  (b0 : El0 A0)
-  (b1 : El1 A0 A1 b0)
-  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
-  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0) :
-  El1 (app0 P0 b0 b1) (app1 P1 b0 b1) (transport0 A0 A1 P0 P1 a0 a1 x0 x1 b0 b1 e0 e1).
-Proof.
-refine (transport_aux2_1 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1 
-  (transp0 (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1) (eqToShiftedType1 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1)
-    (transport_aux1_0 A0 A1 P0 P1 a0 a1 x0 x1 b0 b1 e0 e1)
-    (transport_aux1_1 A0 A1 P0 P1 a0 a1 x0 x1 b0 b1 e0 e1))
-  (transp1 (eqToShiftedType0 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1) (eqToShiftedType1 A0 A1 P0 P1 a0 a1 b0 b1 e0 e1)
-    (transport_aux1_0 A0 A1 P0 P1 a0 a1 x0 x1 b0 b1 e0 e1)
-    (transport_aux1_1 A0 A1 P0 P1 a0 a1 x0 x1 b0 b1 e0 e1))).
-Defined.
-
-
-(* contractibility of singletons *)
-
-Definition singl_contr0 {p}
-  (A0 : @El0 p Type0)
-  (A1 : @El1 p Type0 Type1 A0)
-  (a0 : El0 A0)
-  (a1 : El1 A0 A1 a0)
-  (b0 : El0 A0)
-  (b1 : El1 A0 A1 b0)
-  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
-  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0)
-  : El0 (eq0
-    (Sigma0 A0 A1 (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !) (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !))
-    (Sigma1 A0 A1 (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !) (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !))
-    (dpair0 a0 a1 (eq_refl0 A0 A1 a0 a1) (eq_refl1 A0 A1 a0 a1))
-    (dpair1 a0 a1 (eq_refl0 A0 A1 a0 a1) (eq_refl1 A0 A1 a0 a1))
-    (dpair0 b0 b1 e0 e1)
-    (dpair1 b0 b1 e0 e1)).
-Proof.
-Admitted.
-
-Definition singl_contr1 {p}
-  (A0 : @El0 p Type0)
-  (A1 : @El1 p Type0 Type1 A0)
-  (a0 : El0 A0)
-  (a1 : El1 A0 A1 a0)
-  (b0 : El0 A0)
-  (b1 : El1 A0 A1 b0)
-  (e0 : El0 (eq0 A0 A1 a0 a1 b0 b1))
-  (e1 : El1 _ (eq1 A0 A1 a0 a1 b0 b1) e0)
-  : El1 _ (eq1
-    (Sigma0 A0 A1 (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !) (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !))
-    (Sigma1 A0 A1 (fun q α x0 x1 => eq0 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !) (fun q α x0 x1 => eq1 (α ⋅ A0) (α ⋅ A1) (α ⋅ a0) (α ⋅ a1) x0 x1 q !))
-    (dpair0 a0 a1 (eq_refl0 A0 A1 a0 a1) (eq_refl1 A0 A1 a0 a1))
-    (dpair1 a0 a1 (eq_refl0 A0 A1 a0 a1) (eq_refl1 A0 A1 a0 a1))
-    (dpair0 b0 b1 e0 e1)
-    (dpair1 b0 b1 e0 e1))
-    (singl_contr0 A0 A1 a0 a1 b0 b1 e0 e1).
-Proof.
-Admitted.
-
-(* weak univalence *)
-
-Definition glueTypeAux (p : ℙ) (A B : Type) : (p ≤ 1) -> Type :=
-fun αi => if (is_i0 αi) then A else B.
-
-Definition glueTypeAux_i0 {p : ℙ} {A B : Type} : glueTypeAux p A B i0 ≡ A :=
-J_seqs bool true (fun X _ => (if X then A else B) ≡ A) (srefl _) (is_i0 i0) (ssym is_i0_i0).
-
-Definition glueTypeAux_i1 {p : ℙ} {A B : Type} : glueTypeAux p A B i1 ≡ B :=
-J_seqs bool false (fun X _ => (if X then A else B) ≡ B) (srefl _) (is_i0 i1) (ssym is_i0_i1).
-
-Definition glueType (p : ℙ) (A B : Type) : itype p Type A B.
-Proof.
-refine (J_seq _ (glueTypeAux p A B i0) (fun X _ => itype p Type X B) _ _ (glueTypeAux_i0)).
-refine (J_seq _ (glueTypeAux p A B i1) (fun X _ => itype p Type (glueTypeAux p A B i0) X) _ _ (glueTypeAux_i1)).
-refine (itype_in (glueTypeAux p A B)).
-Defined.
-
-Definition weakunivalence0 {p}
-  (A0 : @El0 p Type0)
-  (A1 : @El1 p Type0 Type1 A0)
-  (B0 : @El0 p Type0)
-  (B1 : @El1 p Type0 Type1 B0)
-  : El0 (eq0 Type0 Type1 A0 A1 B0 B1).
-Proof.
-refine (fun q α => _).
-unshelve econstructor.
-- refine (fun r β => _).
-  unshelve econstructor.
-  + refine (fun r0 β0 => _).
-    refine (itype_out (glueType r0 (yft0 (A0 r0 (α ∘ squish ∘ β ∘ β0)) r0 !) (yft0 (B0 r0 (α ∘ squish ∘ β ∘ β0)) r0 !)) (antisquish ∘ β ∘ β0)).
-  + refine (fun r0 β0 s => _) ; simpl in s.
-    admit.
-  + refine (fun r0 β0 a b c d e => _).
-    admit.
-- refine (fun r β r0 β0 => _). unfold cast0 ; simpl. reflexivity.
-- simpl.
-Admitted.
-
-(* incomplete funext proof. for complete proof, see translation_fib_path.v *)
-
-Definition eq_funext {p}
-(A0 : @El0 p Type0)
-(A1 : @El1 p Type0 Type1 A0)
-(B0 : @El0 p Type0)
-(B1 : @El1 p Type0 Type1 B0)
-(f0 : El0 (Arr0 A0 A1 B0 B1))
-(f1 : El1 _ (Arr1 A0 A1 B0 B1) f0)
-(g0 : El0 (Arr0 A0 A1 B0 B1))
-(g1 : El1 _ (Arr1 A0 A1 B0 B1) g0)
-(h0 : El0 (Prod0 A0 A1
-  (fun q α x0 x1 => eq0 (α ⋅ B0) (α ⋅ B1)
-    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
-    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
-  (fun q α x0 x1 => eq1 (α ⋅ B0) (α ⋅ B1)
-    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
-    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
-  ))
-(h1 : El1 _ (Prod1 A0 A1
-  (fun q α x0 x1 => eq0 (α ⋅ B0) (α ⋅ B1)
-    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
-    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
-  (fun q α x0 x1 => eq1 (α ⋅ B0) (α ⋅ B1)
-    (app0 (α ⋅ f0) x0 x1) (app1 (α ⋅ f1) x0 x1)
-    (app0 (α ⋅ g0) x0 x1) (app1 (α ⋅ g1) x0 x1) q !)
-  ) h0)
-: El0 (eq0 (Arr0 A0 A1 B0 B1) (Arr1 A0 A1 B0 B1) f0 f1 g0 g1).
-Proof.
-refine (fun q α => _).
-unshelve econstructor.
-- refine (fun r β x0 x1 => _).
-  refine (@itype_out r (yft0 (B0 r (α ∘ squish ∘ β)) r !)
-    (f0 r (α ∘ squish ∘ β) x0 x1) (g0 r (α ∘ squish ∘ β) x0 x1)
-    _ (antisquish ∘ β)).
-  refine (J_seq _ _ (fun X _ => itype _ _ (X r !) _) _ _ ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_s))).
-  refine (J_seq _ _ (fun X _ => itype _ _ _ (X r !)) _ _ ((h0 r (α ∘ squish ∘ β) x0 x1).(ce_t))).
-  refine (@itype_in r (yft0 (B0 r (α ∘ squish ∘ β)) r !) (fun αi => (h0 r (α ∘ squish ∘ β) x0 x1).(ce_f0) r (merge ! αi))).
-- refine (fun r β x0 x1 => _). admit.
-- simpl. (* use the cbv property for itype_out *) admit.
-- simpl. (* use the cbv property for itype_out *) admit.
-Abort.
