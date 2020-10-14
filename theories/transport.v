@@ -29,13 +29,15 @@ fun s => s ≡ fun q α => st_funct α (s p !).
 Definition shiftedType0 {p}
   : @El0 p Type0.
 Proof.
-unshelve refine (fun q α => mkYFT _ _ _ _).
+unshelve econstructor.
 - unshelve refine (fun r β => _).
   exact (@shifted_ty r).
 - unshelve refine (fun r β s => _). simpl in s.
   exact (shifted_tyR s).
-- unshelve refine (fun r β b e l le l' => _).
-  apply falso. (** TODO **)
+- refine (fun r β s0 s1 => _). apply falso.
+- refine (fun r β s0 s1 => _). apply falso.
+- refine (fun r β s0 s1 => _). apply sfalso.
+- refine (fun r β s0 s1 => _). apply sfalso.
 Defined.
 
 Definition shiftedType1 {p}
@@ -142,19 +144,18 @@ Definition transp0 {p}
 Proof.
 refine (fun q α => _).
 unfold shiftedTypeEnd0 ; simpl.
-unfold El0 in s0 ; unfold shiftedTypeStart0 in s0 ; simpl in s0. 
-change (forall q α, yft0 (st_t0 (A0 q α) q side_0) q !) in s0.
-unfold El0 in A0 ; simpl in A0.
-
 refine (J_seq _ _ (fun X _ => yft0 (X q side_1) q !) _ _ (ssym (st_t1 (A0 q α) (S q) !))).
 change (yft0 (st_t0 (A0 q α) (S q) !) q side_1).
 
-unshelve refine (let s'0 : yft0 (st_t0 (A0 q α) (S q) !) q side_0 := _ in _).
-{ pose proof (st_t1 (A0 q α) (S q) !) as H. change (yftR (st_t0 (A0 q α))) in H. unfold yftR in H.
-  refine (J_seq _ _ (fun X _ => yft0 (X q side_0) q !) _ _ H).
-  refine (s0 q α). }
-
-Admitted.
+pose proof (yftfibl0 (st_t0 (A0 q α) (S q) !) q !) as fib0.
+unshelve refine (fib0 _ _).
+- refine (fun r β => _).
+  refine (J_seq _ _ (fun X _ => yft0 (X r (side_0 ∘ β)) r !) _ _ (st_t1 (A0 q α) (S q) !)).
+  refine (J_seq _ _ (fun X _ => yft0 (st_t0 (X r β) r side_0) r !) _ _ (A1 q α)).
+  refine (s0 r (α ∘ β)).
+- refine (fun r β => _).
+  apply sfalso.
+Defined.
 
 Definition transp1 {p}
   (A0 : @El0 p shiftedType0)
@@ -163,6 +164,10 @@ Definition transp1 {p}
   (s1 : El1 _ (shiftedTypeStart1 A0 A1) s0)
   : El1 _ (shiftedTypeEnd1 A0 A1) (transp0 A0 A1 s0 s1).
 Proof.
+refine (fun q α => _).
+unfold shiftedTypeEnd0 ; simpl.
+unfold transp0 ; simpl.
+unfold cast0 ; simpl.
 Admitted.
 
 Definition transport_aux1_0 {p}

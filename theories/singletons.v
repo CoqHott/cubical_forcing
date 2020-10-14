@@ -83,8 +83,10 @@ refine (fun q α => _). unshelve econstructor.
   exact (wedge_eq ((α ∘ β) · A0) ((α ∘ β) · A1) ((α ∘ β) · a0) ((α ∘ β) · a1) ((α ∘ β) · b0) ((α ∘ β) · b1) ((α ∘ β) · e0) ((α ∘ β) · e1)).
 - unshelve refine (fun r β s => _). simpl in s.
   exact (wedge_eqR ((α ∘ β) · A0) ((α ∘ β) · A1) ((α ∘ β) · a0) ((α ∘ β) · a1) ((α ∘ β) · b0) ((α ∘ β) · b1) ((α ∘ β) · e0) ((α ∘ β) · e1) s).
-- unshelve refine (fun r β b e l le l' => _).
-  apply falso.
+- refine (fun r β s0 s1 => _). apply falso.
+- refine (fun r β s0 s1 => _). apply falso.
+- refine (fun r β s0 s1 => _). apply sfalso.
+- refine (fun r β s0 s1 => _). apply sfalso.
 Defined.
 
 Definition contractor1 {p}
