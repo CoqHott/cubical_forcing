@@ -22,6 +22,68 @@ mkPsh {
   psh1 : forall p : ℙ, (forall q (α : q ≤ p), psh0 q) -> SProp;
 }.
 
+Definition precofib (p : ℙ) : Set.
+Admitted.
+
+Definition cofib (p : ℙ) := forall q (α : q ≤ p), precofib q.
+
+Definition lbox {p} : cofib p -> cofib (S p).
+Admitted.
+
+Definition rbox {p} : cofib p -> cofib (S p).
+Admitted.
+
+Definition is1 {p} : cofib p -> SProp.
+Admitted.
+
+Definition is1_funct {p q} (α : q ≤ p) (c : cofib p) : 
+  is1 c -> is1 (α ⋅ c).
+Admitted.
+
+Definition is1_match {p} {X : Type} (c : cofib p) 
+  (b1 : is1 c -> X) 
+  (b2 : (is1 c -> sFalse) -> X) : X.
+Admitted.
+
+Definition is1_lbox {p q r} (α : q ≤ p) (β : r ≤ S q) (c : cofib p) : 
+  is1 (β ⋅ lbox (α ⋅ c)) -> is1 ((promote α) ∘ β ⋅ lbox c).
+Admitted.
+
+Definition is1_rbox {p q r} (α : q ≤ p) (β : r ≤ S q) (c : cofib p) : 
+  is1 (β ⋅ rbox (α ⋅ c)) -> is1 ((promote α) ∘ β ⋅ rbox c).
+Admitted.
+
+(* welcome to fibrancy HELL *)
+Record FPsh@{i} : Type :=
+mkFPsh {
+  fpsh0 : forall p : ℙ, Type@{i} ;
+  fpsh1 : forall p : ℙ, (forall q (α : q ≤ p), fpsh0 q) -> SProp ;
+  fpshl0 : forall (p : ℙ) (c : cofib p)
+    (s0 : forall (q : ℙ) (α : q ≤ S p) (αε : is1 (α ⋅ lbox c)), fpsh0 q)
+    (s1 : forall (q : ℙ) (α : q ≤ S p) (αε : is1 (α ⋅ lbox c)), fpsh1 q (fun r β => s0 r (α ∘ β) (is1_funct β _ αε))),
+    fpsh0 p ;
+  fpshl1 : forall (p : ℙ) (c : cofib p)
+    (s0 : forall (q : ℙ) (α : q ≤ S p) (αε : is1 (α ⋅ lbox c)), fpsh0 q)
+    (s1 : forall (q : ℙ) (α : q ≤ S p) (αε : is1 (α ⋅ lbox c)), fpsh1 q (fun r β => s0 r (α ∘ β) (is1_funct β _ αε))),
+    fpsh1 p (fun q α => is1_match ((side_1 ∘ α) ⋅ lbox c)
+      (fun αε => s0 q (side_1 ∘ α) αε)
+      (fun _ => fpshl0 q (α ⋅ c) 
+        (fun r β βε => s0 r (promote α ∘ β) (is1_lbox α β c βε))
+        (fun r β βε => s1 r (promote α ∘ β) (is1_lbox α β c βε)))) ;
+  fpshr0 : forall (p : ℙ) (c : cofib p)
+    (s0 : forall (q : ℙ) (α : q ≤ S p) (αε : is1 (α ⋅ rbox c)), fpsh0 q)
+    (s1 : forall (q : ℙ) (α : q ≤ S p) (αε : is1 (α ⋅ rbox c)), fpsh1 q (fun r β => s0 r (α ∘ β) (is1_funct β _ αε))),
+    fpsh0 p ;
+  fpshr1 : forall (p : ℙ) (c : cofib p)
+    (s0 : forall (q : ℙ) (α : q ≤ S p) (αε : is1 (α ⋅ rbox c)), fpsh0 q)
+    (s1 : forall (q : ℙ) (α : q ≤ S p) (αε : is1 (α ⋅ rbox c)), fpsh1 q (fun r β => s0 r (α ∘ β) (is1_funct β _ αε))),
+    fpsh1 p (fun q α => is1_match ((side_0 ∘ α) ⋅ rbox c)
+      (fun αε => s0 q (side_0 ∘ α) αε)
+      (fun _ => fpshr0 q (α ⋅ c) 
+        (fun r β βε => s0 r (promote α ∘ β) (is1_rbox α β c βε))
+        (fun r β βε => s1 r (promote α ∘ β) (is1_rbox α β c βε)))) ;
+}.
+
 (* Elements of a presheaf *)
 
 Record El@{i} (p : ℙ) (f : Psh@{i}) : Type :=
@@ -88,41 +150,41 @@ Definition ytEl_funct@{i j} {p q} {f : yt@{i} p} (α : q ≤ p) :
   ytEl@{i j} f -> ytEl@{i j} (yt_funct@{i} α f) :=
 fun s => mkYtEl@{i j} q (yt_funct α f) (α ⋅ s.(ytel0)) (α ⋅ s.(ytel1)).
 
-(* 
-Definition fibstruct@{i j} (p : ℙ)
-  (t0 : forall q (α : q ≤ S p), Type@{i})
-  (t1 : forall q (α : q ≤ S p) (s : forall r (β : r ≤ q), t0 r (α ∘ β)), SProp)
-  : Type@{i} :=
-ytEl (mkYT p (side_0 ⋅ t0) (side_0 ⋅ t1)) -> ytEl (mkYT p (side_1 ⋅ t0) (side_1 ⋅ t1)).
- *)
-
 Record yft@{i j} (p : ℙ) := mkYFT {
   yft0 : forall q (α : q ≤ p), Type@{i};
   yft1 : forall q (α : q ≤ p), (forall r (β : r ≤ q), yft0 r (α ∘ β)) -> SProp;
-  yftfibl0 : forall q (α : S q ≤ p) 
-    (s0 : forall r (β : r ≤ q), yft0 r (α ∘ side_0 ∘ β)) 
-    (s1 : forall r (β : r ≤ q), yft1 r (α ∘ side_0 ∘ β) (fun r0 β0 => s0 r0 (β ∘ β0))),
+  yftl0 : forall (q : ℙ) (α : S q ≤ p) (c : cofib q)
+    (s0 : forall (r : ℙ) (β : r ≤ S q) (βε : is1 (β ⋅ lbox c)), yft0 r (α ∘ β))
+    (s1 : forall (r : ℙ) (β : r ≤ S q) (βε : is1 (β ⋅ lbox c)), yft1 r (α ∘ β) (fun r0 β0 => s0 r0 (β ∘ β0) (is1_funct β0 _ βε))),
     yft0 q (α ∘ side_1) ;
-  yftfibl1 : forall q (α : S q ≤ p)
-    (s0 : forall r (β : r ≤ q), yft0 r (α ∘ side_0 ∘ β)) 
-    (s1 : forall r (β : r ≤ q), yft1 r (α ∘ side_0 ∘ β) (fun r0 β0 => s0 r0 (β ∘ β0))),
-    yft1 q (α ∘ side_1) (fun r (β : r ≤ q) => yftfibl0 r (α ∘ promote β) (β ⋅ s0) (β ⋅ s1)) ;
-  yftfibr0 : forall q (α : S q ≤ p) 
-    (s0 : forall r (β : r ≤ q), yft0 r (α ∘ side_1 ∘ β)) 
-    (s1 : forall r (β : r ≤ q), yft1 r (α ∘ side_1 ∘ β) (fun r0 β0 => s0 r0 (β ∘ β0))),
+  yftl1 : forall (q : ℙ) (α : S q ≤ p) (c : cofib q)
+    (s0 : forall (r : ℙ) (β : r ≤ S q) (βε : is1 (β ⋅ lbox c)), yft0 r (α ∘ β))
+    (s1 : forall (r : ℙ) (β : r ≤ S q) (βε : is1 (β ⋅ lbox c)), yft1 r (α ∘ β) (fun r0 β0 => s0 r0 (β ∘ β0) (is1_funct β0 _ βε))),
+    yft1 q (α ∘ side_1) (fun r (β : r ≤ q) => is1_match ((side_1 ∘ β) ⋅ lbox c)
+      (fun βε => s0 r (side_1 ∘ β) βε)
+      (fun _ => yftl0 r (α ∘ promote β) (β ⋅ c)
+        (fun r0 β0 β0ε => s0 r0 (promote β ∘ β0) (is1_lbox β β0 c β0ε))
+        (fun r0 β0 β0ε => s1 r0 (promote β ∘ β0) (is1_lbox β β0 c β0ε)))) ;
+  yftr0 : forall (q : ℙ) (α : S q ≤ p) (c : cofib q)
+    (s0 : forall (r : ℙ) (β : r ≤ S q) (βε : is1 (β ⋅ rbox c)), yft0 r (α ∘ β))
+    (s1 : forall (r : ℙ) (β : r ≤ S q) (βε : is1 (β ⋅ rbox c)), yft1 r (α ∘ β) (fun r0 β0 => s0 r0 (β ∘ β0) (is1_funct β0 _ βε))),
     yft0 q (α ∘ side_0) ;
-  yftfibr1 : forall q (α : S q ≤ p)
-    (s0 : forall r (β : r ≤ q), yft0 r (α ∘ side_1 ∘ β)) 
-    (s1 : forall r (β : r ≤ q), yft1 r (α ∘ side_1 ∘ β) (fun r0 β0 => s0 r0 (β ∘ β0))),
-    yft1 q (α ∘ side_0) (fun r (β : r ≤ q) => yftfibr0 r (α ∘ promote β) (β ⋅ s0) (β ⋅ s1))
+  yftr1 : forall (q : ℙ) (α : S q ≤ p) (c : cofib q)
+    (s0 : forall (r : ℙ) (β : r ≤ S q) (βε : is1 (β ⋅ rbox c)), yft0 r (α ∘ β))
+    (s1 : forall (r : ℙ) (β : r ≤ S q) (βε : is1 (β ⋅ rbox c)), yft1 r (α ∘ β) (fun r0 β0 => s0 r0 (β ∘ β0) (is1_funct β0 _ βε))),
+    yft1 q (α ∘ side_0) (fun r (β : r ≤ q) => is1_match ((side_0 ∘ β) ⋅ rbox c)
+      (fun βε => s0 r (side_0 ∘ β) βε)
+      (fun _ => yftr0 r (α ∘ promote β) (β ⋅ c)
+        (fun r0 β0 β0ε => s0 r0 (promote β ∘ β0) (is1_rbox β β0 c β0ε))
+        (fun r0 β0 β0ε => s1 r0 (promote β ∘ β0) (is1_rbox β β0 c β0ε)))) ;
 }.
 
 Arguments yft0 {_}.
 Arguments yft1 {_}.
-Arguments yftfibl0 {_}.
-Arguments yftfibl1 {_}.
-Arguments yftfibr0 {_}.
-Arguments yftfibr1 {_}.
+Arguments yftl0 {_}.
+Arguments yftl1 {_}.
+Arguments yftr0 {_}.
+Arguments yftr1 {_}.
 
 Definition yft_funct@{i j} {p q : ℙ} (α : q ≤ p) :
   yft@{i j} p -> yft@{i j} q :=
@@ -130,13 +192,12 @@ fun f =>
 {|
   yft0 := α · yft0 f;
   yft1 := α ⋅ yft1 f;
-  yftfibl0 := α ⋅ yftfibl0 f;
-  yftfibl1 := α ⋅ yftfibl1 f;
-  yftfibr0 := α ⋅ yftfibr0 f;
-  yftfibr1 := α ⋅ yftfibr1 f;
+  yftl0 := α ⋅ yftl0 f;
+  yftl1 := α ⋅ yftl1 f;
+  yftr0 := α ⋅ yftr0 f;
+  yftr1 := α ⋅ yftr1 f;
 |}.
 
-(* original version had an extensional version of this *)
 Definition yftR@{i j k} {p : ℙ} (s : forall q : nat, q ≤ p -> yft@{i j} q) : SProp :=
   seq@{k} s (fun q α => yft_funct α (s p !)).
 
@@ -185,16 +246,19 @@ Proof.
 unshelve econstructor.
 - exact (fun q α => yft q).
 - refine (fun q α s => yftR s).
-- refine (fun q α s0 s1 => s0 q !).
-- refine (fun q α s0 s1 => s0 q !).
-- refine (fun q α s0 s1 => s1 q !).
-- refine (fun q α s0 s1 => s1 q !).
-Defined.
+- refine (fun q α c s0 s1 => _).
+  admit.
+- refine (fun q α c s0 s1 => _).
+  admit.
+- refine (fun q α c s0 s1 => _).
+  admit.
+- refine (fun q α c s0 s1 => _).
+  admit.
+Admitted.
 
 Definition U1 (p : ℙ) : psh1 Uᶠ p (fun q α => U0 q).
 Proof.
-reflexivity.
-Defined.
+Admitted.
 
 
 (* Now that we have this, everything should be constrained *)
@@ -244,10 +308,10 @@ Proof.
 unshelve econstructor.
 - refine (fun r β => bool).
 - refine (fun r β s => boolR s).
-- refine (fun r β s0 s1 => _). exact (s0 r !).
-- refine (fun r β s0 s1 => _). exact (s0 r !).
-- refine (fun r β s0 s1 => _). exact (s1 r !).
-- refine (fun r β s0 s1 => _). exact (s1 r !).
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
 Defined.
 
 Definition bool1 {p} : @El1 p Type0 Type1 bool0.
@@ -291,19 +355,10 @@ unshelve econstructor.
   (B0 r (α ∘ β)).(yft1) r ! (fun r' β' => _)).
   unshelve refine (cast0 B0 B1 (α ∘ β) β' _).
   exact (f r' β' (β' · x0) (β' · x1)).
-- refine (fun r β s0 s1 x0 x1 => _). apply falso.
-  (* simpl in s0 ; simpl in s1.
-  refine (J_seq _ _ (fun X _ => yft0 (X r (β ∘ side_1)) r !) _ _ (ssym (B1 q α))).
-  unshelve refine (yftfibl0 (B0 q α) r β _ _).
-  + refine (fun r0 β0 => _).
-    refine (J_seq _ _ (fun X _ => yft0 (X r0 (β ∘ side_0 ∘ β0)) r0 !) _ _ (B1 q α)).
-    unshelve refine (s0 r0 β0 _ _).
-    *
-    *
-  +  *)
-- refine (fun r β s0 s1 x0 x1 => _). apply falso.
-- refine (fun r β s0 s1 x0 x1 => _). apply sfalso.
-- refine (fun r β s0 s1 x0 x1 => _). apply sfalso.  
+- refine (fun r β c s0 s1 x0 x1 => _). admit.
+- refine (fun r β c s0 s1 x0 x1 => _). admit.
+- refine (fun r β c s0 s1 x0 x1 => _). admit.
+- refine (fun r β c s0 s1 x0 x1 => _). admit.
 Defined.
 
 Definition Arr1 {p}
@@ -396,10 +451,10 @@ unshelve econstructor.
   exact (SigmaT (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ P0) (α ∘ β ⋅ P1)).
 - refine (fun r β => _).
   exact (SigmaR (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ P0) (α ∘ β ⋅ P1)).
-- refine (fun r β s0 s1 => _). apply falso.
-- refine (fun r β s0 s1 => _). apply falso.
-- refine (fun r β s0 s1 => _). apply sfalso.
-- refine (fun r β s0 s1 => _). apply sfalso.
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
 Defined.
 
 Definition Sigma1 {p}
@@ -689,10 +744,10 @@ unshelve econstructor.
     (fun r3 (β3 : r3 ≤ r) => B0 r3 (α ∘ β ∘ β3) (β3 · x0) (β3 · x1))
     (fun r3 (β3 : r3 ≤ r) => B1 r3 (α ∘ β ∘ β3) (β3 · x0) (β3 · x1))
     _ ! _ β2 (f0 r2 _ (β2 · x0) (β2 · x1))).
-- refine (fun r β s0 s1 => _). apply falso.
-- refine (fun r β s0 s1 => _). apply falso.
-- refine (fun r β s0 s1 => _). apply sfalso.
-- refine (fun r β s0 s1 => _). apply sfalso.
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
 Defined.
 
 Definition Prod1 {p}
@@ -809,10 +864,10 @@ unshelve econstructor.
   exact (cube_eq ((α ∘ β) · A0) ((α ∘ β) · A1) ((α ∘ β) · x0) ((α ∘ β) · y0)).
 - unshelve refine (fun r β s => _). simpl in s.
   exact (cube_eqR ((α ∘ β) · A0) ((α ∘ β) · A1) ((α ∘ β) · x0) ((α ∘ β) · y0) s).
-- refine (fun r β s0 s1 => _). apply falso.
-- refine (fun r β s0 s1 => _). apply falso.
-- refine (fun r β s0 s1 => _). apply sfalso.
-- refine (fun r β s0 s1 => _). apply sfalso.
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). admit.
 Defined.
 
 Definition eq1 {p}
@@ -852,122 +907,3 @@ Proof.
 unshelve refine (fun q α => _).
 reflexivity.
 Defined.
-(* 
-(* shifted types *)
-
-Record shifted_ty {p} : Type :=
-mkST {
-  st_t0 : @El0 (S p) Type0 ;
-  st_t1 : @El1 (S p) Type0 Type1 st_t0 ;
-}.
-
-Definition st_funct {p} {q} (α : q ≤ p) :
-  @shifted_ty p -> @shifted_ty q.
-Proof.
-unshelve refine (fun x => _).
-unshelve econstructor.
-- exact (promote α ⋅ x.(st_t0)).
-- exact (promote α ⋅ x.(st_t1)).
-Defined.
-
-Definition shifted_tyR {p} :
- (forall q (α : q ≤ p), @shifted_ty q) -> SProp :=
-fun s => s ≡ fun q α => st_funct α (s p !).
-
-Definition shiftedType0 {p}
-  : @El0 p Type0.
-Proof.
-refine (fun q α => _).
-unshelve econstructor. 
-- refine (fun r β => _).
-  exact (@shifted_ty r).
-- refine (fun r β s => _). simpl in s.
-  exact (shifted_tyR s).
-- refine (fun r β s0 s1 => _). apply falso.
-- refine (fun r β s0 s1 => _). apply falso.
-- refine (fun r β s0 s1 => _). apply sfalso.
-- refine (fun r β s0 s1 => _). apply sfalso.  
-Defined.
-
-Definition shiftedType1 {p}
-  : @El1 p Type0 Type1 shiftedType0.
-Proof.
-refine (fun q α => _). reflexivity.
-Defined.
-
-Definition shiftedTypeStart0 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0) :
-  @El0 p Type0.
-Proof.
-refine (fun q α => _).
-refine ((side_0 ⋅ st_t0 (A0 q α)) q !). 
-Defined.
-
-Definition shiftedTypeStart1 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0) :
-  @El1 p Type0 Type1 (shiftedTypeStart0 A0 A1).
-Proof.
-refine (fun q α => _). 
-refine (J_seqs _ _ (fun X _ => yftR (fun r β => st_t0 (X r β) r side_0 )) _ (α ⋅ A0) (ssym (A1 q α))).
-refine ((side_0 ⋅ st_t1 (A0 q α)) q !).
-Defined.
-
-Definition shiftedTypeEnd0 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0) :
-  @El0 p Type0.
-Proof.
-refine (fun q α => _).
-refine ((side_1 ⋅ st_t0 (A0 q α)) q !). 
-Defined.
-
-Definition shiftedTypeEnd1 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0) :
-  @El1 p Type0 Type1 (shiftedTypeEnd0 A0 A1).
-Proof.
-refine (fun q α => _). 
-refine (J_seqs _ _ (fun X _ => yftR (fun r β => st_t0 (X r β) r side_1)) _ (α ⋅ A0) (ssym (A1 q α))).
-refine ((side_1 ⋅ st_t1 (A0 q α)) q !).
-Defined.
-
-(* transport boils down to a statement about shifted types *)
-
-Definition transp0 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0)
-  (s0 : El0 (shiftedTypeStart0 A0 A1))
-  (s1 : El1 _ (shiftedTypeStart1 A0 A1) s0)
-  : El0 (shiftedTypeEnd0 A0 A1).
-Proof.
-refine (fun q α => _).
-unfold shiftedTypeEnd0 ; simpl.
-refine (J_seq _ _ (fun X _ => yft0 (X q side_1) q !) _ _ (ssym (st_t1 (A0 q α) (S q) !))).
-change (yft0 (st_t0 (A0 q α) (S q) !) q side_1).
-
-pose proof (yftfibl0 (st_t0 (A0 q α) (S q) !) q !) as fib0.
-unshelve refine (fib0 _ _).
-- refine (fun r β => _).
-  refine (J_seq _ _ (fun X _ => yft0 (X r (side_0 ∘ β)) r !) _ _ (st_t1 (A0 q α) (S q) !)).
-  refine (J_seq _ _ (fun X _ => yft0 (st_t0 (X r β) r side_0) r !) _ _ (A1 q α)).
-  refine (s0 r (α ∘ β)).
-- refine (fun r β => _).
-  apply sfalso.
-Defined.
-
-Definition transp1 {p}
-  (A0 : @El0 p shiftedType0)
-  (A1 : @El1 p shiftedType0 shiftedType1 A0)
-  (s0 : El0 (shiftedTypeStart0 A0 A1))
-  (s1 : El1 _ (shiftedTypeStart1 A0 A1) s0)
-  : El1 _ (shiftedTypeEnd1 A0 A1) (transp0 A0 A1 s0 s1).
-Proof.
-refine (fun q α => _).
-unfold shiftedTypeEnd0 ; simpl.
-unfold transp0 ; simpl.
-unfold cast0 ; simpl.
-Admitted.
-
- *)
