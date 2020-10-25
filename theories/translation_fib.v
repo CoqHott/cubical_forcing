@@ -45,11 +45,11 @@ Definition is1_match {p} {X : Type} (c : cofib p)
   (b2 : (is1 c -> sFalse) -> X) : X.
 Admitted.
 
-Definition is1_lbox {p q r} (α : q ≤ p) (β : r ≤ S q) (c : cofib p) : 
+Definition is1_promote_lbox {p q r} (α : q ≤ p) (β : r ≤ S q) (c : cofib p) : 
   is1 (β ⋅ lbox (α ⋅ c)) -> is1 ((promote α) ∘ β ⋅ lbox c).
 Admitted.
 
-Definition is1_rbox {p q r} (α : q ≤ p) (β : r ≤ S q) (c : cofib p) : 
+Definition is1_promote_rbox {p q r} (α : q ≤ p) (β : r ≤ S q) (c : cofib p) : 
   is1 (β ⋅ rbox (α ⋅ c)) -> is1 ((promote α) ∘ β ⋅ rbox c).
 Admitted.
 
@@ -68,8 +68,8 @@ mkFPsh {
     fpsh1 p (fun q α => is1_match ((side_1 ∘ α) ⋅ lbox c)
       (fun αε => s0 q (side_1 ∘ α) αε)
       (fun _ => fpshl0 q (α ⋅ c) 
-        (fun r β βε => s0 r (promote α ∘ β) (is1_lbox α β c βε))
-        (fun r β βε => s1 r (promote α ∘ β) (is1_lbox α β c βε)))) ;
+        (fun r β βε => s0 r (promote α ∘ β) (is1_promote_lbox α β c βε))
+        (fun r β βε => s1 r (promote α ∘ β) (is1_promote_lbox α β c βε)))) ;
   fpshr0 : forall (p : ℙ) (c : cofib p)
     (s0 : forall (q : ℙ) (α : q ≤ S p) (αε : is1 (α ⋅ rbox c)), fpsh0 q)
     (s1 : forall (q : ℙ) (α : q ≤ S p) (αε : is1 (α ⋅ rbox c)), fpsh1 q (fun r β => s0 r (α ∘ β) (is1_funct β _ αε))),
@@ -80,8 +80,8 @@ mkFPsh {
     fpsh1 p (fun q α => is1_match ((side_0 ∘ α) ⋅ rbox c)
       (fun αε => s0 q (side_0 ∘ α) αε)
       (fun _ => fpshr0 q (α ⋅ c) 
-        (fun r β βε => s0 r (promote α ∘ β) (is1_rbox α β c βε))
-        (fun r β βε => s1 r (promote α ∘ β) (is1_rbox α β c βε)))) ;
+        (fun r β βε => s0 r (promote α ∘ β) (is1_promote_rbox α β c βε))
+        (fun r β βε => s1 r (promote α ∘ β) (is1_promote_rbox α β c βε)))) ;
 }.
 
 (* Elements of a presheaf *)
@@ -163,8 +163,8 @@ Record yft@{i j} (p : ℙ) := mkYFT {
     yft1 q (α ∘ side_1) (fun r (β : r ≤ q) => is1_match ((side_1 ∘ β) ⋅ lbox c)
       (fun βε => s0 r (side_1 ∘ β) βε)
       (fun _ => yftl0 r (α ∘ promote β) (β ⋅ c)
-        (fun r0 β0 β0ε => s0 r0 (promote β ∘ β0) (is1_lbox β β0 c β0ε))
-        (fun r0 β0 β0ε => s1 r0 (promote β ∘ β0) (is1_lbox β β0 c β0ε)))) ;
+        (fun r0 β0 β0ε => s0 r0 (promote β ∘ β0) (is1_promote_lbox β β0 c β0ε))
+        (fun r0 β0 β0ε => s1 r0 (promote β ∘ β0) (is1_promote_lbox β β0 c β0ε)))) ;
   yftr0 : forall (q : ℙ) (α : S q ≤ p) (c : cofib q)
     (s0 : forall (r : ℙ) (β : r ≤ S q) (βε : is1 (β ⋅ rbox c)), yft0 r (α ∘ β))
     (s1 : forall (r : ℙ) (β : r ≤ S q) (βε : is1 (β ⋅ rbox c)), yft1 r (α ∘ β) (fun r0 β0 => s0 r0 (β ∘ β0) (is1_funct β0 _ βε))),
@@ -175,8 +175,8 @@ Record yft@{i j} (p : ℙ) := mkYFT {
     yft1 q (α ∘ side_0) (fun r (β : r ≤ q) => is1_match ((side_0 ∘ β) ⋅ rbox c)
       (fun βε => s0 r (side_0 ∘ β) βε)
       (fun _ => yftr0 r (α ∘ promote β) (β ⋅ c)
-        (fun r0 β0 β0ε => s0 r0 (promote β ∘ β0) (is1_rbox β β0 c β0ε))
-        (fun r0 β0 β0ε => s1 r0 (promote β ∘ β0) (is1_rbox β β0 c β0ε)))) ;
+        (fun r0 β0 β0ε => s0 r0 (promote β ∘ β0) (is1_promote_rbox β β0 c β0ε))
+        (fun r0 β0 β0ε => s1 r0 (promote β ∘ β0) (is1_promote_rbox β β0 c β0ε)))) ;
 }.
 
 Arguments yft0 {_}.
@@ -199,7 +199,7 @@ fun f =>
 |}.
 
 Definition yftR@{i j k} {p : ℙ} (s : forall q : nat, q ≤ p -> yft@{i j} q) : SProp :=
-  seq@{k} s (fun q α => yft_funct α (s p !)).
+  forall q α, seq@{k} (s q α) (yft_funct α (s p !)).
 
 Definition cast0 {p : ℙ}
   (A0 : forall q (α : q ≤ p), yft q)
@@ -208,7 +208,7 @@ Definition cast0 {p : ℙ}
   (A0 r (α ∘ β)).(yft0) r ! -> (A0 q α).(yft0) r β.
 Proof.
 refine (fun x => _).
-refine (J_seq _ (α ⋅ A0) (fun a _ => (a r β).(yft0) r !) x _ (A1 q α)).
+refine (J_seq _ _ (fun X _ => yft0 X r !) x _ (A1 q α r β)).
 Defined.
 
 (* Sections of fibrant presheaves over yoneda(p) *)
@@ -241,25 +241,51 @@ fun s => mkYftEl@{i j k} q (yft_funct α f) (α ⋅ s.(yftel0)) (α ⋅ s.(yftel
 Definition Uᶠ@{i j k l} : Psh@{l} :=
 mkPsh@{l} yft@{i j} (fun p s => yftR@{i j k} s).
 
+Definition Gluel {p : ℙ} 
+  (c : cofib p)
+  (s0 : forall q (α : q ≤ S p), is1 (α ⋅ lbox c) -> yft q)
+  (s1 : forall q (α : q ≤ S p) (αε : is1 (α ⋅ lbox c)),
+    yftR (fun r β => s0 r (α ∘ β) (is1_funct β (α ⋅ lbox c) αε))) :
+  yft p.
+Proof.
+Admitted.
+
+Definition Gluer {p : ℙ} 
+  (c : cofib p)
+  (s0 : forall q (α : q ≤ S p), is1 (α ⋅ rbox c) -> yft q)
+  (s1 : forall q (α : q ≤ S p) (αε : is1 (α ⋅ rbox c)),
+    yftR (fun r β => s0 r (α ∘ β) (is1_funct β (α ⋅ rbox c) αε))) :
+  yft p.
+Proof.
+Admitted.
+
 Definition U0 (p : ℙ) : psh0 Uᶠ p.
 Proof.
 unshelve econstructor.
 - exact (fun q α => yft q).
 - refine (fun q α s => yftR s).
 - refine (fun q α c s0 s1 => _).
-  admit.
+  refine (Gluel c s0 s1).
 - refine (fun q α c s0 s1 => _).
-  admit.
-- refine (fun q α c s0 s1 => _).
-  admit.
-- refine (fun q α c s0 s1 => _).
-  admit.
-Admitted.
+  refine (Gluer c s0 s1).
+- refine (fun q α c s0 s1 r β => _). 
+  simpl in s0 ; simpl in s1.
+  apply sfalso.
+- refine (fun q α c s0 s1 r β => _). 
+  simpl in s0 ; simpl in s1.
+  apply sfalso.
+(*   unshelve econstructor.
+  + refine (fun r β => _). 
+    refine (is1_match (side_1 ∘ β ⋅ lbox c) (fun βε => _) (fun _ => _)).
+    * refine (yft0 (s0 r (side_1 ∘ β) βε) r !).
+    * apply falso. *)
+Defined.
 
 Definition U1 (p : ℙ) : psh1 Uᶠ p (fun q α => U0 q).
 Proof.
-Admitted.
-
+refine (fun q α => _).
+reflexivity.
+Defined.
 
 (* Now that we have this, everything should be constrained *)
 (* Let us write a translation in the style of PMP *)
@@ -308,15 +334,15 @@ Proof.
 unshelve econstructor.
 - refine (fun r β => bool).
 - refine (fun r β s => boolR s).
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). apply falso.
+- refine (fun r β c s0 s1 => _). apply falso.
+- refine (fun r β c s0 s1 => _). apply sfalso.
+- refine (fun r β c s0 s1 => _). apply sfalso.
 Defined.
 
 Definition bool1 {p} : @El1 p Type0 Type1 bool0.
 Proof.
-unshelve refine (fun q α => _).
+unshelve refine (fun q α r β => _).
 reflexivity.
 Defined.
 
@@ -355,10 +381,10 @@ unshelve econstructor.
   (B0 r (α ∘ β)).(yft1) r ! (fun r' β' => _)).
   unshelve refine (cast0 B0 B1 (α ∘ β) β' _).
   exact (f r' β' (β' · x0) (β' · x1)).
-- refine (fun r β c s0 s1 x0 x1 => _). admit.
-- refine (fun r β c s0 s1 x0 x1 => _). admit.
-- refine (fun r β c s0 s1 x0 x1 => _). admit.
-- refine (fun r β c s0 s1 x0 x1 => _). admit.
+- refine (fun r β c s0 s1 x0 x1 => _). apply falso.
+- refine (fun r β c s0 s1 x0 x1 => _). apply falso.
+- refine (fun r β c s0 s1 x0 x1 => _). apply sfalso.
+- refine (fun r β c s0 s1 x0 x1 => _). apply sfalso.
 Defined.
 
 Definition Arr1 {p}
@@ -368,7 +394,7 @@ Definition Arr1 {p}
   (B1 : @El1 p Type0 Type1 B0) :
   @El1 p Type0 Type1 (Arr0 A0 A1 B0 B1).
 Proof.
-unshelve refine (fun q α => _).
+unshelve refine (fun q α r β => _).
 reflexivity.
 Defined.
 
@@ -451,10 +477,10 @@ unshelve econstructor.
   exact (SigmaT (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ P0) (α ∘ β ⋅ P1)).
 - refine (fun r β => _).
   exact (SigmaR (α ∘ β ⋅ A0) (α ∘ β ⋅ A1) (α ∘ β ⋅ P0) (α ∘ β ⋅ P1)).
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). apply falso.
+- refine (fun r β c s0 s1 => _). apply falso.
+- refine (fun r β c s0 s1 => _). apply sfalso.
+- refine (fun r β c s0 s1 => _). apply sfalso.
 Defined.
 
 Definition Sigma1 {p}
@@ -464,7 +490,7 @@ Definition Sigma1 {p}
   (P1 : El1 _ (Arr1 A0 A1 Type0 Type1) P0) :
   @El1 p Type0 Type1 (Sigma0 A0 A1 P0 P1).
 Proof.
-refine (fun q α => _).
+refine (fun q α r β => _).
 reflexivity.
 Defined.
 
@@ -744,10 +770,10 @@ unshelve econstructor.
     (fun r3 (β3 : r3 ≤ r) => B0 r3 (α ∘ β ∘ β3) (β3 · x0) (β3 · x1))
     (fun r3 (β3 : r3 ≤ r) => B1 r3 (α ∘ β ∘ β3) (β3 · x0) (β3 · x1))
     _ ! _ β2 (f0 r2 _ (β2 · x0) (β2 · x1))).
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). apply falso.
+- refine (fun r β c s0 s1 => _). apply falso.
+- refine (fun r β c s0 s1 => _). apply sfalso.
+- refine (fun r β c s0 s1 => _). apply sfalso.
 Defined.
 
 Definition Prod1 {p}
@@ -757,7 +783,7 @@ Definition Prod1 {p}
   (B1 : El1 (Arr0 A0 A1 Type0 Type1) (Arr1 A0 A1 Type0 Type1) B0)
   : El1 Type0 Type1 (Prod0 A0 A1 B0 B1).
 Proof.
-refine (fun q α => _).
+refine (fun q α r β => _).
 reflexivity.
 Defined.
 
@@ -864,10 +890,10 @@ unshelve econstructor.
   exact (cube_eq ((α ∘ β) · A0) ((α ∘ β) · A1) ((α ∘ β) · x0) ((α ∘ β) · y0)).
 - unshelve refine (fun r β s => _). simpl in s.
   exact (cube_eqR ((α ∘ β) · A0) ((α ∘ β) · A1) ((α ∘ β) · x0) ((α ∘ β) · y0) s).
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
-- refine (fun r β c s0 s1 => _). admit.
+- refine (fun r β c s0 s1 => _). apply falso.
+- refine (fun r β c s0 s1 => _). apply falso.
+- refine (fun r β c s0 s1 => _). apply sfalso.
+- refine (fun r β c s0 s1 => _). apply sfalso.
 Defined.
 
 Definition eq1 {p}
@@ -879,7 +905,7 @@ Definition eq1 {p}
   (y1 : El1 A0 A1 y0) :
   @El1 p Type0 Type1 (eq0 A0 A1 x0 x1 y0 y1).
 Proof.
-unshelve refine (fun q α => _). reflexivity.
+unshelve refine (fun q α r β => _). reflexivity.
 Defined.
 
 Definition eq_refl0 {p}

@@ -34,16 +34,16 @@ unshelve econstructor.
   exact (@shifted_ty r).
 - unshelve refine (fun r β s => _). simpl in s.
   exact (shifted_tyR s).
-- refine (fun r β s0 s1 => _). apply falso.
-- refine (fun r β s0 s1 => _). apply falso.
-- refine (fun r β s0 s1 => _). apply sfalso.
-- refine (fun r β s0 s1 => _). apply sfalso.
+- refine (fun r β c s0 s1 => _). apply falso.
+- refine (fun r β c s0 s1 => _). apply falso.
+- refine (fun r β c s0 s1 => _). apply sfalso.
+- refine (fun r β c s0 s1 => _). apply sfalso.
 Defined.
 
 Definition shiftedType1 {p}
   : @El1 p Type0 Type1 shiftedType0.
 Proof.
-refine (fun q α => _). reflexivity.
+refine (fun q α r β => _). reflexivity.
 Defined.
 
 Definition shiftedTypeStart0 {p}
@@ -135,6 +135,9 @@ Defined.
 
 (* transport boils down to a statement about shifted types *)
 
+Definition emptycofib p : cofib p.
+Admitted.
+
 Definition transp0 {p}
   (A0 : @El0 p shiftedType0)
   (A1 : @El1 p shiftedType0 shiftedType1 A0)
@@ -144,12 +147,12 @@ Definition transp0 {p}
 Proof.
 refine (fun q α => _).
 unfold shiftedTypeEnd0 ; simpl.
-refine (J_seq _ _ (fun X _ => yft0 (X q side_1) q !) _ _ (ssym (st_t1 (A0 q α) (S q) !))).
+refine (J_seq _ _ (fun X _ => yft0 X q !) _ _ (ssym (st_t1 (A0 q α) (S q) ! q side_1))).
 change (yft0 (st_t0 (A0 q α) (S q) !) q side_1).
 
-pose proof (yftfibl0 (st_t0 (A0 q α) (S q) !) q !) as fib0.
-unshelve refine (fib0 _ _).
-- refine (fun r β => _).
+pose proof (yftl0 (st_t0 (A0 q α) (S q) !) q !) as fib0.
+unshelve refine (fib0 (emptycofib q) _ _).
+- refine (fun r β βε => _).
   refine (J_seq _ _ (fun X _ => yft0 (X r (side_0 ∘ β)) r !) _ _ (st_t1 (A0 q α) (S q) !)).
   refine (J_seq _ _ (fun X _ => yft0 (st_t0 (X r β) r side_0) r !) _ _ (A1 q α)).
   refine (s0 r (α ∘ β)).
