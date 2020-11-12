@@ -45,6 +45,16 @@ record Box (A : Prop ℓ) : Set ℓ where
 
 open Box public
 
+_×_ : ∀ (A : Prop ℓ) (B : Prop ℓ₁) → Prop (ℓ ⊔ ℓ₁)
+A × B = Tel A (λ _ → B)
+
+-- we need this for cumulativity
+
+record i (A : Prop ℓ) : Prop (lsuc ℓ) where
+  constructor inj
+  field
+    uninj : A
+
 transport_prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 transport_prop {A} P x t y e = unbox (transport (λ z → Box (P z)) x (box t) y e)
 
@@ -78,6 +88,8 @@ postulate Id_Unit : (p q : ⊤) → Id ⊤ p q ≡ ⊤P
 
 {- # REWRITE Id_Unit # -}
 
+-- rewrite rules for the identity type on the universe
+
 postulate Id_Type_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
                           Id (Set (ℓ ⊔ ℓ₁)) (Σ A B) (Σ A' B') ≡
                           Id (Σ (Set ℓ) (λ A → A → Set ℓ₁)) (A , B) (A' , B')
@@ -89,6 +101,12 @@ postulate Id_Type_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set 
                        Id (Σ (Set ℓ) (λ A → A → Set ℓ₁)) (A , B) (A' , B')
 
 {-# REWRITE Id_Type_Pi #-}
+
+-- rewrite rules for the identity type on Prop : Prop ext modulo cumul 
+
+postulate Id_prop : (P Q : Prop ℓ) → Id (Prop ℓ) P Q ≡ i (P → Q) × (Q → P)
+
+{-# REWRITE Id_prop #-}
 
 -- Contractibility of singletons and J can be defined
 
@@ -130,8 +148,7 @@ postulate transport_Sigma : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) �
 
 {-# REWRITE transport_Sigma #-}
 
-postulate transport_Unit : (X : Set ℓ)  
-                           (x : X) (s : ⊤) (y : X) (e : Id X x y) →
+postulate transport_Unit : (X : Set ℓ) (x : X) (s : ⊤) (y : X) (e : Id X x y) →
                            transport (λ x → ⊤) x s y e ≡ s
 
 {-# REWRITE transport_Unit #-}
@@ -151,6 +168,11 @@ postulate cast_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set 
 {-# REWRITE cast_Sigma #-}
 
 
+postulate transport_on_prop : (X : Set ℓ) (x : X) (P : Prop ℓ₁) (y : X) (e : Id X x y) →
+                              transport (λ x → Prop ℓ₁) x P y e ≡ P
+{-# REWRITE transport_on_prop #-}
+
+-- sanity check on closed terms
 
 test_J_refl_on_closed_term : (X : Set ℓ) (x : X) →
        transport (λ z → Σ ⊤ (λ z → ⊤)) x (tt , tt) x (Id_refl x) ≡ (tt , tt)
