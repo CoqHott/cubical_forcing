@@ -35,8 +35,11 @@ record Box (A : Prop ℓ) : Set ℓ where
 
 open Box public
 
+transport_prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
+transport_prop {A} P x t y e = unbox (transport (λ z → Box (P z)) x (box t) y e)
+
 inverse : (A : Set ℓ) (x y : A) (p : Id {ℓ} A x y) → Id A y x
-inverse A x y p = unbox (transport (λ z → Box (Id A z x)) x (box (Id_refl x)) y p )
+inverse A x y p = transport_prop (λ z → Id A z x) x (Id_refl x) y p
 
 postulate Id_Pi : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
                   Id ((a : A) → B a) f g ≡ ((a : A) → Id (B a) (f a) (g a))
