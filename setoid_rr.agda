@@ -58,8 +58,8 @@ record i (A : Prop ℓ) : Prop (lsuc ℓ) where
 transport_prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 transport_prop {A} P x t y e = unbox (transport (λ z → Box (P z)) x (box t) y e)
 
-inverse : (A : Set ℓ) (x y : A) (p : Id {ℓ} A x y) → Id A y x
-inverse A x y p = transport_prop (λ z → Id A z x) x (Id_refl x) y p
+inverse : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) → Id A y x
+inverse A {x} {y} p = transport_prop (λ z → Id A z x) x (Id_refl x) y p
 
 -- we now state rewrite rules for the identity type
 
@@ -68,7 +68,7 @@ postulate Id_Pi : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) �
 
 {-# REWRITE Id_Pi #-}
 
--- rewrite rules on Id_refl are not needed because it is in SProp
+-- rewrite rules on Id_refl are not needed because it is in Prop
 
 refl_Pi : (A : Set ℓ) (B : A → Set ℓ₁) (f : (a : A) → B a) →
           box (Id_refl f) ≡ box (λ a → Id_refl (f a))
@@ -77,12 +77,14 @@ refl_Pi A B f = refl
 -- sanity check forr funext
 
 funext : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
-         Id ((a : A) → B a) f g -> ((a : A) → Id (B a) (f a) (g a))
+         Id ((a : A) → B a) f g → ((a : A) → Id (B a) (f a) (g a))
 funext A B f g e = e
 
 
 postulate Id_Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (p q : Σ A B) → 
-                     Id (Σ A B) p q ≡ Tel (Id A (fst p) (fst q)) (λ e → Id (B (fst p)) (snd p) ((transport B (fst q) (snd q) (fst p) (inverse A _ _ e))))
+                     Id (Σ A B) p q ≡ Tel (Id A (fst p) (fst q))
+                                          (λ e → Id (B (fst p)) (snd p)
+                                                                ((transport B (fst q) (snd q) (fst p) (inverse A e))))
 
 {-# REWRITE Id_Sigma #-}
   
@@ -132,10 +134,10 @@ J_prop A x P t y e = transport_prop (λ z → P (fst z) (unbox (snd z))) (x , bo
 
 transport_inv : (X : Set ℓ) (A : X → Set ℓ₁) 
                 (x : X) (y : X) (e : Id X x y) (a : A x) →
-    Id (A x) a (transport A y (transport A x a y e) x (inverse X x y e))
+    Id (A x) a (transport A y (transport A x a y e) x (inverse X e))
 transport_inv X A x y e a = let e_refl = transport_refl A x a (Id_refl x)
-                                e_refl_inv = inverse (A x) _ a e_refl
-                            in J_prop X x (λ y e → Id (A x) a (transport A y (transport A x a y e) x (inverse X x y e)))
+                                e_refl_inv = inverse (A x) e_refl
+                            in J_prop X x (λ y e → Id (A x) a (transport A y (transport A x a y e) x (inverse X e)))
                                       (transport_prop (λ Z → Id (A x) a (transport A x Z x (Id_refl x))) a e_refl_inv _ e_refl_inv) y e
 
 -- we can now state rewrite rules for transports
@@ -143,9 +145,9 @@ transport_inv X A x y e a = let e_refl = transport_refl A x a (Id_refl x)
 postulate transport_Pi : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) → A x → Set ℓ₂)
                          (x : X) (f : (a : A x) → B x a) (y : X) (e : Id X x y) →
                          transport (λ x → (a : A x) → B x a) x f y e ≡
-                         λ (a' : A y) → let a = transport A y a' x (inverse X x y e)
+                         λ (a' : A y) → let a = transport A y a' x (inverse X e)
                                         in transport (λ z → B (fst z) (snd z)) (x , a) (f a) (y , a')
-                                                     ( e ,, Id_refl (transport A y a' x (inverse X x y e)) )
+                                                     ( e ,, Id_refl (transport A y a' x (inverse X e)) )
 
 {-# REWRITE transport_Pi #-}
 
