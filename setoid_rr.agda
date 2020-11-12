@@ -35,6 +35,8 @@ postulate transport_refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x
 
 -- a bit of boilerplate to deal with Prop
 
+data ⊥ : Prop where
+
 record ⊤P : Prop ℓ where
   constructor ttP
 
@@ -50,7 +52,7 @@ A × B = Tel A (λ _ → B)
 
 -- we need this for cumulativity
 
-record i (A : Prop ℓ) : Prop (lsuc ℓ) where
+record i (A : Prop ℓ) : Prop (ℓ ⊔ ℓ₁) where
   constructor inj
   field
     uninj : A
@@ -94,7 +96,17 @@ postulate Id_Box : (A : Prop ℓ) (p q : Box A) → Id (Box A) p q ≡ ⊤P
 
 postulate Id_Unit : (p q : ⊤) → Id ⊤ p q ≡ ⊤P
 
-{- # REWRITE Id_Unit # -}
+{-# REWRITE Id_Unit #-}
+
+Id_list_ : (A : Set ℓ) (l l' : List A) → Prop ℓ
+Id_list_ A [] [] = ⊤P
+Id_list_ A [] (x ∷ l') = i ⊥
+Id_list_ A (x ∷ l) [] = i ⊥
+Id_list_ A (x ∷ l) (x₁ ∷ l') = ⊤P
+
+postulate Id_list : (A : Set ℓ) (l l' : List A) → Id (List A) l l' ≡ Id_list_ A l l'
+
+{-# REWRITE Id_list #-}
 
 -- rewrite rules for the identity type on the universe
 
@@ -165,6 +177,15 @@ postulate transport_Unit : (X : Set ℓ) (x : X) (s : ⊤) (y : X) (e : Id X x y
                            transport (λ x → ⊤) x s y e ≡ s
 
 {-# REWRITE transport_Unit #-}
+
+transport_List_ : (X : Set ℓ) (A : X → Set ℓ₁) (x : X) (l : List (A x)) (y : X) (e : Id X x y) → List (A y)
+transport_List_ X A x [] y e = []
+transport_List_ X A x (a ∷ l) y e = (transport A x a y e) ∷ (transport (λ x → List (A x)) x l y e)
+
+postulate transport_List : (X : Set ℓ) (A : X → Set ℓ₁) (x : X) (l : List (A x)) (y : X) (e : Id X x y) →
+                           transport (λ x → List (A x)) x l y e ≡ transport_List_ X A x l y e 
+
+{-# REWRITE transport_List #-}
 
 -- transporting over the identity is type casting
 
