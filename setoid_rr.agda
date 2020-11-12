@@ -115,3 +115,30 @@ postulate transport_Unit : (X : Set ℓ)
 test_J_refl_on_closed_term : (X : Set ℓ) (x : X) →
        transport (λ z → Σ Unit (λ z → Unit)) x (unit {ℓ₁}, unit {ℓ₁}) x (Id_refl x) ≡ (unit , unit)
 test_J_refl_on_closed_term X x = refl 
+
+postulate Id_Type_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
+                          Id (Set (ℓ ⊔ ℓ₁)) (Σ A B) (Σ A' B') ≡ Id (Σ (Set ℓ) (λ A → A → Set ℓ₁)) (A , B) (A' , B')
+
+{-# REWRITE Id_Type_Sigma #-}
+
+postulate Id_Type_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
+                       Id (Set (ℓ ⊔ ℓ₁)) ((a : A) → B a) ((a' : A') → B' a') ≡
+                       Id (Σ (Set ℓ) (λ A → A → Set ℓ₁)) (A , B) (A' , B')
+
+{-# REWRITE Id_Type_Pi #-}
+
+
+postulate cast_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (f : (a : A) → B a) (e : _) →
+                    transport (λ T → T) ((a : A) → B a) f ((a' : A') → B' a') e ≡
+                    transport {A = Σ (Set ℓ) (λ A → A → Set ℓ₁)}
+                              (λ X → (x : fst X) → (snd X) x) (A , B) f (A' , B') e
+
+{-# REWRITE cast_Pi #-}
+
+postulate cast_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (s : Σ A B) (e : _) →
+                    transport (λ T → T) (Σ A B) s (Σ A' B') e ≡
+                    transport {A = Σ (Set ℓ) (λ A → A → Set ℓ₁)}
+                              (λ X → Σ (fst X) (snd X)) (A , B) s (A' , B') e
+
+{-# REWRITE cast_Sigma #-}
+
