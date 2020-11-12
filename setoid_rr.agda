@@ -118,14 +118,19 @@ J : (A : Set ℓ) (x : A) (P : (y : A) → Id A x y → Set ℓ₁)
     (t : P x (Id_refl x)) (y : A) (e : Id A x y) → P y e
 J A x P t y e = transport (λ z → P (fst z) (unbox (snd z))) (x , box (Id_refl x)) t (y , box e) (contr_sing A e)
 
+J_prop : (A : Set ℓ) (x : A) (P : (y : A) → Id A x y → Prop ℓ₁) 
+    (t : P x (Id_refl x)) (y : A) (e : Id A x y) → P y e
+J_prop A x P t y e = transport_prop (λ z → P (fst z) (unbox (snd z))) (x , box (Id_refl x)) t (y , box e) (contr_sing A e)
+
 -- tranporting back and forth is the identity
 
 transport_inv : (X : Set ℓ) (A : X → Set ℓ₁) 
                 (x : X) (y : X) (e : Id X x y) (a : A x) →
     Id (A x) a (transport A y (transport A x a y e) x (inverse X x y e))
 transport_inv X A x y e a = let e_refl = transport_refl A x a (Id_refl x)
-                                e_refl_inv = inverse (A x) ((transport A x a x _)) a e_refl
-                            in unbox (J X x ((λ y e → Box (Id (A x) a (transport A y (transport A x a y e) x (inverse X x y e))))) ((transport (λ Z → Box (Id (A x) a (transport A x Z x (Id_refl x)))) a (box e_refl_inv) _ e_refl_inv)) y e)
+                                e_refl_inv = inverse (A x) _ a e_refl
+                            in J_prop X x (λ y e → Id (A x) a (transport A y (transport A x a y e) x (inverse X x y e)))
+                                      (transport_prop (λ Z → Id (A x) a (transport A x Z x (Id_refl x))) a e_refl_inv _ e_refl_inv) y e
 
 -- we can now state rewrite rules for transports
 
