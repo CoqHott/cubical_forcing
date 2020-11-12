@@ -68,6 +68,12 @@ postulate Id_Pi : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) �
 
 {-# REWRITE Id_Pi #-}
 
+-- rewrite rules on Id_refl are not needed because it is in SProp
+
+refl_Pi : (A : Set ℓ) (B : A → Set ℓ₁) (f : (a : A) → B a) →
+          box (Id_refl f) ≡ box (λ a → Id_refl (f a))
+refl_Pi A B f = refl
+
 -- sanity check forr funext
 
 funext : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
