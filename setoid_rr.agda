@@ -130,15 +130,13 @@ postulate Id_Type_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set 
 
 postulate cast_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (f : (a : A) → B a) (e : _) →
                     transport (λ T → T) ((a : A) → B a) f ((a' : A') → B' a') e ≡
-                    transport {A = Σ (Set ℓ) (λ A → A → Set ℓ₁)}
-                              (λ X → (x : fst X) → (snd X) x) (A , B) f (A' , B') e
+                    transport (λ X → (x : fst X) → (snd X) x) (A , B) f (A' , B') e
 
 {-# REWRITE cast_Pi #-}
 
 postulate cast_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (s : Σ A B) (e : _) →
                     transport (λ T → T) (Σ A B) s (Σ A' B') e ≡
-                    transport {A = Σ (Set ℓ) (λ A → A → Set ℓ₁)}
-                              (λ X → Σ (fst X) (snd X)) (A , B) s (A' , B') e
+                    transport (λ X → Σ (fst X) (snd X)) (A , B) s (A' , B') e
 
 {-# REWRITE cast_Sigma #-}
 
