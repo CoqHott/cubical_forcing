@@ -7,18 +7,23 @@ open import Agda.Builtin.List
 open import Agda.Builtin.Equality
 open import Agda.Builtin.Equality.Rewrite
 open import Agda.Builtin.Sigma
+open import Agda.Builtin.Unit
 
-record Con {a b} (A : Prop a) (B : A → Prop b) : Prop (a ⊔ b) where
+-- sigma type in Prop used to handle telescopes. 
+
+record Tel {a b} (A : Prop a) (B : A → Prop b) : Prop (a ⊔ b) where
   constructor _,,_
   field
     fstC : A
     sndC : B fstC
 
-open Con public
+open Tel public
 
 infixr 4 _,,_
 
 variable ℓ ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Level
+
+-- axiomatisation of Id, Id_refl, transport and transport_refl (propositionally)
 
 postulate Id : (A : Set ℓ) → A → A → Prop ℓ
 
@@ -27,6 +32,11 @@ postulate Id_refl : {A : Set ℓ} (x : A) → Id A x x
 postulate transport : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 
 postulate transport_refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (e : Id A x x) → Id (P x) (transport P x t x e) t
+
+-- a bit of boilerplate to deal with Prop
+
+record ⊤P : Prop ℓ where
+  constructor ttP
 
 record Box (A : Prop ℓ) : Set ℓ where
   constructor box
@@ -41,38 +51,56 @@ transport_prop {A} P x t y e = unbox (transport (λ z → Box (P z)) x (box t) y
 inverse : (A : Set ℓ) (x y : A) (p : Id {ℓ} A x y) → Id A y x
 inverse A x y p = transport_prop (λ z → Id A z x) x (Id_refl x) y p
 
+-- we now state rewrite rules for the identity type
+
 postulate Id_Pi : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
                   Id ((a : A) → B a) f g ≡ ((a : A) → Id (B a) (f a) (g a))
 
 {-# REWRITE Id_Pi #-}
 
+-- sanity check forr funext
+
+funext : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
+         Id ((a : A) → B a) f g -> ((a : A) → Id (B a) (f a) (g a))
+funext A B f g e = e
+
+
 postulate Id_Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (p q : Σ A B) → 
-                     Id (Σ A B) p q ≡ Con (Id A (fst p) (fst q)) (λ e → Id (B (fst p)) (snd p) ((transport B (fst q) (snd q) (fst p) (inverse A _ _ e))))
+                     Id (Σ A B) p q ≡ Tel (Id A (fst p) (fst q)) (λ e → Id (B (fst p)) (snd p) ((transport B (fst q) (snd q) (fst p) (inverse A _ _ e))))
 
 {-# REWRITE Id_Sigma #-}
-
-record ⊤ : Prop ℓ where
-  constructor tt
   
-postulate Id_Box : (A : Prop ℓ) (p q : Box A) → Id (Box A) p q ≡ ⊤
+postulate Id_Box : (A : Prop ℓ) (p q : Box A) → Id (Box A) p q ≡ ⊤P
 
 {-# REWRITE Id_Box #-}
 
-record Unit : Set ℓ where
-  constructor unit
-
-postulate Id_Unit : (p q : Unit{ℓ}) → Id Unit p q ≡ ⊤
+postulate Id_Unit : (p q : ⊤) → Id ⊤ p q ≡ ⊤P
 
 {- # REWRITE Id_Unit # -}
 
+postulate Id_Type_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
+                          Id (Set (ℓ ⊔ ℓ₁)) (Σ A B) (Σ A' B') ≡
+                          Id (Σ (Set ℓ) (λ A → A → Set ℓ₁)) (A , B) (A' , B')
+
+{-# REWRITE Id_Type_Sigma #-}
+
+postulate Id_Type_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
+                       Id (Set (ℓ ⊔ ℓ₁)) ((a : A) → B a) ((a' : A') → B' a') ≡
+                       Id (Σ (Set ℓ) (λ A → A → Set ℓ₁)) (A , B) (A' , B')
+
+{-# REWRITE Id_Type_Pi #-}
+
+-- Contractibility of singletons and J can be defined
+
 contr_sing : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) →
     Id (Σ A (λ y → Box (Id A x y))) (x , box (Id_refl x)) (y , box p) 
-contr_sing A {x} {y} p = p ,, tt
+contr_sing A {x} {y} p = p ,, ttP
 
 J : (A : Set ℓ) (x : A) (P : (y : A) → Id A x y → Set ℓ₁) 
     (t : P x (Id_refl x)) (y : A) (e : Id A x y) → P y e
 J A x P t y e = transport (λ z → P (fst z) (unbox (snd z))) (x , box (Id_refl x)) t (y , box e) (contr_sing A e)
 
+-- tranporting back and forth is the identity
 
 transport_inv : (X : Set ℓ) (A : X → Set ℓ₁) 
                 (x : X) (y : X) (e : Id X x y) (a : A x) →
@@ -80,6 +108,8 @@ transport_inv : (X : Set ℓ) (A : X → Set ℓ₁)
 transport_inv X A x y e a = let e_refl = transport_refl A x a (Id_refl x)
                                 e_refl_inv = inverse (A x) ((transport A x a x _)) a e_refl
                             in unbox (J X x ((λ y e → Box (Id (A x) a (transport A y (transport A x a y e) x (inverse X x y e))))) ((transport (λ Z → Box (Id (A x) a (transport A x Z x (Id_refl x)))) a (box e_refl_inv) _ e_refl_inv)) y e)
+
+-- we can now state rewrite rules for transports
 
 postulate transport_Pi : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) → A x → Set ℓ₂)
                          (x : X) (f : (a : A x) → B x a) (y : X) (e : Id X x y) →
@@ -89,11 +119,6 @@ postulate transport_Pi : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) → A
                                                      ( e ,, Id_refl (transport A y a' x (inverse X x y e)) )
 
 {-# REWRITE transport_Pi #-}
-
-funext : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
-         Id ((a : A) → B a) f g -> ((a : A) → Id (B a) (f a) (g a))
-funext A B f g e = e
-
 
 postulate transport_Sigma : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) → A x → Set ℓ₂)
                             (x : X) (s : Σ (A x) (B x)) (y : X) (e : Id X x y) →
@@ -106,27 +131,12 @@ postulate transport_Sigma : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) �
 {-# REWRITE transport_Sigma #-}
 
 postulate transport_Unit : (X : Set ℓ)  
-                           (x : X) (s : Unit{ℓ₁}) (y : X) (e : Id X x y) →
-                           transport (λ x → Unit) x s y e ≡ s
+                           (x : X) (s : ⊤) (y : X) (e : Id X x y) →
+                           transport (λ x → ⊤) x s y e ≡ s
 
 {-# REWRITE transport_Unit #-}
 
-
-test_J_refl_on_closed_term : (X : Set ℓ) (x : X) →
-       transport (λ z → Σ Unit (λ z → Unit)) x (unit {ℓ₁}, unit {ℓ₁}) x (Id_refl x) ≡ (unit , unit)
-test_J_refl_on_closed_term X x = refl 
-
-postulate Id_Type_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
-                          Id (Set (ℓ ⊔ ℓ₁)) (Σ A B) (Σ A' B') ≡ Id (Σ (Set ℓ) (λ A → A → Set ℓ₁)) (A , B) (A' , B')
-
-{-# REWRITE Id_Type_Sigma #-}
-
-postulate Id_Type_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
-                       Id (Set (ℓ ⊔ ℓ₁)) ((a : A) → B a) ((a' : A') → B' a') ≡
-                       Id (Σ (Set ℓ) (λ A → A → Set ℓ₁)) (A , B) (A' , B')
-
-{-# REWRITE Id_Type_Pi #-}
-
+-- transporting over the identity it type casting
 
 postulate cast_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (f : (a : A) → B a) (e : _) →
                     transport (λ T → T) ((a : A) → B a) f ((a' : A') → B' a') e ≡
@@ -140,3 +150,8 @@ postulate cast_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set 
 
 {-# REWRITE cast_Sigma #-}
 
+
+
+test_J_refl_on_closed_term : (X : Set ℓ) (x : X) →
+       transport (λ z → Σ ⊤ (λ z → ⊤)) x (tt , tt) x (Id_refl x) ≡ (tt , tt)
+test_J_refl_on_closed_term X x = refl 
