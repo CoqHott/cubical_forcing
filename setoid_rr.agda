@@ -166,7 +166,7 @@ postulate transport_Unit : (X : Set ℓ) (x : X) (s : ⊤) (y : X) (e : Id X x y
 
 {-# REWRITE transport_Unit #-}
 
--- transporting over the identity it type casting
+-- transporting over the identity is type casting
 
 postulate cast_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (f : (a : A) → B a) (e : _) →
                     transport (λ T → T) ((a : A) → B a) f ((a' : A') → B' a') e ≡
