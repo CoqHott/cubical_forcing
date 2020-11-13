@@ -122,6 +122,12 @@ postulate Id_Type_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set 
 
 {-# REWRITE Id_Type_Pi #-}
 
+postulate Id_Type_List : (A A' : Set ℓ) →
+                       Id (Set ℓ) (List A) (List A') ≡
+                       Id (Set ℓ) A A'
+
+{-# REWRITE Id_Type_List #-}
+
 -- rewrite rules for the identity type on Prop : Prop ext modulo cumul 
 
 postulate Id_prop : (P Q : Prop ℓ) → Id (Prop ℓ) P Q ≡ i (P → Q) × (Q → P)
@@ -200,6 +206,12 @@ postulate cast_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set 
                     transport (λ X → Σ (fst X) (snd X)) (A , B) s (A' , B') e
 
 {-# REWRITE cast_Sigma #-}
+
+postulate cast_List : (A A' : Set ℓ) (l : List A) (e : _) →
+                    transport (λ T → T) (List A) l (List A') e ≡
+                    transport (λ T → List T) A l A' e
+
+{-# REWRITE cast_List #-}
 
 
 postulate transport_on_prop : (X : Set ℓ) (x : X) (P : Prop ℓ₁) (y : X) (e : Id X x y) →
