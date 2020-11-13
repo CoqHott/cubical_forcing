@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting --prop #-}
+{-# OPTIONS --rewriting --prop --confluence-check #-}
 
 open import Agda.Primitive
 open import Agda.Builtin.Bool
@@ -76,7 +76,7 @@ refl_Pi : (A : Set ℓ) (B : A → Set ℓ₁) (f : (a : A) → B a) →
           box (Id_refl f) ≡ box (λ a → Id_refl (f a))
 refl_Pi A B f = refl
 
--- sanity check forr funext
+-- sanity check for funext
 
 funext : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
          Id ((a : A) → B a) f g → ((a : A) → Id (B a) (f a) (g a))
@@ -89,7 +89,7 @@ postulate Id_Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (p q : Σ A B) →
                                                                 ((transport B (fst q) (snd q) (fst p) (inverse A e))))
 
 {-# REWRITE Id_Sigma #-}
-  
+
 postulate Id_Box : (A : Prop ℓ) (p q : Box A) → Id (Box A) p q ≡ ⊤P
 
 {-# REWRITE Id_Box #-}
