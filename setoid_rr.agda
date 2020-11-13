@@ -223,3 +223,69 @@ postulate transport_on_prop : (X : Set ℓ) (x : X) (P : Prop ℓ₁) (y : X) (e
 test_J_refl_on_closed_term : (X : Set ℓ) (x : X) →
        transport (λ z → Σ ⊤ (λ z → ⊤)) x (tt , tt) x (Id_refl x) ≡ (tt , tt)
 test_J_refl_on_closed_term X x = refl 
+
+-- Quotient types
+
+postulate Quotient : (A : Set ℓ)
+                     (R : A → A → Prop ℓ)
+                     (r : (x : A) → R x x)
+                     (s : (x y : A) → R x y → R y x)
+                     (t : (x y z : A) → R x y → R y z → R x z) →
+                     Set ℓ
+
+postulate pi : (A : Set ℓ)
+               (R : A → A → Prop ℓ)
+               (r : (x : A) → R x x)
+               (s : (x y : A) → R x y → R y x)
+               (t : (x y z : A) → R x y → R y z → R x z) →
+               A → Quotient A R r s t
+
+postulate Id_Quotient : (A : Set ℓ)
+                        (R : A → A → Prop ℓ)
+                        (r : (x : A) → R x x)
+                        (s : (x y : A) → R x y → R y x)
+                        (t : (x y z : A) → R x y → R y z → R x z)
+                        (a a' : A) →
+                        Id (Quotient A R r s t)
+                           (pi A R r s t a) (pi A R r s t a') ≡ R a a'
+
+{-# REWRITE Id_Quotient #-}
+
+postulate Quotient_elim : (A : Set ℓ)
+               (R : A → A → Prop ℓ)
+               (r : (x : A) → R x x)
+               (s : (x y : A) → R x y → R y x)
+               (t : (x y z : A) → R x y → R y z → R x z)
+               (P : Quotient A R r s t → Set ℓ₁) 
+               (p : (x : A) → P (pi A R r s t x))
+               (e : (x y : A) → (rel : R x y) →
+                    Id _ (transport P (pi A R r s t x) (p x) (pi A R r s t y) rel) (p y))
+               (w : Quotient A R r s t) → P w
+
+postulate Quotient_elim_rec : (A : Set ℓ)
+                (R : A → A → Prop ℓ)
+                (r : (x : A) → R x x)
+                (s : (x y : A) → R x y → R y x)
+                (t : (x y z : A) → R x y → R y z → R x z)
+                (P : Quotient A R r s t → Set ℓ₁) 
+                (p : (x : A) → P (pi A R r s t x))
+                (e : (x y : A) → (rel : R x y) →
+                     Id _ (transport P (pi A R r s t x) (p x) (pi A R r s t y) rel) (p y))
+                (a : A) →
+                Quotient_elim A R r s t P p e (pi A R r s t a)
+                ≡ p a
+
+{-# REWRITE Quotient_elim_rec #-}
+
+postulate transport_Quotient : (X : Set ℓ)
+                  (A : X -> Set ℓ₁)
+                  (R : (x : X) → A x → A x → Prop ℓ₁)
+                  (r : (z : X) (x : A z) → R z x x)
+                  (s : (z : X) (x y : A z) → R z x y → R z y x)
+                  (t : (zz : X) (x y z : A zz) → R zz x y → R zz y z → R zz x z)
+                  (x : X) (a : A x) (y : X) (e : Id X x y) →
+                  transport (λ x → Quotient (A x) (R x) (r x) (s x) (t x))
+                            x (pi (A x) (R x) (r x) (s x) (t x) a) y e
+                  ≡ pi (A y) (R y) (r y) (s y) (t y) (transport A x a y e)
+
+{-# REWRITE transport_Quotient #-}
