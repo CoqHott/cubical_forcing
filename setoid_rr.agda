@@ -353,7 +353,7 @@ postulate cast_Quotient : (A A' : Set ℓ)
 
 {-# REWRITE cast_Quotient #-}
 
--- Implementing transport_refl
+-- Sanity Check: transport_refl oon quotient type
 
 transport_refl_Quotient : (X : Set ℓ)
                   (A : X -> Set ℓ₁)
@@ -370,6 +370,4 @@ transport_refl_Quotient : (X : Set ℓ)
 transport_refl_Quotient X A R r s t x q e =
   Quotient_elim_prop (A x) (R x) (r x) (s x) (t x)
                      ((λ a → Id _ (transport (λ (x : X) → Quotient (A x) (R x) (r x) (s x) (t x)) x a x e) a))
-                     (λ a → transport_prop (λ a' → R x a' a) a (r x a) (transport A x a x e) ((inverse (A x) (transport_refl A x a e))))
-                     
-                     q
+                     (λ a → transport_prop (λ a' → R x a' a) a (r x a) (transport A x a x e) ((inverse (A x) (transport_refl A x a e)))) q
