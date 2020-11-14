@@ -63,6 +63,10 @@ transport_prop {A} P x t y e = unbox (transport (λ z → Box (P z)) x (box t) y
 inverse : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) → Id A y x
 inverse A {x} {y} p = transport_prop (λ z → Id A z x) x (Id_refl x) y p
 
+ap : (A : Set ℓ) (B : Set ℓ₁) (f : A → B) (x y : A) (e : Id A x y) →
+     Id B (f x) (f y)
+ap A B f x y e = transport_prop (λ z → Id B (f x) (f z)) x (Id_refl _) y e
+
 -- we now state rewrite rules for the identity type
 
 postulate Id_Pi : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
@@ -277,6 +281,15 @@ postulate Quotient_elim_rec : (A : Set ℓ)
 
 {-# REWRITE Quotient_elim_rec #-}
 
+postulate Quotient_elim_prop : (A : Set ℓ)
+               (R : A → A → Prop ℓ)
+               (r : (x : A) → R x x)
+               (s : (x y : A) → R x y → R y x)
+               (t : (x y z : A) → R x y → R y z → R x z)
+               (P : Quotient A R r s t → Prop ℓ₁) 
+               (p : (x : A) → P (pi A R r s t x))
+               (w : Quotient A R r s t) → P w
+
 postulate transport_Quotient : (X : Set ℓ)
                   (A : X -> Set ℓ₁)
                   (R : (x : X) → A x → A x → Prop ℓ₁)
@@ -340,3 +353,23 @@ postulate cast_Quotient : (A A' : Set ℓ)
 
 {-# REWRITE cast_Quotient #-}
 
+-- Implementing transport_refl
+
+transport_refl_Quotient : (X : Set ℓ)
+                  (A : X -> Set ℓ₁)
+                  (R : (x : X) → A x → A x → Prop ℓ₁)
+                  (r : (z : X) (x : A z) → R z x x)
+                  (s : (z : X) (x y : A z) → R z x y → R z y x)
+                  (t : (zz : X) (x y z : A zz) → R zz x y → R zz y z → R zz x z)
+                  (x : X) (q : Quotient (A x) (R x) (r x) (s x) (t x))
+                  (e : Id X x x) →
+                  Id _
+                    (transport (λ x → Quotient (A x) (R x) (r x) (s x) (t x))
+                               x q x e)
+                    q
+transport_refl_Quotient X A R r s t x q e =
+  Quotient_elim_prop (A x) (R x) (r x) (s x) (t x)
+                     ((λ a → Id _ (transport (λ (x : X) → Quotient (A x) (R x) (r x) (s x) (t x)) x a x e) a))
+                     (λ a → transport_prop (λ a' → R x a' a) a (r x a) (transport A x a x e) ((inverse (A x) (transport_refl A x a e))))
+                     
+                     q
