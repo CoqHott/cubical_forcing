@@ -289,3 +289,54 @@ postulate transport_Quotient : (X : Set ℓ)
                   ≡ pi (A y) (R y) (r y) (s y) (t y) (transport A x a y e)
 
 {-# REWRITE transport_Quotient #-}
+
+postulate Id_Type_Quotient : (A A' : Set ℓ) 
+                (R : A → A → Prop ℓ)
+                (R' : A' → A' → Prop ℓ)
+                (r : (x : A) → R x x)
+                (r' : (x : A') → R' x x)
+                (s : (x y : A) → R x y → R y x)
+                (s' : (x y : A') → R' x y → R' y x)
+                (t : (x y z : A) → R x y → R y z → R x z)
+                (t' : (x y z : A') → R' x y → R' y z → R' x z) →
+                Id (Set ℓ) (Quotient A R r s t) (Quotient A' R' r' s' t')
+                ≡
+                Id (Σ (Set ℓ) (λ A →
+                    Σ (A → A → Prop ℓ) (λ R → Box (
+                    Tel ((x : A) → R x x) (λ r →
+                    Tel ((x y : A) → R x y → R y x) (λ s →
+                      (x y z : A) → R x y → R y z → R x z))))))
+                   (A , (R , box (r ,, (s ,, t))))
+                   (A' , (R' , box (r' ,, (s' ,, t'))))
+
+{-# REWRITE Id_Type_Quotient #-}
+                  
+postulate cast_Quotient : (A A' : Set ℓ) 
+                (R : A → A → Prop ℓ)
+                (R' : A' → A' → Prop ℓ)
+                (r : (x : A) → R x x)
+                (r' : (x : A') → R' x x)
+                (s : (x y : A) → R x y → R y x)
+                (s' : (x y : A') → R' x y → R' y x)
+                (t : (x y z : A) → R x y → R y z → R x z)
+                (t' : (x y z : A') → R' x y → R' y z → R' x z)
+                (q : Quotient A R r s t) (e : _) →
+                transport (λ T → T) (Quotient A R r s t) q
+                                    (Quotient A' R' r' s' t') e ≡
+                transport (λ (X : Σ (Set ℓ) (λ A →
+                                  Σ (A → A → Prop ℓ) (λ R → Box (
+                                  Tel ((x : A) → R x x) (λ r →
+                                  Tel ((x y : A) → R x y → R y x) (λ s →
+                                  (x y z : A) → R x y → R y z → R x z))))))
+                                  → let struct = unbox (snd (snd X))
+                                    in Quotient (fst X) (fst (snd X))
+                                                (fstC struct)
+                                                (fstC (sndC struct))
+                                                (sndC (sndC struct)))
+                          (A , (R , box (r ,, (s ,, t))))
+                          q
+                          (A' , (R' , box (r' ,, (s' ,, t'))))
+                          e
+
+{-# REWRITE cast_Quotient #-}
+
