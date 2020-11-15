@@ -23,16 +23,6 @@ infixr 4 _,,_
 
 variable ℓ ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Level
 
--- axiomatisation of Id, Id_refl, transport and transport_refl (propositionally)
-
-postulate Id : (A : Set ℓ) → A → A → Prop ℓ
-
-postulate Id_refl : {A : Set ℓ} (x : A) → Id A x x
-
-postulate transport : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
-
-postulate transport_refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (e : Id A x x) → Id (P x) (transport P x t x e) t
-
 -- a bit of boilerplate to deal with Prop
 
 data ⊥ : Prop where
@@ -57,11 +47,32 @@ record i (A : Prop ℓ) : Prop (ℓ ⊔ ℓ₁) where
   field
     uninj : A
 
+{- 
+ Axiomatisation of Id, Id_refl, transport and transport_refl (propositionally)
+
+ Note that Id_refl and transport_refl are axioms in Prop, so we don't
+ need to give them a computation content. 
+-}
+
+postulate Id : (A : Set ℓ) → A → A → Prop ℓ
+
+postulate Id_refl : {A : Set ℓ} (x : A) → Id A x x
+
+postulate transport : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
+
+postulate transport_refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (e : Id A x x) → Id (P x) (transport P x t x e) t
+
+-- direct derived functions 
+
 transport_prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 transport_prop {A} P x t y e = unbox (transport (λ z → Box (P z)) x (box t) y e)
 
 inverse : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) → Id A y x
 inverse A {x} {y} p = transport_prop (λ z → Id A z x) x (Id_refl x) y p
+
+concat : (A : Set ℓ) {x y z : A} (p : Id {ℓ} A x y)
+         (q : Id {ℓ} A y z)→ Id A x z
+concat A {x} {y} {z} p q = transport_prop (λ t → Id A x t) y p z q
 
 ap : (A : Set ℓ) (B : Set ℓ₁) (f : A → B) (x y : A) (e : Id A x y) →
      Id B (f x) (f y)
@@ -88,9 +99,11 @@ funext A B f g e = e
 
 
 postulate Id_Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (p q : Σ A B) → 
-                     Id (Σ A B) p q ≡ Tel (Id A (fst p) (fst q))
-                                          (λ e → Id (B (fst p)) (snd p)
-                                                                ((transport B (fst q) (snd q) (fst p) (inverse A e))))
+                     Id (Σ A B) p q ≡
+                       Tel (Id A (fst p) (fst q))
+                           (λ e → Id (B (fst p))
+                                     (snd p)
+                                     ((transport B (fst q) (snd q) (fst p) (inverse A e))))
 
 {-# REWRITE Id_Sigma #-}
 
@@ -174,28 +187,28 @@ postulate transport_Pi : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) → A
 {-# REWRITE transport_Pi #-}
 
 postulate transport_Sigma : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) → A x → Set ℓ₂)
-                            (x : X) (s : Σ (A x) (B x)) (y : X) (e : Id X x y) →
-                            transport (λ z → Σ (A z) (B z)) x s y e ≡
-                            let a = fst s
-                                b = snd s
-                                a' = transport A x a y e
-                            in a' , transport (λ z → B (fst z) (snd z)) (x , a) b (y , a') (e ,, transport_inv X A x y e a)
+                            (x : X) (a : A x) (b : B x a) (y : X) (e : Id X x y) →
+                            transport (λ z → Σ (A z) (B z)) x (a , b) y e ≡
+                            let a' = transport A x a y e
+                            in a' , transport (λ z → B (fst z) (snd z)) _ b _ (e ,, transport_inv X A x y e a)
 
 {-# REWRITE transport_Sigma #-}
 
-postulate transport_Unit : (X : Set ℓ) (x : X) (s : ⊤) (y : X) (e : Id X x y) →
-                           transport (λ x → ⊤) x s y e ≡ s
+postulate transport_Unit : (X : Set ℓ) (x : X) (y : X) (e : Id X x y) →
+                           transport (λ x → ⊤) x tt y e ≡ tt
 
 {-# REWRITE transport_Unit #-}
 
-transport_List_ : (X : Set ℓ) (A : X → Set ℓ₁) (x : X) (l : List (A x)) (y : X) (e : Id X x y) → List (A y)
-transport_List_ X A x [] y e = []
-transport_List_ X A x (a ∷ l) y e = (transport A x a y e) ∷ (transport (λ x → List (A x)) x l y e)
+postulate transport_List_nil : (X : Set ℓ) (A : X → Set ℓ₁) (x : X) (y : X) (e : Id X x y) →
+                               transport (λ x → List (A x)) x [] y e ≡ []
 
-postulate transport_List : (X : Set ℓ) (A : X → Set ℓ₁) (x : X) (l : List (A x)) (y : X) (e : Id X x y) →
-                           transport (λ x → List (A x)) x l y e ≡ transport_List_ X A x l y e 
+postulate transport_List_cons : (X : Set ℓ) (A : X → Set ℓ₁) (x : X) (a : A x) (l : List (A x))
+                                (y : X) (e : Id X x y) →
+                                transport (λ x → List (A x)) x (a ∷ l) y e ≡
+                                transport A x a y e ∷ transport (λ x → List (A x)) x l y e
 
-{-# REWRITE transport_List #-}
+{-# REWRITE transport_List_nil #-}
+{-# REWRITE transport_List_cons #-}
 
 -- transporting over the identity is type casting
 
@@ -303,6 +316,13 @@ postulate transport_Quotient : (X : Set ℓ)
 
 {-# REWRITE transport_Quotient #-}
 
+telescope_Quotient : Set (lsuc ℓ)
+telescope_Quotient {ℓ} = Σ (Set ℓ) (λ A →
+                         Σ (A → A → Prop ℓ) (λ R → Box (
+                         Tel ((x : A) → R x x) (λ r →
+                         Tel ((x y : A) → R x y → R y x) (λ s →
+                         (x y z : A) → R x y → R y z → R x z)))))
+
 postulate Id_Type_Quotient : (A A' : Set ℓ) 
                 (R : A → A → Prop ℓ)
                 (R' : A' → A' → Prop ℓ)
@@ -314,11 +334,7 @@ postulate Id_Type_Quotient : (A A' : Set ℓ)
                 (t' : (x y z : A') → R' x y → R' y z → R' x z) →
                 Id (Set ℓ) (Quotient A R r s t) (Quotient A' R' r' s' t')
                 ≡
-                Id (Σ (Set ℓ) (λ A →
-                    Σ (A → A → Prop ℓ) (λ R → Box (
-                    Tel ((x : A) → R x x) (λ r →
-                    Tel ((x y : A) → R x y → R y x) (λ s →
-                      (x y z : A) → R x y → R y z → R x z))))))
+                Id telescope_Quotient 
                    (A , (R , box (r ,, (s ,, t))))
                    (A' , (R' , box (r' ,, (s' ,, t'))))
 
@@ -336,11 +352,7 @@ postulate cast_Quotient : (A A' : Set ℓ)
                 (q : Quotient A R r s t) (e : _) →
                 transport (λ T → T) (Quotient A R r s t) q
                                     (Quotient A' R' r' s' t') e ≡
-                transport (λ (X : Σ (Set ℓ) (λ A →
-                                  Σ (A → A → Prop ℓ) (λ R → Box (
-                                  Tel ((x : A) → R x x) (λ r →
-                                  Tel ((x y : A) → R x y → R y x) (λ s →
-                                  (x y z : A) → R x y → R y z → R x z))))))
+                transport (λ (X : telescope_Quotient)
                                   → let struct = unbox (snd (snd X))
                                     in Quotient (fst X) (fst (snd X))
                                                 (fstC struct)
