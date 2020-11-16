@@ -50,8 +50,10 @@ record i (A : Prop ℓ) : Prop (ℓ ⊔ ℓ₁) where
 {- 
  Axiomatisation of Id, Id_refl, transport and transport_refl (propositionally)
 
- Note that Id_refl and transport_refl are axioms in Prop, so we don't
- need to give them a computation content. 
+ Note that Id_refl, transport_Prop and transport_refl are axioms in Prop, 
+ so we don't need to give them a computation content. 
+
+ Also transport_refl is useless for transport on Prop
 -}
 
 postulate Id : (A : Set ℓ) → A → A → Prop ℓ
@@ -60,12 +62,11 @@ postulate Id_refl : {A : Set ℓ} (x : A) → Id A x x
 
 postulate transport : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 
+postulate transport_prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
+
 postulate transport_refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (e : Id A x x) → Id (P x) (transport P x t x e) t
 
 -- direct derived functions 
-
-transport_prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
-transport_prop {A} P x t y e = unbox (transport (λ z → Box (P z)) x (box t) y e)
 
 inverse : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) → Id A y x
 inverse A {x} {y} p = transport_prop (λ z → Id A z x) x (Id_refl x) y p
