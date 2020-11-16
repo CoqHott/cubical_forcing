@@ -293,7 +293,7 @@ postulate Quotient_elim : (A : Set ℓ)
                     Id _ (transport P (pi A R r s t x) (p x) (pi A R r s t y) rel) (p y))
                (w : Quotient A R r s t) → P w
 
-postulate Quotient_elim_rec : (A : Set ℓ)
+postulate Quotient_elim_red : (A : Set ℓ)
                 (R : A → A → Prop ℓ)
                 (r : (x : A) → R x x)
                 (s : (x y : A) → R x y → R y x)
@@ -306,7 +306,7 @@ postulate Quotient_elim_rec : (A : Set ℓ)
                 Quotient_elim A R r s t P p e (pi A R r s t a)
                 ≡ p a
 
-{-# REWRITE Quotient_elim_rec #-}
+{-# REWRITE Quotient_elim_red #-}
 
 postulate Quotient_elim_prop : (A : Set ℓ)
                (R : A → A → Prop ℓ)
