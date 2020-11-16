@@ -190,7 +190,7 @@ postulate transport_Pi : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) → A
                          transport (λ x → (a : A x) → B x a) x f y e ≡
                          λ (a' : A y) → let a = transport A y a' x (inverse X e)
                                         in transport (λ z → B (fst z) (snd z)) (x , a) (f a) (y , a')
-                                                     ( e ,, Id_refl (transport A y a' x (inverse X e)) )
+                                                     (e ,, Id_refl (transport A y a' x (inverse X e)) )
 
 {-# REWRITE transport_Pi #-}
 
@@ -249,6 +249,13 @@ test_J_refl_on_closed_term : (X : Set ℓ) (x : X) →
 test_J_refl_on_closed_term X x = refl 
 
 -- Quotient types
+
+{- 
+  Note that r s and t are not used in the definitions, they are just here
+  to make sure the theory stays consistent, because postulating the quotient, 
+  we can derive them. In particular, with R = λ _ _ → ⊥, we would get
+  a direct inconsistency using Id_refl
+-}
 
 postulate Quotient : (A : Set ℓ)
                      (R : A → A → Prop ℓ)
