@@ -99,12 +99,11 @@ funext : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
 funext A B f g e = e
 
 
-postulate Id_Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (p q : Σ A B) → 
-                     Id (Σ A B) p q ≡
-                       Tel (Id A (fst p) (fst q))
-                           (λ e → Id (B (fst p))
-                                     (snd p)
-                                     ((transport B (fst q) (snd q) (fst p) (inverse A e))))
+postulate Id_Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (a a' : A)
+                     (b : B a) (b' : B a') → 
+                     Id (Σ A B) (a , b) (a' , b') ≡
+                       Tel (Id A a a')
+                           (λ e → Id (B a) b (transport B a' b' a (inverse A e)))
 
 {-# REWRITE Id_Sigma #-}
 
@@ -116,15 +115,23 @@ postulate Id_Unit : (p q : ⊤) → Id ⊤ p q ≡ ⊤P
 
 {-# REWRITE Id_Unit #-}
 
-Id_list_ : (A : Set ℓ) (l l' : List A) → Prop ℓ
-Id_list_ A [] [] = ⊤P
-Id_list_ A [] (x ∷ l') = i ⊥
-Id_list_ A (x ∷ l) [] = i ⊥
-Id_list_ A (x ∷ l) (x₁ ∷ l') = ⊤P
+postulate Id_list_nil_nil : (A : Set ℓ) →
+                            Id (List A) [] [] ≡ ⊤P
 
-postulate Id_list : (A : Set ℓ) (l l' : List A) → Id (List A) l l' ≡ Id_list_ A l l'
+postulate Id_list_nil_cons : (A : Set ℓ) (a' : A) (l' : List A) →
+                             Id (List A) [] (a' ∷ l') ≡ i ⊥
 
-{-# REWRITE Id_list #-}
+postulate Id_list_cons_nil : (A : Set ℓ) (a : A) (l : List A) →
+                             Id (List A) (a ∷ l) [] ≡ i ⊥
+
+postulate Id_list_cons_cons : (A : Set ℓ) (a a' : A) (l l' : List A) →
+                             Id (List A) (a ∷ l) (a' ∷ l') ≡
+                             Id A a a' × Id (List A) l l'
+
+{-# REWRITE Id_list_nil_nil #-}
+{-# REWRITE Id_list_nil_cons #-}
+{-# REWRITE Id_list_cons_nil #-}
+{-# REWRITE Id_list_cons_cons #-}
 
 -- rewrite rules for the identity type on the universe
 
@@ -190,8 +197,7 @@ postulate transport_Pi : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) → A
 postulate transport_Sigma : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) → A x → Set ℓ₂)
                             (x : X) (a : A x) (b : B x a) (y : X) (e : Id X x y) →
                             transport (λ z → Σ (A z) (B z)) x (a , b) y e ≡
-                            let a' = transport A x a y e
-                            in a' , transport (λ z → B (fst z) (snd z)) _ b _ (e ,, transport_inv X A x y e a)
+                            (transport A x a y e , transport (λ z → B (fst z) (snd z)) _ b _ (e ,, transport_inv X A x y e a))
 
 {-# REWRITE transport_Sigma #-}
 
