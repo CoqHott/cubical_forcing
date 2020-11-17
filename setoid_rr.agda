@@ -102,8 +102,8 @@ funext A B f g e = e
 postulate Id_Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (a a' : A)
                      (b : B a) (b' : B a') → 
                      Id (Σ A B) (a , b) (a' , b') ≡
-                       Tel (Id A a a')
-                           (λ e → Id (B a) b (transport B a' b' a (inverse A e)))
+                     Tel (Id A a a')
+                         (λ e → Id (B a') (transport B a b a' e) b')
 
 {-# REWRITE Id_Sigma #-}
 
@@ -177,11 +177,10 @@ J_prop A x P t y e = transport_prop (λ z → P (fst z) (unbox (snd z))) (x , bo
 
 transport_inv : (X : Set ℓ) (A : X → Set ℓ₁) 
                 (x : X) (y : X) (e : Id X x y) (a : A x) →
-    Id (A x) a (transport A y (transport A x a y e) x (inverse X e))
+    Id (A x) (transport A y (transport A x a y e) x (inverse X e)) a
 transport_inv X A x y e a = let e_refl = transport_refl A x a (Id_refl x)
                                 e_refl_inv = inverse (A x) e_refl
-                            in J_prop X x (λ y e → Id (A x) a (transport A y (transport A x a y e) x (inverse X e)))
-                                      (transport_prop (λ Z → Id (A x) a (transport A x Z x (Id_refl x))) a e_refl_inv _ e_refl_inv) y e
+                            in J_prop X x (λ y e → Id (A x) (transport A y (transport A x a y e) x (inverse X e)) a) (transport_prop (λ Z → Id (A x) (transport A x Z x (Id_refl x)) a) a e_refl _ e_refl_inv) y e
 
 -- we can now state rewrite rules for transports
 
@@ -190,14 +189,14 @@ postulate transport_Pi : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) → A
                          transport (λ x → (a : A x) → B x a) x f y e ≡
                          λ (a' : A y) → let a = transport A y a' x (inverse X e)
                                         in transport (λ z → B (fst z) (snd z)) (x , a) (f a) (y , a')
-                                                     (e ,, Id_refl (transport A y a' x (inverse X e)) )
+                                                     (e ,, transport_inv X A y x (inverse X e) a') 
 
 {-# REWRITE transport_Pi #-}
 
 postulate transport_Sigma : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) → A x → Set ℓ₂)
                             (x : X) (a : A x) (b : B x a) (y : X) (e : Id X x y) →
                             transport (λ z → Σ (A z) (B z)) x (a , b) y e ≡
-                            (transport A x a y e , transport (λ z → B (fst z) (snd z)) _ b _ (e ,, transport_inv X A x y e a))
+                            (transport A x a y e , transport (λ z → B (fst z) (snd z)) _ b _ (e ,, Id_refl (transport A x a y e)))
 
 {-# REWRITE transport_Sigma #-}
 
