@@ -133,6 +133,23 @@ postulate Id_list_cons_cons : (A : Set ℓ) (a a' : A) (l l' : List A) →
 {-# REWRITE Id_list_cons_nil #-}
 {-# REWRITE Id_list_cons_cons #-}
 
+postulate Id_nat_zero_zero : Id Nat 0 0 ≡ ⊤P
+
+postulate Id_nat_zero_suc : (n : Nat) →
+                            Id Nat 0 (suc n) ≡ i ⊥
+
+postulate Id_nat_suc_zero : (n : Nat) →
+                            Id Nat (suc n) zero ≡ i ⊥
+
+postulate Id_nat_suc_suc : (n n' : Nat) →
+                           Id Nat (suc n) (suc n') ≡
+                           Id Nat n n'
+
+{-# REWRITE Id_nat_zero_zero #-}
+{-# REWRITE Id_nat_zero_suc #-}
+{-# REWRITE Id_nat_suc_zero #-}
+{-# REWRITE Id_nat_suc_suc #-}
+
 -- rewrite rules for the identity type on the universe
 
 postulate Id_Type_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
@@ -152,6 +169,14 @@ postulate Id_Type_List : (A A' : Set ℓ) →
                        Id (Set ℓ) A A'
 
 {-# REWRITE Id_Type_List #-}
+
+postulate Id_Type_Unit : Id Set ⊤ ⊤ ≡ ⊤P
+                        
+{-# REWRITE Id_Type_Unit #-}
+
+postulate Id_Type_Nat : Id Set Nat Nat ≡ Id Set ⊤ ⊤
+                        
+{-# REWRITE Id_Type_Nat #-}
 
 -- rewrite rules for the identity type on Prop : Prop ext modulo cumul 
 
@@ -216,6 +241,18 @@ postulate transport_List_cons : (X : Set ℓ) (A : X → Set ℓ₁) (x : X) (a 
 {-# REWRITE transport_List_nil #-}
 {-# REWRITE transport_List_cons #-}
 
+postulate transport_nat_zero : (X : Set ℓ) (x : X) (y : X) (e : Id X x y) →
+                               transport (λ x → Nat) x 0 y e ≡ 0
+
+postulate transport_nat_suc : (X : Set ℓ) (x : X) (n : Nat)
+                              (y : X) (e : Id X x y) →
+                              transport (λ x → Nat) x (suc n) y e ≡
+                              suc (transport (λ x → Nat) x n y e)
+
+{-# REWRITE transport_nat_zero #-}
+{-# REWRITE transport_nat_suc #-}
+
+
 -- transporting over the identity is type casting
 
 postulate cast_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (f : (a : A) → B a) (e : _) →
@@ -236,6 +273,11 @@ postulate cast_List : (A A' : Set ℓ) (l : List A) (e : _) →
 
 {-# REWRITE cast_List #-}
 
+postulate cast_Nat : (n : Nat) (e : _) →
+                    transport (λ T → T) Nat n Nat e ≡
+                    transport (λ T → Nat) ⊤ n ⊤ e
+
+{-# REWRITE cast_Nat #-}
 
 postulate transport_on_prop : (X : Set ℓ) (x : X) (P : Prop ℓ₁) (y : X) (e : Id X x y) →
                               transport (λ x → Prop ℓ₁) x P y e ≡ P
@@ -396,3 +438,65 @@ transport_refl_Quotient X A R r s t x q e =
   Quotient_elim_prop (A x) (R x) (r x) (s x) (t x)
                      ((λ a → Id _ (transport (λ (x : X) → Quotient (A x) (R x) (r x) (s x) (t x)) x a x e) a))
                      (λ a → transport_prop (λ a' → R x a' a) a (r x a) (transport A x a x e) ((inverse (A x) (transport_refl A x a e)))) q
+
+-- 
+
+-- Vectors (or how to deal with indices)
+
+postulate Vector : Set ℓ → Nat → Set ℓ
+
+postulate vnil : {A : Set ℓ} → Vector A 0
+
+postulate vcons : {A : Set ℓ} {n : Nat} (a : A) (v : Vector A n) → Vector A (suc n)
+
+postulate vector_elim : (A : Set ℓ) (P : (n : Nat) → Vector A n → Set ℓ₁) 
+                        (Pvnil : P 0 vnil) →
+                        (Pvcons : (n : Nat) (a : A) (v : Vector A n) → P n v → P (suc n) (vcons a v))
+                        (n : Nat) → (v : Vector A n) → P n v
+
+postulate vector_elim_vnil : (A : Set ℓ) (P : (n : Nat) → Vector A n → Set ℓ₁) 
+                        (Pvnil : P 0 vnil) →
+                        (Pvcons : (n : Nat) (a : A) (v : Vector A n) → P n v → P (suc n) (vcons a v)) → vector_elim A P Pvnil Pvcons 0 vnil ≡ Pvnil
+
+postulate vector_elim_vcons : (A : Set ℓ) (P : (n : Nat) → Vector A n → Set ℓ₁) 
+                        (Pvnil : P 0 vnil) →
+                        (Pvcons : (n : Nat) (a : A) (v : Vector A n) → P n v → P (suc n) (vcons a v))
+                        (n : Nat) (a : A) (v : Vector A n) →
+                        vector_elim A P Pvnil Pvcons (suc n) (vcons a v) ≡
+                        Pvcons n a v (vector_elim A P Pvnil Pvcons n v)
+
+{-# REWRITE vector_elim_vnil #-}
+{-# REWRITE vector_elim_vcons #-}
+
+postulate Id_vector_vnil_vnil : (A : Set ℓ) →
+                            Id (Vector A 0) vnil vnil ≡ ⊤P
+
+-- postulate Id_vector_vnil_vcons : not well typed
+-- postulate Id_vector_vcons_vnil : not well typed
+
+postulate Id_vector_vcons_vcons : (A : Set ℓ) (n : Nat) (a a' : A)
+                                  (l l' : Vector A n) →
+                                  Id (Vector A (suc n)) (vcons a l) (vcons a' l') ≡
+                                  Id A a a' × Id (Vector A n) l l'
+
+{-# REWRITE Id_vector_vnil_vnil #-}
+{-# REWRITE Id_vector_vcons_vcons #-}
+
+postulate Id_Type_Vector : (A A' : Set ℓ) (n n' : Nat) →
+                       Id (Set ℓ) (Vector A n) (Vector A' n') ≡
+                       Id (Set ℓ) A A' × Id Nat n n'
+
+{-# REWRITE Id_Type_Vector #-}
+
+postulate transport_Vector_vnil : (X : Set ℓ) (A : X → Set ℓ₁)
+                                  (x : X) (y : X) (e : Id X x y) →
+                       transport (λ x → Vector (A x) 0) x vnil y e ≡ vnil
+
+postulate transport_Vector_vcons : (X : Set ℓ) (A : X → Set ℓ₁) (n : Nat)
+                                   (x : X) (a : A x) (l : Vector (A x) n)
+                                   (y : X) (e : Id X x y) →
+                       transport (λ x → Vector (A x) (suc n)) x (vcons a l) y e ≡
+                       vcons (transport A x a y e) (transport (λ x → Vector (A x) n) x l y e)
+
+{-# REWRITE transport_Vector_vnil #-}
+{-# REWRITE transport_Vector_vcons #-}
