@@ -8,6 +8,7 @@ open import Agda.Builtin.Equality
 open import Agda.Builtin.Equality.Rewrite
 open import Agda.Builtin.Sigma
 open import Agda.Builtin.Unit
+open import Data.Vec.Base
 
 -- sigma type in Prop used to handle telescopes. 
 
@@ -71,9 +72,9 @@ postulate transport_refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x
 inverse : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) → Id A y x
 inverse A {x} {y} p = transport_prop (λ z → Id A z x) x (Id_refl x) y p
 
-concat : (A : Set ℓ) {x y z : A} (p : Id {ℓ} A x y)
+trans : (A : Set ℓ) {x y z : A} (p : Id {ℓ} A x y)
          (q : Id {ℓ} A y z)→ Id A x z
-concat A {x} {y} {z} p q = transport_prop (λ t → Id A x t) y p z q
+trans A {x} {y} {z} p q = transport_prop (λ t → Id A x t) y p z q
 
 ap : (A : Set ℓ) (B : Set ℓ₁) (f : A → B) (x y : A) (e : Id A x y) →
      Id B (f x) (f y)
@@ -439,64 +440,39 @@ transport_refl_Quotient X A R r s t x q e =
                      ((λ a → Id _ (transport (λ (x : X) → Quotient (A x) (R x) (r x) (s x) (t x)) x a x e) a))
                      (λ a → transport_prop (λ a' → R x a' a) a (r x a) (transport A x a x e) ((inverse (A x) (transport_refl A x a e)))) q
 
--- 
-
--- Vectors (or how to deal with indices)
-
-postulate Vector : Set ℓ → Nat → Set ℓ
-
-postulate vnil : {A : Set ℓ} → Vector A 0
-
-postulate vcons : {A : Set ℓ} {n : Nat} (a : A) (v : Vector A n) → Vector A (suc n)
-
-postulate vector_elim : (A : Set ℓ) (P : (n : Nat) → Vector A n → Set ℓ₁) 
-                        (Pvnil : P 0 vnil) →
-                        (Pvcons : (n : Nat) (a : A) (v : Vector A n) → P n v → P (suc n) (vcons a v))
-                        (n : Nat) → (v : Vector A n) → P n v
-
-postulate vector_elim_vnil : (A : Set ℓ) (P : (n : Nat) → Vector A n → Set ℓ₁) 
-                        (Pvnil : P 0 vnil) →
-                        (Pvcons : (n : Nat) (a : A) (v : Vector A n) → P n v → P (suc n) (vcons a v)) → vector_elim A P Pvnil Pvcons 0 vnil ≡ Pvnil
-
-postulate vector_elim_vcons : (A : Set ℓ) (P : (n : Nat) → Vector A n → Set ℓ₁) 
-                        (Pvnil : P 0 vnil) →
-                        (Pvcons : (n : Nat) (a : A) (v : Vector A n) → P n v → P (suc n) (vcons a v))
-                        (n : Nat) (a : A) (v : Vector A n) →
-                        vector_elim A P Pvnil Pvcons (suc n) (vcons a v) ≡
-                        Pvcons n a v (vector_elim A P Pvnil Pvcons n v)
-
-{-# REWRITE vector_elim_vnil #-}
-{-# REWRITE vector_elim_vcons #-}
+-- Vector (or how to deal with indices)
+-- Some of the rewrite rules below can be defined only because
+-- the indexes of vnil and vcons are given by constructor of Nat
 
 postulate Id_vector_vnil_vnil : (A : Set ℓ) →
-                            Id (Vector A 0) vnil vnil ≡ ⊤P
+                            Id (Vec A 0) [] [] ≡ ⊤P
 
 -- postulate Id_vector_vnil_vcons : not well typed
 -- postulate Id_vector_vcons_vnil : not well typed
 
 postulate Id_vector_vcons_vcons : (A : Set ℓ) (n : Nat) (a a' : A)
-                                  (l l' : Vector A n) →
-                                  Id (Vector A (suc n)) (vcons a l) (vcons a' l') ≡
-                                  Id A a a' × Id (Vector A n) l l'
+                                  (l l' : Vec A n) →
+                                  Id (Vec A (suc n)) (a ∷ l) (a' ∷ l') ≡
+                                  Id A a a' × Id (Vec A n) l l'
 
 {-# REWRITE Id_vector_vnil_vnil #-}
 {-# REWRITE Id_vector_vcons_vcons #-}
 
-postulate Id_Type_Vector : (A A' : Set ℓ) (n n' : Nat) →
-                       Id (Set ℓ) (Vector A n) (Vector A' n') ≡
+postulate Id_Type_Vec : (A A' : Set ℓ) (n n' : Nat) →
+                       Id (Set ℓ) (Vec A n) (Vec A' n') ≡
                        Id (Set ℓ) A A' × Id Nat n n'
 
-{-# REWRITE Id_Type_Vector #-}
+{-# REWRITE Id_Type_Vec #-}
 
-postulate transport_Vector_vnil : (X : Set ℓ) (A : X → Set ℓ₁)
+postulate transport_Vec_vnil : (X : Set ℓ) (A : X → Set ℓ₁)
                                   (x : X) (y : X) (e : Id X x y) →
-                       transport (λ x → Vector (A x) 0) x vnil y e ≡ vnil
+                       transport (λ x → Vec (A x) 0) x [] y e ≡ []
 
-postulate transport_Vector_vcons : (X : Set ℓ) (A : X → Set ℓ₁) (n : Nat)
-                                   (x : X) (a : A x) (l : Vector (A x) n)
+postulate transport_Vec_vcons : (X : Set ℓ) (A : X → Set ℓ₁) (n : Nat)
+                                   (x : X) (a : A x) (l : Vec (A x) n)
                                    (y : X) (e : Id X x y) →
-                       transport (λ x → Vector (A x) (suc n)) x (vcons a l) y e ≡
-                       vcons (transport A x a y e) (transport (λ x → Vector (A x) n) x l y e)
+                       transport (λ x → Vec (A x) (suc n)) x (a ∷ l) y e ≡
+                       transport A x a y e ∷ transport (λ x → Vec (A x) n) x l y e
 
-{-# REWRITE transport_Vector_vnil #-}
-{-# REWRITE transport_Vector_vcons #-}
+{-# REWRITE transport_Vec_vnil #-}
+{-# REWRITE transport_Vec_vcons #-}
