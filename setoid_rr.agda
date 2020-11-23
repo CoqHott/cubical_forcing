@@ -24,6 +24,16 @@ infixr 4 _,,_
 
 variable ℓ ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Level
 
+-- special type for product to account for non-dependency
+
+record Prod {a b} (A : Set a) (B : Set b) : Set (a ⊔ b) where
+  constructor _,,,_
+  field
+    fstP : A
+    sndP : B
+
+open Prod public
+
 -- a bit of boilerplate to deal with Prop
 
 data ⊥ : Prop where
@@ -108,6 +118,13 @@ postulate Id_Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (a a' : A)
 
 {-# REWRITE Id_Sigma #-}
 
+postulate Id_Prod : (A : Set ℓ) (B : Set ℓ₁) (a a' : A)
+                     (b b' : B) → 
+                     Id (Prod A B) (a ,,, b) (a' ,,, b') ≡
+                     Id A a a' × Id B b b'
+
+{-# REWRITE Id_Prod #-}
+
 postulate Id_Box : (A : Prop ℓ) (p q : Box A) → Id (Box A) p q ≡ ⊤P
 
 {-# REWRITE Id_Box #-}
@@ -158,6 +175,12 @@ postulate Id_Type_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → S
                           Id (Σ (Set ℓ) (λ A → A → Set ℓ₁)) (A , B) (A' , B')
 
 {-# REWRITE Id_Type_Sigma #-}
+
+postulate Id_Type_Prod : (A A' : Set ℓ) (B B' : Set ℓ₁) →
+                          Id (Set (ℓ ⊔ ℓ₁)) (Prod A B) (Prod A' B') ≡
+                          Id (Prod (Set ℓ) (Set ℓ₁)) (A ,,, B) (A' ,,, B')
+
+{-# REWRITE Id_Type_Prod #-}
 
 postulate Id_Type_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
                        Id (Set (ℓ ⊔ ℓ₁)) ((a : A) → B a) ((a' : A') → B' a') ≡
@@ -226,6 +249,13 @@ postulate transport_Sigma : (X : Set ℓ) (A : X → Set ℓ₁) (B : (x : X) �
 
 {-# REWRITE transport_Sigma #-}
 
+postulate transport_Prod : (X : Set ℓ) (A : X → Set ℓ₁) (B : X → Set ℓ₂)
+                            (x : X) (a : A x) (b : B x) (y : X) (e : Id X x y) →
+                            transport (λ z → Prod (A z) (B z)) x (a ,,, b) y e ≡
+                            (transport A x a y e ,,, transport B _ b _ e)
+
+{-# REWRITE transport_Prod #-}
+
 postulate transport_Unit : (X : Set ℓ) (x : X) (y : X) (e : Id X x y) →
                            transport (λ x → ⊤) x tt y e ≡ tt
 
@@ -242,16 +272,22 @@ postulate transport_List_cons : (X : Set ℓ) (A : X → Set ℓ₁) (x : X) (a 
 {-# REWRITE transport_List_nil #-}
 {-# REWRITE transport_List_cons #-}
 
-postulate transport_nat_zero : (X : Set ℓ) (x : X) (y : X) (e : Id X x y) →
-                               transport (λ x → Nat) x 0 y e ≡ 0
+-- postulate transport_nat_zero : (X : Set ℓ) (x : X) (y : X) (e : Id X x y) →
+--                                transport (λ x → Nat) x 0 y e ≡ 0
 
-postulate transport_nat_suc : (X : Set ℓ) (x : X) (n : Nat)
+-- postulate transport_nat_suc : (X : Set ℓ) (x : X) (n : Nat)
+--                               (y : X) (e : Id X x y) →
+--                               transport (λ x → Nat) x (suc n) y e ≡
+--                               suc (transport (λ x → Nat) x n y e)
+
+postulate transport_nat : (X : Set ℓ) (x : X) (n : Nat)
                               (y : X) (e : Id X x y) →
-                              transport (λ x → Nat) x (suc n) y e ≡
-                              suc (transport (λ x → Nat) x n y e)
-
-{-# REWRITE transport_nat_zero #-}
-{-# REWRITE transport_nat_suc #-}
+                              transport (λ x → Nat) x n y e ≡
+                              n
+                              
+-- {-# REWRITE transport_nat_zero #-}
+-- {-# REWRITE transport_nat_suc #-}
+{-# REWRITE transport_nat #-}
 
 
 -- transporting over the identity is type casting
@@ -267,6 +303,12 @@ postulate cast_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set 
                     transport (λ X → Σ (fst X) (snd X)) (A , B) s (A' , B') e
 
 {-# REWRITE cast_Sigma #-}
+
+postulate cast_Prod : (A A' : Set ℓ) (B B' : Set ℓ₁) (s : Prod A B) (e : _) →
+                    transport (λ T → T) (Prod A B) s (Prod A' B') e ≡
+                    transport (λ X → Prod (fstP X) (sndP X)) (A ,,, B) s (A' ,,, B') e
+
+{-# REWRITE cast_Prod #-}
 
 postulate cast_List : (A A' : Set ℓ) (l : List A) (e : _) →
                     transport (λ T → T) (List A) l (List A') e ≡
@@ -468,11 +510,60 @@ postulate transport_Vec_vnil : (X : Set ℓ) (A : X → Set ℓ₁)
                                   (x : X) (y : X) (e : Id X x y) →
                        transport (λ x → Vec (A x) 0) x [] y e ≡ []
 
-postulate transport_Vec_vcons : (X : Set ℓ) (A : X → Set ℓ₁) (n : Nat)
-                                   (x : X) (a : A x) (l : Vec (A x) n)
+postulate transport_Vec_vcons : (X : Set ℓ) (A : X → Set ℓ₁) (n : X → Nat)
+                                   (x : X) (a : A x) (l : Vec (A x) (n x))
                                    (y : X) (e : Id X x y) →
-                       transport (λ x → Vec (A x) (suc n)) x (a ∷ l) y e ≡
-                       transport A x a y e ∷ transport (λ x → Vec (A x) n) x l y e
+                       transport (λ x → Vec (A x) (suc (n x))) x (a ∷ l) y e ≡
+                       transport A x a y e ∷ transport (λ x → Vec (A x) (n x)) x l y e
 
 {-# REWRITE transport_Vec_vnil #-}
 {-# REWRITE transport_Vec_vcons #-}
+
+postulate cast_Vec : (A A' : Set ℓ) (n n' : Nat) (v : Vec A n) (e : _) →
+                    transport (λ T → T) (Vec A n) v (Vec A' n') e ≡
+                    transport (λ X → Vec (fst X) (snd X)) (A , n) v (A' , n') e
+
+{-# REWRITE cast_Vec #-}
+
+-- Now for Path
+
+postulate Id_Path : (A : Set ℓ) (x y : A) (p q : x ≡ y) →
+                    Id (x ≡ y) p q ≡ ⊤P
+
+
+{-# REWRITE Id_Path #-}
+
+postulate Id_Type_Path : (A A' : Set ℓ) (x y : A) (x' y' : A') →
+                       Id (Set ℓ) (x ≡ y) (x' ≡ y') ≡
+                       Tel (Id (Set ℓ) A A')
+                           (λ e → Id A' (transport (λ T → T) _ x _ e) x' ×
+                                  Id A' (transport (λ T → T) _ y _ e) y')
+
+
+{-# REWRITE Id_Type_Path #-}
+
+
+postulate transport_Path : (X : Set ℓ) (A : X → Set ℓ₁)
+                           (a : (x : X) → A x)
+                           -- (a' : (x : X) → A x) 
+                           (x : X) (y : X) (e : Id X x y) →
+                           transport (λ x → a x ≡ a x) x (refl) y e ≡
+                           refl
+
+-- This rewrite rule is not valid as it is non-linear
+
+{-# REWRITE transport_Path #-}
+
+
+-- telescope_Path : Set (lsuc ℓ)
+-- telescope_Path {ℓ} = Σ (Set ℓ) (λ A → Σ A (λ _ → A))
+
+postulate cast_Path : (A A' : Set ℓ) (x y : A) (x' y' : A') (p : x ≡ y) (e : _) →
+                    transport (λ T → T) (x ≡ y) p (x' ≡ y') e ≡
+                    transport (λ (X : Σ (Set ℓ) (λ A → Prod A A)) →
+                                 fstP (snd X) ≡ sndP (snd X))
+                              (A , (x ,,, y)) p (A' , (x' ,,, y')) e  
+
+{-# REWRITE cast_Path #-}
+
+
