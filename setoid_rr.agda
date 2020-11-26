@@ -541,7 +541,7 @@ postulate cast_VecL_suc : (A A' : Set ℓ) (a : A) (a' : A') (l : List A) (l' : 
                     transport (λ (X : telescope_VecL) → VecL (fst X) (fst (snd X)) (snd (snd X))) (A , (a , a ∷ l)) v (A' , (a' , a' ∷ l')) e
 
 {-# REWRITE cast_VecL_zero #-}
-{-# REWRITE cast_Vec_suc #-}
+{-# REWRITE cast_VecL_suc #-}
 
 -- Now for Path
 
