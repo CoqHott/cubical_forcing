@@ -270,6 +270,16 @@ postulate transport_nat_suc : (X : Set ℓ) (x : X) (n : Nat)
 {-# REWRITE transport_nat_zero #-}
 {-# REWRITE transport_nat_suc #-}
 
+postulate transport_on_prop : (X : Set ℓ) (x : X) (P : Prop ℓ₁) (y : X) (e : Id X x y) →
+                              transport (λ x → Prop ℓ₁) x P y e ≡ P
+
+{-# REWRITE transport_on_prop #-}
+
+postulate transport_on_set : (X : Set ℓ) (x : X) (A : Set ℓ₁) (y : X) (e : Id X x y) →
+                              transport (λ x → Set ℓ₁) x A y e ≡ A
+
+{-# REWRITE transport_on_set #-}
+
 -- transporting over the identity is type casting
 
 postulate cast_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (f : (a : A) → B a) (e : _) →
@@ -307,10 +317,6 @@ postulate cast_Box : (A A' : Prop ℓ) (l : Box A) (e : _) →
                     transport (λ (T : telescope_Box) → Box T) A l A' e
 
 {-# REWRITE cast_Box #-}
-
-postulate transport_on_prop : (X : Set ℓ) (x : X) (P : Prop ℓ₁) (y : X) (e : Id X x y) →
-                              transport (λ x → Prop ℓ₁) x P y e ≡ P
-{-# REWRITE transport_on_prop #-}
 
 -- sanity check on closed terms
 
