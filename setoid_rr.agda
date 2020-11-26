@@ -479,16 +479,11 @@ postulate transport_Vec_vcons : (X : Set ℓ) (A : X → Set ℓ₁) (n : X → 
 {-# REWRITE transport_Vec_vnil #-}
 {-# REWRITE transport_Vec_vcons #-}
 
-postulate cast_Vec_zero : (A A' : Set ℓ) (v : Vec A 0) (e : _) →
-                    transport (λ T → T) (Vec A 0) v (Vec A' 0) e ≡
-                    transport (λ (X : telescope_Vec) → Vec (fst X) (snd X)) (A , 0) v (A' , 0) e
+postulate cast_Vec : (A A' : Set ℓ) (n n' : Nat) (v : Vec A n) (e : _) →
+                    transport (λ T → T) (Vec A n) v (Vec A' n') e ≡
+                    transport (λ (X : telescope_Vec) → Vec (fst X) (snd X)) (A , n) v (A' , n') e
 
-postulate cast_Vec_suc : (A A' : Set ℓ) (n n' : Nat) (v : Vec A (suc n)) (e : _) →
-                    transport (λ T → T) (Vec A (suc n)) v (Vec A' (suc n')) e ≡
-                    transport (λ (X : telescope_Vec) → Vec (fst X) (snd X)) (A , suc n) v (A' , suc n') e
-
-{-# REWRITE cast_Vec_zero #-}
-{-# REWRITE cast_Vec_suc #-}
+{-# REWRITE cast_Vec #-}
 
 -- Test with weird vectors indexed by lists.
 
@@ -532,16 +527,11 @@ postulate transport_VecL_vcons : (X : Set ℓ) (A : X → Set ℓ₁) (Val : (x 
 {-# REWRITE transport_VecL_vnil #-}
 {-# REWRITE transport_VecL_vcons #-}
 
-postulate cast_VecL_zero : (A A' : Set ℓ) (a : A) (a' : A') (v : VecL A a []) (e : _) →
-                    transport (λ T → T) (VecL A a []) v (VecL A' a' []) e ≡
-                    transport (λ (X : telescope_VecL) → VecL (fst X) (fst (snd X)) (snd (snd X))) (A , (a , [])) v (A' , (a' , [])) e
+postulate cast_VecL : (A A' : Set ℓ) (a : A) (a' : A') (l : List A) (l' : List A') (v : VecL A a l) (e : _) →
+                    transport (λ T → T) (VecL A a l) v ( VecL A' a' l') e ≡
+                    transport (λ (X : telescope_VecL) → VecL (fst X) (fst (snd X)) (snd (snd X))) (A , (a , l)) v (A' , (a' , l')) e
 
-postulate cast_VecL_suc : (A A' : Set ℓ) (a : A) (a' : A') (l : List A) (l' : List A') (v : VecL A a (a ∷ l)) (e : _) →
-                    transport (λ T → T) (VecL A a (a ∷ l)) v ( VecL A' a' (a' ∷ l')) e ≡
-                    transport (λ (X : telescope_VecL) → VecL (fst X) (fst (snd X)) (snd (snd X))) (A , (a , a ∷ l)) v (A' , (a' , a' ∷ l')) e
-
-{-# REWRITE cast_VecL_zero #-}
-{-# REWRITE cast_VecL_suc #-}
+{-# REWRITE cast_VecL #-}
 
 -- Now for Path
 
