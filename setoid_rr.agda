@@ -108,7 +108,7 @@ postulate Id_Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (a a' : A)
 
 {-# REWRITE Id_Sigma #-}
 
-postulate Id_Box : (A : Prop ℓ) (p q : Box A) → Id (Box A) p q ≡ ⊤P
+postulate Id_Box : (A : Prop ℓ) (p q : A) → Id (Box A) (box p) (box q) ≡ ⊤P
 
 {-# REWRITE Id_Box #-}
 
@@ -183,6 +183,10 @@ postulate Id_Type_Unit : Id Set ⊤ ⊤ ≡ ⊤P
 postulate Id_Type_Nat : Id Set Nat Nat ≡ Id Set ⊤ ⊤
                         
 {-# REWRITE Id_Type_Nat #-}
+
+postulate Id_Type_Box : (P P' : Prop ℓ) → Id (Set ℓ) (Box P) (Box P') ≡ Id (Prop ℓ) P P'
+                        
+{-# REWRITE Id_Type_Box #-}
 
 -- rewrite rules for the identity type on Prop : Prop ext modulo cumul 
 
