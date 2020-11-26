@@ -473,8 +473,10 @@ postulate transport_Vec_vnil : (X : Set ℓ) (A : X → Set ℓ₁)
 postulate transport_Vec_vcons : (X : Set ℓ) (A : X → Set ℓ₁) (n : X → Nat)
                                    (x : X) (a : A x) (l : Vec (A x) (n x))
                                    (y : X) (e : Id X x y) →
-                       transport (λ (z : X) → Vec (A z) (suc (n z))) x (a ∷ l) y e ≡
+                       transport (λ (z : X) → Vec (A z) (suc (n z))) x (_∷_ {A = {- ! -} A x} {n = {- ! -} n x} a l) y e ≡
                        transport A x a y e ∷ transport (λ z → Vec (A z) (n z)) x l y e
+
+{- Note that the rule above is technically non-linear, but the arguments A and n of vcons can be seen as "type-forced" -}
 
 {-# REWRITE transport_Vec_vnil #-}
 {-# REWRITE transport_Vec_vcons #-}
@@ -554,10 +556,11 @@ postulate Id_Type_Path : (A A' : Set ℓ) (x y : A) (x' y' : A') →
 postulate transport_Path : (X : Set ℓ) (A : X → Set ℓ₁)
                            (a : (x : X) → A x)
                            (x : X) (y : X) (e : Id X x y) →
-                           transport (λ x → a x ≡ a x) x (refl) y e ≡
+                           transport (λ x → a x ≡ {- ! -} a x) x (refl) y e ≡
                            refl
 
--- This rewrite rule is not valid as it is non-linear
+-- This rewrite rule is not valid as it is non-linear or we need to accept rewrite rules with "type-forced" arguments such as
+-- transport (λ x → a x ≡ !{a x}) x (refl {x = !{a x}}) y e ≡ refl {x = a y}
 
 {-# REWRITE transport_Path #-}
 
@@ -568,5 +571,3 @@ postulate cast_Path : (A A' : Set ℓ) (x y : A) (x' y' : A') (p : x ≡ y) (e :
                               (A , (x , y)) p (A' , (x' , y')) e  
 
 {-# REWRITE cast_Path #-}
-
-
