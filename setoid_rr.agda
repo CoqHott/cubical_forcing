@@ -563,7 +563,6 @@ postulate Id_Type_Path : (A A' : Set ℓ) (x y : A) (x' y' : A') →
 
 postulate transport_Path : (X : Set ℓ) (A : X → Set ℓ₁)
                            (a : (x : X) → A x)
-                           -- (a' : (x : X) → A x) 
                            (x : X) (y : X) (e : Id X x y) →
                            transport (λ x → a x ≡ a x) x (refl) y e ≡
                            refl
@@ -573,15 +572,11 @@ postulate transport_Path : (X : Set ℓ) (A : X → Set ℓ₁)
 {-# REWRITE transport_Path #-}
 
 
--- telescope_Path : Set (lsuc ℓ)
--- telescope_Path {ℓ} = Σ (Set ℓ) (λ A → Σ A (λ _ → A))
+postulate cast_Path : (A A' : Set ℓ) (x y : A) (x' y' : A') (p : x ≡ y) (e : _) →
+                    transport (λ T → T) (x ≡ y) p (x' ≡ y') e ≡
+                    transport (λ (X : telescope_Path) → fst (snd X) ≡ snd (snd X))
+                              (A , (x , y)) p (A' , (x' , y')) e  
 
--- postulate cast_Path : (A A' : Set ℓ) (x y : A) (x' y' : A') (p : x ≡ y) (e : _) →
---                     transport (λ T → T) (x ≡ y) p (x' ≡ y') e ≡
---                     transport (λ (X : Σ (Set ℓ) (λ A → Prod A A)) →
---                                  fstP (snd X) ≡ sndP (snd X))
---                               (A , (x , y)) p (A' , (x' , y')) e  
-
--- {-# REWRITE cast_Path #-}
+{-# REWRITE cast_Path #-}
 
 
