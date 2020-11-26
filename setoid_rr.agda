@@ -184,7 +184,10 @@ postulate Id_Type_Nat : Id Set Nat Nat ≡ Id Set ⊤ ⊤
                         
 {-# REWRITE Id_Type_Nat #-}
 
-postulate Id_Type_Box : (P P' : Prop ℓ) → Id (Set ℓ) (Box P) (Box P') ≡ Id (Prop ℓ) P P'
+telescope_Box : Set (lsuc ℓ)
+telescope_Box {ℓ} = Prop ℓ
+
+postulate Id_Type_Box : (P P' : Prop ℓ) → Id (Set ℓ) (Box P) (Box P') ≡ Id telescope_Box P P'
                         
 {-# REWRITE Id_Type_Box #-}
 
@@ -240,6 +243,11 @@ postulate transport_Unit : (X : Set ℓ) (x : X) (y : X) (e : Id X x y) →
 
 {-# REWRITE transport_Unit #-}
 
+postulate transport_Box : (X : Set ℓ) (A : X → Prop ℓ₁) (x : X) (a : A x) (y : X) (e : Id X x y) →
+                           transport (λ x → Box (A x)) x (box a) y e ≡ box (transport_prop A x a y e)
+
+{-# REWRITE transport_Box #-}
+
 postulate transport_List_nil : (X : Set ℓ) (A : X → Set ℓ₁) (x : X) (y : X) (e : Id X x y) →
                                transport (λ x → List (A x)) x [] y e ≡ []
 
@@ -287,6 +295,18 @@ postulate cast_Nat : (n : Nat) (e : _) →
                     transport (λ T → Nat) ⊤ n ⊤ e
 
 {-# REWRITE cast_Nat #-}
+
+postulate cast_Unit : (n : ⊤) (e : _) →
+                    transport (λ T → T) ⊤ n ⊤ e ≡
+                    transport (λ T → ⊤) ⊤ n ⊤ e
+
+{-# REWRITE cast_Unit #-}
+
+postulate cast_Box : (A A' : Prop ℓ) (l : Box A) (e : _) →
+                    transport (λ T → T) (Box A) l (Box A') e ≡
+                    transport (λ (T : telescope_Box) → Box T) A l A' e
+
+{-# REWRITE cast_Box #-}
 
 postulate transport_on_prop : (X : Set ℓ) (x : X) (P : Prop ℓ₁) (y : X) (e : Id X x y) →
                               transport (λ x → Prop ℓ₁) x P y e ≡ P
