@@ -119,55 +119,60 @@ postulate Id_Unit : (p q : ⊤) → Id ⊤ p q ≡ ⊤P
 postulate Id_list_nil_nil : (A : Set ℓ) →
                             Id (List A) [] [] ≡ ⊤P
 
-postulate Id_list_nil_cons : (A : Set ℓ) (a' : A) (l' : List A) →
-                             Id (List A) [] (a' ∷ l') ≡ i ⊥
+-- postulate Id_list_nil_cons : (A : Set ℓ) (a' : A) (l' : List A) →
+--                              Id (List A) [] (a' ∷ l') ≡ i ⊥
 
-postulate Id_list_cons_nil : (A : Set ℓ) (a : A) (l : List A) →
-                             Id (List A) (a ∷ l) [] ≡ i ⊥
+-- postulate Id_list_cons_nil : (A : Set ℓ) (a : A) (l : List A) →
+--                              Id (List A) (a ∷ l) [] ≡ i ⊥
 
 postulate Id_list_cons_cons : (A : Set ℓ) (a a' : A) (l l' : List A) →
                              Id (List A) (a ∷ l) (a' ∷ l') ≡
                              Id A a a' × Id (List A) l l'
 
 {-# REWRITE Id_list_nil_nil #-}
-{-# REWRITE Id_list_nil_cons #-}
-{-# REWRITE Id_list_cons_nil #-}
 {-# REWRITE Id_list_cons_cons #-}
 
 postulate Id_nat_zero_zero : Id Nat 0 0 ≡ ⊤P
 
-postulate Id_nat_zero_suc : (n : Nat) →
-                            Id Nat 0 (suc n) ≡ i ⊥
+-- postulate Id_nat_zero_suc : (n : Nat) →
+--                             Id Nat 0 (suc n) ≡ i ⊥
 
-postulate Id_nat_suc_zero : (n : Nat) →
-                            Id Nat (suc n) zero ≡ i ⊥
+-- postulate Id_nat_suc_zero : (n : Nat) →
+--                             Id Nat (suc n) zero ≡ i ⊥
 
 postulate Id_nat_suc_suc : (n n' : Nat) →
                            Id Nat (suc n) (suc n') ≡
                            Id Nat n n'
 
 {-# REWRITE Id_nat_zero_zero #-}
-{-# REWRITE Id_nat_zero_suc #-}
-{-# REWRITE Id_nat_suc_zero #-}
 {-# REWRITE Id_nat_suc_suc #-}
 
 -- rewrite rules for the identity type on the universe
 
+telescope_Sigma : Set (lsuc (ℓ ⊔ ℓ₁))
+telescope_Sigma {ℓ} {ℓ₁} = Σ (Set ℓ) (λ A → A → Set ℓ₁)
+
 postulate Id_Type_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
                           Id (Set (ℓ ⊔ ℓ₁)) (Σ A B) (Σ A' B') ≡
-                          Id (Σ (Set ℓ) (λ A → A → Set ℓ₁)) (A , B) (A' , B')
+                          Id telescope_Sigma (A , B) (A' , B')
 
 {-# REWRITE Id_Type_Sigma #-}
 
+telescope_Forall : Set (lsuc (ℓ ⊔ ℓ₁))
+telescope_Forall {ℓ} {ℓ₁} = Σ (Set ℓ) (λ A → A → Set ℓ₁)
+
 postulate Id_Type_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
                        Id (Set (ℓ ⊔ ℓ₁)) ((a : A) → B a) ((a' : A') → B' a') ≡
-                       Id (Σ (Set ℓ) (λ A → A → Set ℓ₁)) (A , B) (A' , B')
+                       Id telescope_Forall (A , B) (A' , B')
 
 {-# REWRITE Id_Type_Pi #-}
 
+telescope_List : Set (lsuc ℓ)
+telescope_List {ℓ} = Set ℓ
+
 postulate Id_Type_List : (A A' : Set ℓ) →
                        Id (Set ℓ) (List A) (List A') ≡
-                       Id (Set ℓ) A A'
+                       Id telescope_List A A'
 
 {-# REWRITE Id_Type_List #-}
 
@@ -257,19 +262,19 @@ postulate transport_nat_suc : (X : Set ℓ) (x : X) (n : Nat)
 
 postulate cast_Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (f : (a : A) → B a) (e : _) →
                     transport (λ T → T) ((a : A) → B a) f ((a' : A') → B' a') e ≡
-                    transport (λ X → (x : fst X) → (snd X) x) (A , B) f (A' , B') e
+                    transport (λ (X : telescope_Forall) → (x : fst X) → (snd X) x) (A , B) f (A' , B') e
 
 {-# REWRITE cast_Pi #-}
 
 postulate cast_Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (s : Σ A B) (e : _) →
                     transport (λ T → T) (Σ A B) s (Σ A' B') e ≡
-                    transport (λ X → Σ (fst X) (snd X)) (A , B) s (A' , B') e
+                    transport (λ (X : telescope_Sigma) → Σ (fst X) (snd X)) (A , B) s (A' , B') e
 
 {-# REWRITE cast_Sigma #-}
 
 postulate cast_List : (A A' : Set ℓ) (l : List A) (e : _) →
                     transport (λ T → T) (List A) l (List A') e ≡
-                    transport (λ T → List T) A l A' e
+                    transport (λ (T : telescope_List) → List T) A l A' e
 
 {-# REWRITE cast_List #-}
 
