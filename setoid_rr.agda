@@ -575,8 +575,8 @@ postulate cast_VecL : (A A' : Set ℓ) (a : A) (a' : A') (l : List A) (l' : List
 telescope_Path : Set (lsuc ℓ)
 telescope_Path {ℓ} = Σ (Set ℓ) (λ A → Σ A (λ _ → A))
 
-postulate Id_Path : (A : Set ℓ) (x y : A) (p q : x ≡ y) →
-                    Id (x ≡ y) p q ≡ ⊤P
+postulate Id_Path : (A : Set ℓ) (x : A) →
+                    Id (x ≡ {- ! -} x) (refl) (refl) ≡ ⊤P
 
 
 {-# REWRITE Id_Path #-}
