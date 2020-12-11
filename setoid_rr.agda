@@ -348,39 +348,45 @@ postulate weird-cast-app : (X : Set ℓ) (U : X → Set ℓ₁) (u : (x : X) →
                       transport (λ x → (t x) (u x)) x a y e ≡
                       transport (λ (T : Set ℓ₂) → T) ((t x) (u x)) a ((t y) (u y)) (let e1 = apD t e (u y) in let e2 = ap (t x) (inverse (U x) (apD u (inverse X e))) in concatId (Set ℓ₂) { x = t x (u x) } { y = t x (transport U y (u y) x (inverse X e)) } { z = t y (u y) } e2 e1 ) 
 
--- postulate weird-cast-app : (X : Set ℓ) (f g : X → Set ℓ₁) (x : X)  (t : f x) (e : _) →
---                       transport (λ f → f x) f t g e ≡
---                       transport (λ (T : Set ℓ₁) → T) (f x) t (g x) (e x)
-
+-- not a valid rewrite rule
 -- {-# REWRITE weird-cast-app #-}
 
-postulate weird-cast-fst : (B : Set → Set) (X Y : Σ Set B) (x : fst X) (e : _) →
+weird-cast-fst : (B : Set → Set) (X Y : Σ Set B) (x : fst X) (e : _) →
                         transport (λ (T : Σ Set B) → fst T) X x Y e
                         ≡
                         transport (λ (T : Set) → T) (fst X) x (fst Y) (fstC e)
+weird-cast-fst B X Y x e = weird-cast-app (Σ Set B) (λ X → ⊤) (λ X → tt) (λ X _ → fst X) X Y x e 
+
 
 {-# REWRITE weird-cast-fst #-}
 
-postulate weird-cast-snd : (A : Set) (X Y : Σ A (λ _ → Set)) (x : snd X) (e : _) →
+weird-cast-snd : (A : Set) (X Y : Σ A (λ _ → Set)) (x : snd X) (e : _) →
                         transport (λ (T : Σ A (λ _ → Set)) → snd T) X x Y e
                         ≡
                         transport (λ (T : Set) → T) (snd X) x (snd Y) (sndC e)
+weird-cast-snd A X Y x e = weird-cast-app (Σ A (λ _ → Set)) (λ X → ⊤) (λ X → tt) (λ X _ → snd X) X Y x e 
+
 
 {-# REWRITE weird-cast-snd #-}
 
--- postulate weird-cast'' : (X Y : Σ Set (λ A → Σ A (λ _ → A → Set))) → (x : ((snd (snd X)) (fst (snd X)))) (e : _) →
---                         transport (λ (T : Σ Set (λ A → Σ A (λ - → A → Set))) → ((snd (snd T)) (fst (snd T)))) X x Y e
---                         ≡
---                         transport (λ (T : Set) → T) (snd (snd X) (fst (snd X))) x (snd (snd Y) (fst (snd Y)))
---                                   let ee = (fstC e) in let e1 = (fstC (sndC e)) in let e2 = (sndC (sndC e))(fst (snd Y)) in {!!}
+weird-cast'' : (X Y : Σ Set (λ A → Σ A (λ _ → A → Set))) → (x : ((snd (snd X)) (fst (snd X)))) (e : _) →
+                        transport (λ (T : Σ Set (λ A → Σ A (λ - → A → Set))) → ((snd (snd T)) (fst (snd T)))) X x Y e
+                        ≡
+                        transport (λ (T : Set) → T) (snd (snd X) (fst (snd X))) x (snd (snd Y) (fst (snd Y))) _
 
--- transport (λ (T : Σ Set (λ A → Σ A (λ _ → A → Set))) → ((snd (snd T)) (fst (snd T))))
---                           (Nat , (0 , λ _ → Nat))
---                           3
---                           (Nat , (0 , λ _ → Nat))
---                           (Id_refl (Nat , (0 , λ _ → Nat)))
+weird-cast'' X Y x e = weird-cast-app (Σ Set (λ A → Σ A (λ - → A → Set))) (λ X → fst X) (λ X → fst (snd X)) (λ X → snd (snd X)) X Y x e 
+
+{-# REWRITE weird-cast'' #-}
 
 -- sanity check on closed terms
+
+foo : transport (λ (T : Σ Set (λ A → Σ A (λ _ → A → Set))) → ((snd (snd T)) (fst (snd T))))
+                          (Nat , (0 , λ _ → Nat))
+                          3
+                          (Nat , (0 , λ _ → Nat))
+                          (Id-refl {A = Σ Set (λ A → Σ A (λ _ → A → Set))} (Nat , (0 , λ _ → Nat)))
+      ≡ 3
+foo = refl
 
 test-J-refl-on-closed-term : (X : Set ℓ) (x : X) →
        transport (λ z → Σ ⊤ (λ z → ⊤)) x (tt , tt) x (Id-refl x) ≡ (tt , tt)
