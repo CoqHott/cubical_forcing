@@ -611,3 +611,15 @@ test'- = transport (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) →
 test' : Bool
 test' = transportEq (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) test 
 
+Path : (A : Set ℓ) (x : A) (y : A) → Set ℓ
+Path A x y = Box (Id A x y)
+
+Path-refl : (A : Set ℓ) (x : A) → Path A x x
+Path-refl A x = box (Id-refl x)
+
+transportPath : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Path A x y) → P y
+transportPath P x t y (box e) = cast (P x) (P y) (ap P e) t
+
+transportPath-refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) →
+                     Id _ (transportPath P x t x (Path-refl A x)) t
+transportPath-refl P x t = {!cast-refl (ap P (Id-refl x)) t!}
