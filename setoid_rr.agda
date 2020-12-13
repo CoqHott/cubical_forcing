@@ -72,7 +72,7 @@ ap {ℓ} {ℓ₁} {A} {B} {x} {y} f e = transport-prop (λ z → Id B (f x) (f z
 
 postulate cast : (A B : Set ℓ) (e : Id (Set ℓ) A B) → A → B 
 
-postulate cast-refl : {A : Set ℓ} (e : Id _ A A) (a : A)  → Id A (cast A A e a) a
+postulate cast-refl : {A : Set ℓ} (e : Id _ A A) (a : A) → Id A (cast A A e a) a
 
 transport : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 transport P x t y e = cast (P x) (P y) (ap P e) t
@@ -239,12 +239,12 @@ J-prop A x P t y e = transport-prop (λ z → P (fst z) (unbox (snd z))) (x , bo
 
 -- tranporting back and forth is the identity
 
-postulate cast-inv : (A B : Set ℓ) (e : Id _ A B) (a : A) →
-                     Id A a (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a))
--- transport-inv X A x y e a =
--- let e-refl = transport-refl A x a (Id-refl x)
---                                 e-refl-inv = inverse (A x) e-refl
---                             in J-prop X x (λ y e → Id (A x) (transport A y (transport A x a y e) x (inverse X e)) a) (transport-prop (λ Z → Id (A x) (transport A x Z x (Id-refl x)) a) a e-refl _ e-refl-inv) y e
+cast-inv : (A B : Set ℓ) (e : Id _ A B) (a : A) →
+                     Id A (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a)) a
+cast-inv {ℓ} A B e a = let e-refl = cast-refl (Id-refl A) a in
+                       let e-refl-cast = cast-refl (Id-refl A) (cast A A (Id-refl A) a) in
+                       J-prop (Set ℓ) A (λ B e → Id A (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a)) a)
+                              (concatId A e-refl-cast e-refl) B e
 
 postulate cast-Pi-nodep : (A A' : Set ℓ) (f : (a : A) → Set ℓ₁) (e : _) →
                     cast ((a : A) → Set ℓ₁) ((a' : A') → Set ℓ₁) e f ≡
@@ -263,7 +263,7 @@ postulate cast-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set 
                     let eA = fstC e in
                     let x' = cast A A' eA x in 
                     let eB = sndC e x' in
-                    let proof = concatId _ {x = B x} (ap B (cast-inv A A' eA x)) eB in
+                    let proof = concatId _ {x = B x} (ap B (inverse A (cast-inv A A' eA x))) eB in
                     cast (Σ A B) (Σ A' B') e (x , y) ≡
                     (cast A A' (fstC e) x , cast (B x) (B' x') proof y)
 
