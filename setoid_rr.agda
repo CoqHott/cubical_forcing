@@ -250,6 +250,10 @@ postulate cast-set : (A : Set ℓ) (e : _) → cast (Set ℓ) (Set ℓ) e A ≡ 
 
 {-# REWRITE cast-set #-}
 
+postulate cast-prop : (A : Prop ℓ) (e : _) → cast (Prop ℓ) (Prop ℓ) e A ≡ A
+
+{-# REWRITE cast-prop #-}
+
 postulate cast-Pi-nodep : (A A' : Set ℓ) (f : (a : A) → Set ℓ₁) (e : _) →
                     cast ((a : A) → Set ℓ₁) ((a' : A') → Set ℓ₁) e f ≡
                     λ (a' : A') → let a = cast A' A (inverse (Set ℓ) {x = A} {y = A'} (fstC e)) a' in f a 
@@ -263,7 +267,7 @@ postulate cast-Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ
 
 {-# REWRITE cast-Pi #-}
 
-postulate cast-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (x : A) (y : B x) (e : Id (Set (ℓ ⊔ ℓ₁)) (Σ A B) (Σ A' B')) →
+postulate cast-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (x : A) (y : B x) (e : _) →
                     let eA = fstC e in
                     let x' = cast A A' eA x in 
                     let eB = sndC e x' in
@@ -622,4 +626,4 @@ transportPath P x t y (box e) = cast (P x) (P y) (ap P e) t
 
 transportPath-refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) →
                      Id _ (transportPath P x t x (Path-refl A x)) t
-transportPath-refl P x t = {!cast-refl (ap P (Id-refl x)) t!}
+transportPath-refl P x t = cast-refl (ap P (Id-refl x)) t
