@@ -64,15 +64,15 @@ postulate Id : (A : Set ℓ) → A → A → Prop ℓ
 
 postulate Id-refl : {A : Set ℓ} (x : A) → Id A x x
 
+postulate cast : (A B : Set ℓ) (e : Id (Set ℓ) A B) → A → B 
+
+postulate cast-refl : {A : Set ℓ} (e : Id _ A A) (a : A) → Id A (cast A A e a) a
+
 postulate transport-prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 
 ap : {A : Set ℓ} {B : Set ℓ₁} {x y : A} (f : A → B) (e : Id A x y) →
      Id B (f x) (f y)
 ap {ℓ} {ℓ₁} {A} {B} {x} {y} f e = transport-prop (λ z → Id B (f x) (f z)) x (Id-refl _) y e
-
-postulate cast : (A B : Set ℓ) (e : Id (Set ℓ) A B) → A → B 
-
-postulate cast-refl : {A : Set ℓ} (e : Id _ A A) (a : A) → Id A (cast A A e a) a
 
 transport : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 transport P x t y e = cast (P x) (P y) (ap P e) t
@@ -83,13 +83,11 @@ transport-refl P x t e = cast-refl (ap P e) t
 -- direct derived functions 
 
 inverse  : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) → Id A y x
-inverse{ℓ} A {x} {y} p = transport-prop (λ z → Id A z x) x (Id-refl x) y p
+inverse A {x} {y} p = transport-prop (λ z → Id A z x) x (Id-refl x) y p
 
 concatId : (A : Set ℓ) {x y z : A} (p : Id {ℓ} A x y)
          (q : Id {ℓ} A y z)→ Id A x z
 concatId A {x} {y} {z} p q = transport-prop (λ t → Id A x t) y p z q
-
-
 
 -- we now state rewrite rules for the identity type
 
@@ -254,11 +252,11 @@ postulate cast-prop : (A : Prop ℓ) (e : _) → cast (Prop ℓ) (Prop ℓ) e A 
 
 {-# REWRITE cast-prop #-}
 
-postulate cast-Pi-nodep : (A A' : Set ℓ) (f : (a : A) → Set ℓ₁) (e : _) →
+postulate cast-type-family : (A A' : Set ℓ) (f : (a : A) → Set ℓ₁) (e : _) →
                     cast ((a : A) → Set ℓ₁) ((a' : A') → Set ℓ₁) e f ≡
                     λ (a' : A') → let a = cast A' A (inverse (Set ℓ) {x = A} {y = A'} (fstC e)) a' in f a 
 
-{-# REWRITE cast-Pi-nodep #-}
+{-# REWRITE cast-type-family #-}
 
 postulate cast-Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (f : (a : A) → B a) (e : Id _ ((a : A) → B a) ((a' : A') → B' a')) →
                     cast ((a : A) → B a) ((a' : A') → B' a') e f ≡
