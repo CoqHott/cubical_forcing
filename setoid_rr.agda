@@ -49,6 +49,8 @@ record i (A : Prop ℓ) : Prop (ℓ ⊔ ℓ₁) where
   field
     uninj : A
 
+open i public
+
 {- 
  Axiomatisation of Id, Id-refl, transport and transport-refl (propositionally)
 
@@ -221,6 +223,29 @@ postulate Id-set : Id (Set (lsuc ℓ₁)) (Set ℓ₁) (Set ℓ₁) ≡ ⊤P
 
 {-# REWRITE Id-set #-}
 
+--- Contractibility of singletons and J can be defined
+
+contr-sing : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) →
+    Id (Σ A (λ y → Box (Id A x y))) (x , box (Id-refl x)) (y , box p) 
+contr-sing A {x} {y} p = p , ttP
+
+J : (A : Set ℓ) (x : A) (P : (y : A) → Id A x y → Set ℓ₁) 
+    (t : P x (Id-refl x)) (y : A) (e : Id A x y) → P y e
+J A x P t y e = transport (λ z → P (fst z) (unbox (snd z))) (x , box (Id-refl x)) t (y , box e) (contr-sing A e)
+
+J-prop : (A : Set ℓ) (x : A) (P : (y : A) → Id A x y → Prop ℓ₁) 
+    (t : P x (Id-refl x)) (y : A) (e : Id A x y) → P y e
+J-prop A x P t y e = transport-prop (λ z → P (fst z) (unbox (snd z))) (x , box (Id-refl x)) t (y , box e) (contr-sing A e)
+
+-- tranporting back and forth is the identity
+
+postulate cast-inv : (A B : Set ℓ) (e : Id _ A B) (a : A) →
+                     Id A a (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a))
+-- transport-inv X A x y e a =
+-- let e-refl = transport-refl A x a (Id-refl x)
+--                                 e-refl-inv = inverse (A x) e-refl
+--                             in J-prop X x (λ y e → Id (A x) (transport A y (transport A x a y e) x (inverse X e)) a) (transport-prop (λ Z → Id (A x) (transport A x Z x (Id-refl x)) a) a e-refl _ e-refl-inv) y e
+
 postulate cast-Pi-nodep : (A A' : Set ℓ) (f : (a : A) → Set ℓ₁) (e : _) →
                     cast ((a : A) → Set ℓ₁) ((a' : A') → Set ℓ₁) e f ≡
                     λ (a' : A') → let a = cast A' A (inverse (Set ℓ) {x = A} {y = A'} (fstC e)) a' in f a 
@@ -232,43 +257,57 @@ postulate cast-Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ
                     λ (a' : A') → let a = cast A' A (inverse (Set ℓ) {x = A} {y = A'} (fstC e)) a' in
                                   let e' = sndC e a' in cast (cast (A → Set ℓ₁) (A' → Set ℓ₁) ((fstC e , λ (a' : A') → ttP)) B a') (B' a') e' (f a)
 
-{-# REWRITE cast-Pi #-}
+-- {-# REWRITE cast-Pi #-}
 
-{-
-postulate cast-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (s : Σ A B) (e : _) →
-                    cast (Σ A B) (Σ A' B') e s ≡
-                    transport (λ (X : telescope-Sigma) → Σ (fst X) (snd X)) (A , B) s (A' , B') e
+postulate cast-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (x : A) (y : B x) (e : Id (Set (ℓ ⊔ ℓ₁)) (Σ A B) (Σ A' B')) →
+                    let eA = fstC e in
+                    let x' = cast A A' eA x in 
+                    let eB = sndC e x' in
+                    let proof = concatId _ {x = B x} (ap B (cast-inv A A' eA x)) eB in
+                    cast (Σ A B) (Σ A' B') e (x , y) ≡
+                    (cast A A' (fstC e) x , cast (B x) (B' x') proof y)
+
 
 {-# REWRITE cast-Sigma #-}
 
+ 
+postulate cast-List-nil : (A A' : Set ℓ) (e : _) →
+                          cast (List A) (List A') e [] ≡ []
 
-postulate cast-List : (A A' : Set ℓ) (l : List A) (e : _) →
-                    cast (List A) (List A') e l ≡
-                    transport (λ (T : telescope-List) → List T) A l A' e
+postulate cast-List-cons : (A A' : Set ℓ) (e : _) (a : A) (l : List A) →
+                           cast (List A) (List A') e (a ∷ l) ≡
+                           cast A A' e a ∷ cast _ _ e l
 
-{-# REWRITE cast-List #-}
+{-# REWRITE cast-List-nil #-}
 
-postulate cast-Nat : (n : Nat) (e : _) →
-                    cast Nat Nat e n ≡
-                    transport (λ T → Nat) ⊤ n ⊤ e
+{-# REWRITE cast-List-cons #-}
 
-{-# REWRITE cast-Nat #-}
 
-postulate cast-Bool : (b : Bool) (e : _) →
-                    cast Bool Bool e b ≡
-                    transport (λ T → Bool) ⊤ b ⊤ e
+postulate cast-Nat-zero : (e : _) → cast Nat Nat e 0 ≡ 0
 
-{-# REWRITE cast-Bool #-}
+postulate cast-Nat-suc : (e : _) (n : Nat ) →
+                          cast Nat Nat e (suc n) ≡
+                          suc (cast _ _ e n)
 
-postulate cast-Unit : (n : ⊤) (e : _) →
-                    cast ⊤ ⊤ e n ≡
-                    transport (λ T → ⊤) ⊤ n ⊤ e
+{-# REWRITE cast-Nat-zero #-}
+
+{-# REWRITE cast-Nat-suc #-}
+
+postulate cast-Bool-true : (e : _) → cast Bool Bool e true ≡ true
+
+{-# REWRITE cast-Bool-true #-}
+
+postulate cast-Bool-false : (e : _) → cast Bool Bool e false ≡ false
+
+{-# REWRITE cast-Bool-false #-}
+
+postulate cast-Unit : (e : _) → cast ⊤ ⊤ e tt ≡ tt
 
 {-# REWRITE cast-Unit #-}
 
-postulate cast-Box : (A A' : Prop ℓ) (l : Box A) (e : _) →
-                    cast (Box A) (Box A') e l ≡
-                    transport (λ (T : telescope-Box) → Box T) A l A' e
+
+postulate cast-Box : (A A' : Prop ℓ) (a : A) (f : _) (g : _) →
+                    cast (Box A) (Box A') (f , g) (box a) ≡ box (uninj f a)
 
 {-# REWRITE cast-Box #-}
 
@@ -365,18 +404,6 @@ postulate Quotient-elim-prop : (A : Set ℓ)
                (p : (x : A) → P (pi A R r s t x))
                (w : Quotient A R r s t) → P w
 
-postulate transport-Quotient : (X : Set ℓ)
-                  (A : X -> Set ℓ₁)
-                  (R : (x : X) → A x → A x → Prop ℓ₁)
-                  (r : (z : X) (x : A z) → R z x x)
-                  (s : (z : X) (x y : A z) → R z x y → R z y x)
-                  (t : (zz : X) (x y z : A zz) → R zz x y → R zz y z → R zz x z)
-                  (x : X) (a : A x) (y : X) (e : Id X x y) →
-                  transport (λ x → Quotient (A x) (R x) (r x) (s x) (t x))
-                            x (pi (A x) (R x) (r x) (s x) (t x) a) y e
-                  ≡ pi (A y) (R y) (r y) (s y) (t y) (transport A x a y e)
-
-{-# REWRITE transport-Quotient #-}
 
 postulate Id-Type-Quotient : (A A' : Set ℓ) 
                 (R : A → A → Prop ℓ)
@@ -394,7 +421,7 @@ postulate Id-Type-Quotient : (A A' : Set ℓ)
                    (A' , (R' , box (r' , (s' , t'))))
 
 {-# REWRITE Id-Type-Quotient #-}
-                  
+
 postulate cast-Quotient : (A A' : Set ℓ) 
                 (R : A → A → Prop ℓ)
                 (R' : A' → A' → Prop ℓ)
@@ -404,21 +431,12 @@ postulate cast-Quotient : (A A' : Set ℓ)
                 (s' : (x y : A') → R' x y → R' y x)
                 (t : (x y z : A) → R x y → R y z → R x z)
                 (t' : (x y z : A') → R' x y → R' y z → R' x z)
-                (q : Quotient A R r s t) (e : _) →
-                transport (λ T → T) (Quotient A R r s t) q
-                                    (Quotient A' R' r' s' t') e ≡
-                transport (λ (X : telescope-Quotient)
-                                  → let struct = unbox (snd (snd X))
-                                    in Quotient (fst X) (fst (snd X))
-                                                (fstC struct)
-                                                (fstC (sndC struct))
-                                                (sndC (sndC struct)))
-                          (A , (R , box (r , (s , t))))
-                          q
-                          (A' , (R' , box (r' , (s' , t'))))
-                          e
+                (a : A) (e : _) →
+                cast (Quotient A R r s t) (Quotient A' R' r' s' t') e (pi A R r s t a) ≡
+                pi A' R' r' s' t' (cast A A' (fstC e) a)
 
 {-# REWRITE cast-Quotient #-}
+
 
 -- Sanity Check: transport-refl oon quotient type
 
@@ -438,6 +456,7 @@ transport-refl-Quotient X A R r s t x q e =
   Quotient-elim-prop (A x) (R x) (r x) (s x) (t x)
                      ((λ a → Id _ (transport (λ (x : X) → Quotient (A x) (R x) (r x) (s x) (t x)) x a x e) a))
                      (λ a → transport-prop (λ a' → R x a' a) a (r x a) (transport A x a x e) ((inverse (A x) (transport-refl A x a e)))) q
+
 
 -- Vector (or how to deal with indices)
 -- Some of the rewrite rules below can be defined only because
@@ -466,27 +485,19 @@ postulate Id-Type-Vec : (A A' : Set ℓ) (n n' : Nat) →
 
 {-# REWRITE Id-Type-Vec #-}
 
-postulate transport-Vec-vnil : (X : Set ℓ) (A : X → Set ℓ₁)
-                                  (x : X) (y : X) (e : Id X x y) →
-                       transport (λ x → Vec (A x) 0) x [] y e ≡ []
-
-postulate transport-Vec-vcons : (X : Set ℓ) (A : X → Set ℓ₁) (n : X → Nat)
-                                   (x : X) (a : A x) (l : Vec (A x) (n x))
-                                   (y : X) (e : Id X x y) →
-                       transport (λ (z : X) → Vec (A z) (suc (n z))) x (_∷_ {A = {- ! -} A x} {n = {- ! -} n x} a l) y e ≡
-                       transport A x a y e ∷ transport (λ z → Vec (A z) (n z)) x l y e
-
 {- Note that the rule above is technically non-linear, but the arguments A and n of vcons can be seen as "type-forced" -}
 
-{-# REWRITE transport-Vec-vnil #-}
-{-# REWRITE transport-Vec-vcons #-}
+postulate cast-Vec-vnil : (A A' : Set ℓ) (e : _) →
+                       cast (Vec A 0) (Vec A' 0) e [] ≡ []
 
-postulate cast-Vec : (A A' : Set ℓ) (n n' : Nat) (v : Vec A n) (e : _) →
-                    transport (λ T → T) (Vec A n) v (Vec A' n') e ≡
-                    transport (λ (X : telescope-Vec) → Vec (fst X) (snd X)) (A , n) v (A' , n') e
+postulate cast-Vec-vcons : (A A' : Set ℓ) (n n' : Nat) (a : A) (v : Vec A n) (e : _) →
+                       cast (Vec A (suc n)) (Vec A' (suc n')) e (a ∷ v) ≡ cast A A' (fstC e) a ∷ cast (Vec A n) (Vec A' n') e v 
 
-{-# REWRITE cast-Vec #-}
 
+{-# REWRITE cast-Vec-vnil #-}
+{-# REWRITE cast-Vec-vcons #-}
+
+{-
 -- Test with weird vectors indexed by lists.
 
 data VecL (A : Set ℓ) (a : A) : List A → Set ℓ where
@@ -534,6 +545,7 @@ postulate cast-VecL : (A A' : Set ℓ) (a : A) (a' : A') (l : List A) (l' : List
                     transport (λ (X : telescope-VecL) → VecL (fst X) (fst (snd X)) (snd (snd X))) (A , (a , l)) v (A' , (a' , l')) e
 
 {-# REWRITE cast-VecL #-}
+-}
 
 -- Now for Path
 
@@ -548,37 +560,17 @@ postulate Id-Path : (A : Set ℓ) (x : A) →
 
 postulate Id-Type-Path : (A A' : Set ℓ) (x y : A) (x' y' : A') →
                        Id (Set ℓ) (x ≡ y) (x' ≡ y') ≡
-                       Id telescope-Path (A , (x , y)) (A' , (x' , y'))
+                       Id (Prop ℓ) (Id A x y) (Id A' x' y') -- (A , (x , y)) (A' , (x' , y'))
 
 {-# REWRITE Id-Type-Path #-}
 
+-- not enough to get canonicity
 
-postulate transport-Path : (X : Set ℓ) (A : X → Set ℓ₁)
-                           (a : (x : X) → A x)
-                           (x : X) (y : X) (e : Id X x y) →
-                           transport (λ x → a x ≡ {- ! -} a x) x (refl) y e ≡
-                           refl
+postulate cast-Path : (A A' : Set ℓ) (x : A) (x' : A') (e : _) →
+                    cast (x ≡ x) (x' ≡ x') e refl ≡
+                    refl
 
--- This rewrite rule is not valid as it is non-linear or we need to accept rewrite rules with "type-forced" arguments such as
--- transport (λ x → a x ≡ !{a x}) x (refl {x = !{a x}}) y e ≡ refl {x = a y}
-
-{-# REWRITE transport-Path #-}
-
-
--- postulate transport-Path' : (X : Set ℓ) (A : Set ℓ₁)
---                             (a : (x : X) → A)
---                             (x : X) (y : X) (e : Id X x y) →
---                             transport (λ y → a x ≡ a y) x (refl) y e ≡
---                             ?
-
--- {-# REWRITE transport-Path' #-}
-
-postulate cast-Path : (A A' : Set ℓ) (x y : A) (x' y' : A') (p : x ≡ y) (e : _) →
-                    transport (λ T → T) (x ≡ y) p (x' ≡ y') e ≡
-                    transport (λ (X : telescope-Path) → fst (snd X) ≡ snd (snd X))
-                              (A , (x , y)) p (A' , (x' , y')) e  
-
-{-# REWRITE cast-Path #-}
+-- {-# REWRITE cast-Path #-}
 
 id-to-Path : {A : Set ℓ} {x y : A} → Id A x y → x ≡ y
 id-to-Path {ℓ} {A} {x} {y} = transport (λ (z : A) → x ≡ z) x (refl) y 
@@ -610,7 +602,8 @@ transportEq P x t y refl = t
 test'- : Bool
 test'- = transport (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) test- 
 
+-- non-standard boolean using Path
+
 test' : Bool
 test' = transportEq (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) test 
 
--}
