@@ -246,6 +246,10 @@ cast-inv {ℓ} A B e a = let e-refl = cast-refl (Id-refl A) a in
                        J-prop (Set ℓ) A (λ B e → Id A (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a)) a)
                               (concatId A e-refl-cast e-refl) B e
 
+postulate cast-set : (A : Set ℓ) (e : _) → cast (Set ℓ) (Set ℓ) e A ≡ A
+
+{-# REWRITE cast-set #-}
+
 postulate cast-Pi-nodep : (A A' : Set ℓ) (f : (a : A) → Set ℓ₁) (e : _) →
                     cast ((a : A) → Set ℓ₁) ((a' : A') → Set ℓ₁) e f ≡
                     λ (a' : A') → let a = cast A' A (inverse (Set ℓ) {x = A} {y = A'} (fstC e)) a' in f a 
@@ -255,9 +259,9 @@ postulate cast-Pi-nodep : (A A' : Set ℓ) (f : (a : A) → Set ℓ₁) (e : _) 
 postulate cast-Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (f : (a : A) → B a) (e : Id _ ((a : A) → B a) ((a' : A') → B' a')) →
                     cast ((a : A) → B a) ((a' : A') → B' a') e f ≡
                     λ (a' : A') → let a = cast A' A (inverse (Set ℓ) {x = A} {y = A'} (fstC e)) a' in
-                                  let e' = sndC e a' in cast (cast (A → Set ℓ₁) (A' → Set ℓ₁) ((fstC e , λ (a' : A') → ttP)) B a') (B' a') e' (f a)
+                                  cast _ _ (sndC e a') (f a)
 
--- {-# REWRITE cast-Pi #-}
+{-# REWRITE cast-Pi #-}
 
 postulate cast-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (x : A) (y : B x) (e : Id (Set (ℓ ⊔ ℓ₁)) (Σ A B) (Σ A' B')) →
                     let eA = fstC e in
