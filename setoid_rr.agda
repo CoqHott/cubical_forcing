@@ -235,6 +235,11 @@ J-prop : (A : Set ℓ) (x : A) (P : (y : A) → Id A x y → Prop ℓ₁)
     (t : P x (Id-refl x)) (y : A) (e : Id A x y) → P y e
 J-prop A x P t y e = transport-prop (λ z → P (fst z) (unbox (snd z))) (x , box (Id-refl x)) t (y , box e) (contr-sing A e)
 
+J-refl : {A : Set ℓ} (x : A) (P : (y : A) (e : Id A x y) → Set ℓ₁)  (t : P x (Id-refl x)) (e : Id A x x) →
+                 Id (P x e) (J A x P t x e) t
+J-refl x P t e = cast-refl (ap (λ z → P (fst z) (unbox (snd z))) (Id-refl x , ttP)) t
+
+
 -- tranporting back and forth is the identity
 
 cast-inv : (A B : Set ℓ) (e : Id _ A B) (a : A) →
