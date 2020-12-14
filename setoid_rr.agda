@@ -610,8 +610,10 @@ test'- = transport (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) →
 
 -- non-standard boolean using Path
 
-test' : Bool
-test' = transportEq (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) test 
+non-std-bool : Bool
+non-std-bool = transportEq (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) test 
+
+-- Path type using Box of Id
 
 Path : (A : Set ℓ) (x : A) (y : A) → Set ℓ
 Path A x y = Box (Id A x y)
