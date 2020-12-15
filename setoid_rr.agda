@@ -502,13 +502,14 @@ postulate cast-Vec-vnil : (A A' : Set ℓ) (e : _) →
                        cast (Vec A 0) (Vec A' 0) e [] ≡ []
 
 postulate cast-Vec-vcons : (A A' : Set ℓ) (n n' : Nat) (a : A) (v : Vec A n) (e : _) →
-                       cast (Vec A (suc n)) (Vec A' (suc n')) e (a ∷ v) ≡ cast A A' (fstC e) a ∷ cast (Vec A n) (Vec A' n') e v 
+                       cast (Vec A (suc n)) (Vec A' (suc n')) e (a ∷ v) ≡
+                       cast A A' (fstC e) a ∷ cast (Vec A n) (Vec A' n') e v 
 
 
 {-# REWRITE cast-Vec-vnil #-}
 {-# REWRITE cast-Vec-vcons #-}
 
-{-
+
 -- Test with weird vectors indexed by lists.
 
 data VecL (A : Set ℓ) (a : A) : List A → Set ℓ where
@@ -538,25 +539,20 @@ postulate Id-Type-VecL : (A A' : Set ℓ) (a : A) (a' : A') (l : List A) (l' : L
 
 {-# REWRITE Id-Type-VecL #-}
 
-postulate transport-VecL-vnil : (X : Set ℓ) (A : X → Set ℓ₁) (Val : (x : X) → A x)
-                                (x : X) (y : X) (e : Id X x y) →
-                       transport (λ x → VecL (A x) (Val x) []) x [] y e ≡ []
 
-postulate transport-VecL-vcons : (X : Set ℓ) (A : X → Set ℓ₁) (Val : (x : X) → A x) (l : (x : X) → List (A x))
-                                   (x : X) (a : A x) (v : VecL (A x) (Val x) (l x))
-                                   (y : X) (e : Id X x y) →
-                       transport (λ (z : X) → VecL (A z) (Val z) (Val z ∷ l z)) x (a ∷ v) y e ≡
-                       transport A x a y e ∷ transport (λ z → VecL (A z) (Val z) (l z)) x v y e
 
-{-# REWRITE transport-VecL-vnil #-}
-{-# REWRITE transport-VecL-vcons #-}
+postulate cast-VecL-vnil : (A A' : Set ℓ) (a : A) (a' : A')  (e : _) →
+                       cast (VecL A a []) (VecL A' a' []) e [] ≡ []
 
-postulate cast-VecL : (A A' : Set ℓ) (a : A) (a' : A') (l : List A) (l' : List A') (v : VecL A a l) (e : _) →
-                    transport (λ T → T) (VecL A a l) v ( VecL A' a' l') e ≡
-                    transport (λ (X : telescope-VecL) → VecL (fst X) (fst (snd X)) (snd (snd X))) (A , (a , l)) v (A' , (a' , l')) e
+postulate cast-VecL-vcons : (A A' : Set ℓ) (a : A) (a' : A') (l : List A) (l' : List A') 
+                           (x : A) (v : VecL A a l) (x' : A') (v' : VecL A' a' l') (e : _) →
+                     cast (VecL A a (a ∷ l)) (VecL A' a' (a' ∷ l')) e (x ∷ v) ≡ 
+                     cast A A' (fstC e) a ∷ cast (VecL A a l) (VecL A' a' l') ( fstC e , (fstC (sndC e) , sndC (sndC (sndC e)))) v 
 
-{-# REWRITE cast-VecL #-}
--}
+
+{-# REWRITE cast-VecL-vnil #-}
+{-# REWRITE cast-VecL-vcons #-}
+
 
 -- Now for Path
 
