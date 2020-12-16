@@ -598,9 +598,8 @@ postulate cast-VecL-vcons : (A A' : Set ℓ) (a : A) (a' : A') (l : List A) (l' 
 telescope-Path : Set (lsuc ℓ)
 telescope-Path {ℓ} = Σ (Set ℓ) (λ A → Σ A (λ - → A))
 
-postulate Id-Path : (A : Set ℓ) (x : A) →
-                    Id (x ≡ {- ! -} x) (refl) (refl) ≡ ⊤P
-
+postulate Id-Path : (A : Set ℓ) (x : A) (y : A) (e e' : _)→
+                    Id (x ≡ y) e e' ≡ ⊤P
 
 {-# REWRITE Id-Path #-}
 
@@ -612,17 +611,30 @@ postulate Id-Type-Path : (A A' : Set ℓ) (x y : A) (x' y' : A') →
 
 -- not enough to get canonicity
 
-postulate cast-Path : (A A' : Set ℓ) (x : A) (x' : A') (e : _) →
-                    cast (x ≡ x) (x' ≡ x') e refl ≡
-                    refl
+-- postulate cast-Path : (A A' : Set ℓ) (x : A) (x' : A') (e : _) →
+--                     cast (x ≡ x) (x' ≡ x') e refl ≡ refl
 
 -- {-# REWRITE cast-Path #-}
 
 id-to-Path : {A : Set ℓ} {x y : A} → Id A x y → x ≡ y
 id-to-Path {ℓ} {A} {x} {y} = transport (_≡_ x) x (refl) y 
 
+transportEq : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : x ≡ y) → P y
+transportEq P x t y refl = t
+
+transportEq-prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : x ≡ y) → P y
+transportEq-prop P x t y refl = t
+
 path-to-Id : {A : Set ℓ} {x y : A} → x ≡ y → Id A x y 
-path-to-Id {ℓ} {A} {x} {y} refl = Id-refl x
+path-to-Id {ℓ} {A} {x} {y} = transportEq-prop (Id A x) x (Id-refl x) y
+
+-- we treat cast (x' ≡ y') (x ≡ y) ee e as a new constructor of equality
+
+postulate transportEq-cast : {A : Set ℓ} (P : A → Set ℓ₁) (x x' : A) (t : P x) (y y' : A) (e : x' ≡ y') (ee : _) → P y →
+                             transportEq P x t y (cast (x' ≡ y') (x ≡ y) ee e) ≡
+                             transport P x t y (uninj (fstC ee) (path-to-Id e))
+
+{-# REWRITE transportEq-cast #-}
 
 funext' : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
           ((a : A) → f a ≡ g a) → f ≡ g 
@@ -635,8 +647,6 @@ etaBool false = refl
 test : (λ (b : Bool) → b) ≡ (λ (b : Bool) → if b then true else false)
 test = funext' Bool (λ - → Bool) _ _ λ a → etaBool a
 
-transportEq : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : x ≡ y) → P y
-transportEq P x t y refl = t
 
 -- non-standard boolean using equality
 
