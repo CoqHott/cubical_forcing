@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting --prop --confluence-check #-}
+{-# OPTIONS --rewriting --prop --local-confluence-check #-}
 
 open import Agda.Primitive
 open import Agda.Builtin.Bool
@@ -10,6 +10,7 @@ open import Agda.Builtin.Sigma
 open import Agda.Builtin.Unit
 open import Data.Vec.Base
 open import Data.Bool
+open import Data.Sum
 
 -- sigma type in Prop used to handle telescopes. 
 
@@ -162,6 +163,17 @@ postulate Id-bool-false-false : Id Bool false false ≡ ⊤P
 {-# REWRITE Id-bool-true-true #-}
 {-# REWRITE Id-bool-false-false #-}
 
+postulate Id-sum-inj₁-inj₁ : (A : Set ℓ) (B : Set ℓ₁) (a a' : A) →
+                           Id (A ⊎ B) (inj₁ a) (inj₁ a') ≡
+                           i {ℓ = ℓ} {ℓ₁ = ℓ₁} (Id A a a')
+
+postulate Id-sum-inj₂-inj₂ : (A : Set ℓ) (B : Set ℓ₁) (b b' : B) →
+                           Id (A ⊎ B) (inj₂ b) (inj₂ b') ≡
+                           i {ℓ = ℓ₁} {ℓ₁ = ℓ} (Id B b b')
+
+{-# REWRITE Id-sum-inj₁-inj₁ #-}
+{-# REWRITE Id-sum-inj₂-inj₂ #-}
+
 -- rewrite rules for the identity type on the universe
 
 telescope-Sigma : Set (lsuc (ℓ ⊔ ℓ₁))
@@ -181,6 +193,17 @@ postulate Id-Type-Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set 
                        Id telescope-Forall (A , B) (A' , B')
 
 {-# REWRITE Id-Type-Pi #-}
+
+
+telescope-Sum : Set (lsuc (ℓ ⊔ ℓ₁))
+telescope-Sum {ℓ} {ℓ₁} = Σ (Set ℓ) (λ _ → Set ℓ₁)
+
+postulate Id-Type-Sum : (A A' : Set ℓ) (B B' : Set ℓ₁)  →
+                          Id (Set (ℓ ⊔ ℓ₁)) (A ⊎ B) (A' ⊎ B') ≡
+                          Id telescope-Sum (A , B) (A' , B')
+
+{-# REWRITE Id-Type-Sum #-}
+
 
 telescope-List : Set (lsuc ℓ)
 telescope-List {ℓ} = Set ℓ
@@ -276,10 +299,25 @@ postulate cast-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set 
                     let eB = sndC e x' in
                     let proof = concatId _ {x = B x} (ap B (inverse A (cast-inv A A' eA x))) eB in
                     cast (Σ A B) (Σ A' B') e (x , y) ≡
-                    (cast A A' (fstC e) x , cast (B x) (B' x') proof y)
-
+                    (cast A A' eA x , cast (B x) (B' x') proof y)
 
 {-# REWRITE cast-Sigma #-}
+
+postulate cast-Sum-inj₁ : (A A' : Set ℓ) (B B' : Set ℓ₁) (a : A) (e : _) →
+                    let eA = fstC e in
+                    let eB = sndC e in
+                    cast (A ⊎ B) (A' ⊎ B') e (inj₁ a) ≡
+                    inj₁ (cast A A' eA a)
+
+postulate cast-Sum-inj₂ : (A A' : Set ℓ) (B B' : Set ℓ₁) (b : B) (e : _) →
+                    let eA = fstC e in
+                    let eB = sndC e in
+                    cast (A ⊎ B) (A' ⊎ B') e (inj₂ b) ≡
+                    inj₂ (cast B B' eB b)
+
+
+{-# REWRITE cast-Sum-inj₁ #-}
+{-# REWRITE cast-Sum-inj₂ #-}
 
  
 postulate cast-List-nil : (A A' : Set ℓ) (e : _) →
@@ -476,34 +514,35 @@ transport-refl-Quotient X A R r s t x q e =
 telescope-Vec : Set (lsuc ℓ)
 telescope-Vec {ℓ} = Σ (Set ℓ) (λ - → Nat)
 
-postulate Id-vector-vnil-vnil : (A : Set ℓ) →
-                            Id (Vec A 0) [] [] ≡ ⊤P
-
--- postulate Id-vector-vnil-vcons : not well typed
--- postulate Id-vector-vcons-vnil : not well typed
-
-postulate Id-vector-vcons-vcons : (A : Set ℓ) (n : Nat) (a a' : A)
-                                  (l l' : Vec A n) →
-                                  Id (Vec A (suc n)) (a ∷ l) (a' ∷ l') ≡
-                                  Id A a a' × Id (Vec A n) l l'
-
-{-# REWRITE Id-vector-vnil-vnil #-}
-{-# REWRITE Id-vector-vcons-vcons #-}
-
 postulate Id-Type-Vec : (A A' : Set ℓ) (n n' : Nat) →
                        Id (Set ℓ) (Vec A n) (Vec A' n') ≡
                        Id telescope-Vec (A , n) (A' , n') 
 
 {-# REWRITE Id-Type-Vec #-}
 
-{- Note that the rule above is technically non-linear, but the arguments A and n of vcons can be seen as "type-forced" -}
+postulate Id-vector-vnil-vnil : (A : Set ℓ) →
+                            Id (Vec A 0) [] [] ≡ ⊤P
+
+-- postulate Id-vector-vnil-vcons : not well typed
+-- postulate Id-vector-vcons-vnil : not well typed
+
+{- Note that the rule below are technically non-linear, but the arguments A and n of vcons can be seen as "forced" -}
+
+postulate Id-vector-vcons-vcons : (A : Set ℓ) (n : Nat) (a a' : A)
+                                  (l l' : Vec A n) →
+                                  Id (Vec A (suc n)) (_∷_ {A = A} {n = n} a l) (_∷_ {A = A} {n = n} a' l') ≡
+                                  Id A a a' × Id (Vec A n) l l'
+
+{-# REWRITE Id-vector-vnil-vnil #-}
+{-# REWRITE Id-vector-vcons-vcons #-}
+
 
 postulate cast-Vec-vnil : (A A' : Set ℓ) (e : _) →
                        cast (Vec A 0) (Vec A' 0) e [] ≡ []
 
 postulate cast-Vec-vcons : (A A' : Set ℓ) (n n' : Nat) (a : A) (v : Vec A n) (e : _) →
-                       cast (Vec A (suc n)) (Vec A' (suc n')) e (a ∷ v) ≡
-                       cast A A' (fstC e) a ∷ cast (Vec A n) (Vec A' n') e v 
+                       cast (Vec A (suc n)) (Vec A' (suc n')) e (_∷_ {A = A} {n = n} a v) ≡
+                       _∷_ {A = A'} {n = n'} (cast A A' (fstC e) a) (cast (Vec A n) (Vec A' n') e v)
 
 
 {-# REWRITE cast-Vec-vnil #-}
@@ -567,7 +606,7 @@ postulate Id-Path : (A : Set ℓ) (x : A) →
 
 postulate Id-Type-Path : (A A' : Set ℓ) (x y : A) (x' y' : A') →
                        Id (Set ℓ) (x ≡ y) (x' ≡ y') ≡
-                       Id (Prop ℓ) (Id A x y) (Id A' x' y') -- (A , (x , y)) (A' , (x' , y'))
+                       Id (Prop ℓ) (Id A x y) (Id A' x' y') 
 
 {-# REWRITE Id-Type-Path #-}
 
@@ -580,25 +619,18 @@ postulate cast-Path : (A A' : Set ℓ) (x : A) (x' : A') (e : _) →
 -- {-# REWRITE cast-Path #-}
 
 id-to-Path : {A : Set ℓ} {x y : A} → Id A x y → x ≡ y
-id-to-Path {ℓ} {A} {x} {y} = transport (λ (z : A) → x ≡ z) x (refl) y 
+id-to-Path {ℓ} {A} {x} {y} = transport (_≡_ x) x (refl) y 
 
 path-to-Id : {A : Set ℓ} {x y : A} → x ≡ y → Id A x y 
 path-to-Id {ℓ} {A} {x} {y} refl = Id-refl x
 
 funext' : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
           ((a : A) → f a ≡ g a) → f ≡ g 
-funext' A B f g e = id-to-Path (λ (a : A) → path-to-Id (e a))
+funext' A B f g e = id-to-Path (λ a → path-to-Id (e a))
 
 etaBool : (a : Bool) → a ≡ (if a then true else false)
 etaBool true = refl
 etaBool false = refl
-
-etaBool- : (a : Bool) → Id Bool a (if a then true else false)
-etaBool- true = Id-refl true
-etaBool- false = Id-refl false
-
-test- : Id _  (λ (b : Bool) → b) (λ (b : Bool) → if b then true else false)
-test- = λ a → etaBool- a
 
 test : (λ (b : Bool) → b) ≡ (λ (b : Bool) → if b then true else false)
 test = funext' Bool (λ - → Bool) _ _ λ a → etaBool a
@@ -606,25 +638,51 @@ test = funext' Bool (λ - → Bool) _ _ λ a → etaBool a
 transportEq : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : x ≡ y) → P y
 transportEq P x t y refl = t
 
-test'- : Bool
-test'- = transport (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) test- 
-
--- non-standard boolean using Path
+-- non-standard boolean using equality
 
 non-std-bool : Bool
 non-std-bool = transportEq (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) test 
 
 -- Path type using Box of Id
 
-Path : (A : Set ℓ) (x : A) (y : A) → Set ℓ
-Path A x y = Box (Id A x y)
+Path : {A : Set ℓ} (x : A) (y : A) → Set ℓ
+Path {ℓ} {A} x y = Box (Id A x y) -- ⊎ x ≡ y
 
-Path-refl : (A : Set ℓ) (x : A) → Path A x x
+Path-refl : (A : Set ℓ) (x : A) → Path x x
 Path-refl A x = box (Id-refl x)
+--Path-refl A x = inj₂ refl 
 
-transportPath : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Path A x y) → P y
+transportPath : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Path x y) → P y
 transportPath P x t y (box e) = cast (P x) (P y) (ap P e) t
+-- transportPath P x t y (inj₁ (box e)) = transport P x t y e
+-- transportPath P x t .x (inj₂ refl) = t
 
 transportPath-refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) →
-                     Id _ (transportPath P x t x (Path-refl A x)) t
-transportPath-refl P x t = cast-refl (ap P (Id-refl x)) t
+                     Id (P x) (transportPath P x t x (Path-refl A x)) t
+transportPath-refl P x t = transport-refl P x t (Id-refl x)
+
+id-to-Path' : {A : Set ℓ} {x y : A} → Id A x y → Path x y
+id-to-Path' {ℓ} {A} {x} {y} = transport (Path x) x (Path-refl A x) y 
+
+path-to-Id' : {A : Set ℓ} {x y : A} → Path x y → Id A x y 
+path-to-Id' {ℓ} {A} {x} {y} = unbox
+-- path-to-Id' {ℓ} {A} {x} {y} (inj₁ (box e)) = e
+-- path-to-Id' {ℓ} {A} {x} .{x} (inj₂ refl) = Id-refl x
+
+
+funext'' : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
+          ((a : A) → Path (f a) (g a)) → Path f g 
+funext'' A B f g e = id-to-Path' {A = (a : A) → B a} (λ a → path-to-Id' {A = B a} (e a))
+
+etaBool' : (a : Bool) → Path a (if a then true else false)
+etaBool' true = Path-refl Bool true
+etaBool' false = Path-refl Bool false
+
+test'' : Path (λ (b : Bool) → b) (λ (b : Bool) → if b then true else false)
+test'' = funext'' Bool (λ - → Bool) ((λ (b : Bool) → b)) (λ (b : Bool) → if b then true else false) (λ a → etaBool' a)
+
+-- standard boolean using Path
+
+std-bool : Bool
+std-bool = transportPath (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) test''
+
