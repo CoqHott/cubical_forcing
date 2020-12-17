@@ -53,9 +53,9 @@ record i (A : Prop ℓ) : Prop (ℓ ⊔ ℓ₁) where
 open i public
 
 {- 
- Axiomatisation of Id, Id-refl, transport and transport-refl (propositionally)
+ Axiomatisation of Id, Id-refl, transport (for proposition), cast and cast-refl (propositionally)
 
- Note that Id-refl, transport-Prop and transport-refl are axioms in Prop, 
+ Note that Id-refl, transport and cast-refl are axioms in Prop, 
  so we don't need to give them a computation content. 
 
  Also transport-refl is useless for transport on Prop
@@ -63,32 +63,32 @@ open i public
 
 postulate Id : (A : Set ℓ) → A → A → Prop ℓ
 
-postulate Id-refl : {A : Set ℓ} (x : A) → Id A x x
-
 postulate cast : (A B : Set ℓ) (e : Id (Set ℓ) A B) → A → B 
+
+postulate Id-refl : {A : Set ℓ} (x : A) → Id A x x
 
 postulate cast-refl : {A : Set ℓ} (e : Id _ A A) (a : A) → Id A (cast A A e a) a
 
-postulate transport-prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
-
-ap : {A : Set ℓ} {B : Set ℓ₁} {x y : A} (f : A → B) (e : Id A x y) →
-     Id B (f x) (f y)
-ap {ℓ} {ℓ₁} {A} {B} {x} {y} f e = transport-prop (λ z → Id B (f x) (f z)) x (Id-refl _) y e
-
-transport : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
-transport P x t y e = cast (P x) (P y) (ap P e) t
-
-transport-refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (e : Id A x x) → Id (P x) (transport P x t x e) t
-transport-refl P x t e = cast-refl (ap P e) t
+postulate transport : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 
 -- direct derived functions 
 
+ap : {A : Set ℓ} {B : Set ℓ₁} {x y : A} (f : A → B) (e : Id A x y) →
+     Id B (f x) (f y)
+ap {ℓ} {ℓ₁} {A} {B} {x} {y} f e = transport (λ z → Id B (f x) (f z)) x (Id-refl _) y e
+
+transport-Id : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
+transport-Id P x t y e = cast (P x) (P y) (ap P e) t
+
+transport-refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (e : Id A x x) → Id (P x) (transport-Id P x t x e) t
+transport-refl P x t e = cast-refl (ap P e) t
+
 inverse  : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) → Id A y x
-inverse A {x} {y} p = transport-prop (λ z → Id A z x) x (Id-refl x) y p
+inverse A {x} {y} p = transport (λ z → Id A z x) x (Id-refl x) y p
 
 concatId : (A : Set ℓ) {x y z : A} (p : Id {ℓ} A x y)
          (q : Id {ℓ} A y z)→ Id A x z
-concatId A {x} {y} {z} p q = transport-prop (λ t → Id A x t) y p z q
+concatId A {x} {y} {z} p q = transport (λ t → Id A x t) y p z q
 
 -- we now state rewrite rules for the identity type
 
@@ -113,7 +113,7 @@ postulate Id-Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (a a' : A)
                      (b : B a) (b' : B a') → 
                      Id (Σ A B) (a , b) (a' , b') ≡
                      Tel (Id A a a')
-                         (λ e → Id (B a') (transport B a b a' e) b')
+                         (λ e → Id (B a') (transport-Id B a b a' e) b')
 
 {-# REWRITE Id-Sigma #-}
 
@@ -249,18 +249,9 @@ contr-sing : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) →
     Id (Σ A (λ y → Box (Id A x y))) (x , box (Id-refl x)) (y , box p) 
 contr-sing A {x} {y} p = p , ttP
 
-J : (A : Set ℓ) (x : A) (P : (y : A) → Id A x y → Set ℓ₁) 
+J : (A : Set ℓ) (x : A) (P : (y : A) → Id A x y → Prop ℓ₁) 
     (t : P x (Id-refl x)) (y : A) (e : Id A x y) → P y e
 J A x P t y e = transport (λ z → P (fst z) (unbox (snd z))) (x , box (Id-refl x)) t (y , box e) (contr-sing A e)
-
-J-prop : (A : Set ℓ) (x : A) (P : (y : A) → Id A x y → Prop ℓ₁) 
-    (t : P x (Id-refl x)) (y : A) (e : Id A x y) → P y e
-J-prop A x P t y e = transport-prop (λ z → P (fst z) (unbox (snd z))) (x , box (Id-refl x)) t (y , box e) (contr-sing A e)
-
-J-refl : {A : Set ℓ} (x : A) (P : (y : A) (e : Id A x y) → Set ℓ₁)  (t : P x (Id-refl x)) (e : Id A x x) →
-                 Id (P x e) (J A x P t x e) t
-J-refl x P t e = cast-refl (ap (λ z → P (fst z) (unbox (snd z))) (Id-refl x , ttP)) t
-
 
 -- tranporting back and forth is the identity
 
@@ -268,8 +259,8 @@ cast-inv : (A B : Set ℓ) (e : Id _ A B) (a : A) →
                      Id A (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a)) a
 cast-inv {ℓ} A B e a = let e-refl = cast-refl (Id-refl A) a in
                        let e-refl-cast = cast-refl (Id-refl A) (cast A A (Id-refl A) a) in
-                       J-prop (Set ℓ) A (λ B e → Id A (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a)) a)
-                              (concatId A e-refl-cast e-refl) B e
+                       J (Set ℓ) A (λ B e → Id A (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a)) a)
+                         (concatId A e-refl-cast e-refl) B e
 
 postulate cast-set : (A : Set ℓ) (e : _) → cast (Set ℓ) (Set ℓ) e A ≡ A
 
@@ -361,7 +352,7 @@ postulate cast-Box : (A A' : Prop ℓ) (a : A) (f : _) (g : _) →
 
 -- sanity check on closed terms
 
-foo : transport (λ (T : Σ Set (λ A → Σ A (λ _ → A → Set))) → ((snd (snd T)) (fst (snd T))))
+foo : transport-Id (λ (T : Σ Set (λ A → Σ A (λ _ → A → Set))) → ((snd (snd T)) (fst (snd T))))
                           (Nat , (0 , λ _ → Nat))
                           3
                           (Nat , (0 , λ _ → Nat))
@@ -371,7 +362,7 @@ foo = refl
 
 
 test-J-refl-on-closed-term : (X : Set ℓ) (x : X) →
-       transport (λ z → Σ ⊤ (λ z → ⊤)) x (tt , tt) x (Id-refl x) ≡ (tt , tt)
+       transport-Id (λ z → Σ ⊤ (λ z → ⊤)) x (tt , tt) x (Id-refl x) ≡ (tt , tt)
 test-J-refl-on-closed-term X x = refl 
 
 
@@ -425,7 +416,7 @@ postulate Quotient-elim : (A : Set ℓ)
                (P : Quotient A R r s t → Set ℓ₁) 
                (p : (x : A) → P (pi A R r s t x))
                (e : (x y : A) → (rel : R x y) →
-                    Id _ (transport P (pi A R r s t x) (p x) (pi A R r s t y) rel) (p y))
+                    Id _ (transport-Id P (pi A R r s t x) (p x) (pi A R r s t y) rel) (p y))
                (w : Quotient A R r s t) → P w
 
 postulate Quotient-elim-red : (A : Set ℓ)
@@ -436,7 +427,7 @@ postulate Quotient-elim-red : (A : Set ℓ)
                 (P : Quotient A R r s t → Set ℓ₁) 
                 (p : (x : A) → P (pi A R r s t x))
                 (e : (x y : A) → (rel : R x y) →
-                     Id _ (transport P (pi A R r s t x) (p x) (pi A R r s t y) rel) (p y))
+                     Id _ (transport-Id P (pi A R r s t x) (p x) (pi A R r s t y) rel) (p y))
                 (a : A) →
                 Quotient-elim A R r s t P p e (pi A R r s t a)
                 ≡ p a
@@ -497,13 +488,13 @@ transport-refl-Quotient : (X : Set ℓ)
                   (x : X) (q : Quotient (A x) (R x) (r x) (s x) (t x))
                   (e : Id X x x) →
                   Id _
-                    (transport (λ x → Quotient (A x) (R x) (r x) (s x) (t x))
+                    (transport-Id (λ x → Quotient (A x) (R x) (r x) (s x) (t x))
                                x q x e)
                     q
 transport-refl-Quotient X A R r s t x q e =
   Quotient-elim-prop (A x) (R x) (r x) (s x) (t x)
-                     ((λ a → Id _ (transport (λ (x : X) → Quotient (A x) (R x) (r x) (s x) (t x)) x a x e) a))
-                     (λ a → transport-prop (λ a' → R x a' a) a (r x a) (transport A x a x e) ((inverse (A x) (transport-refl A x a e)))) q
+                     ((λ a → Id _ (transport-Id (λ (x : X) → Quotient (A x) (R x) (r x) (s x) (t x)) x a x e) a))
+                     (λ a → transport (λ a' → R x a' a) a (r x a) (transport-Id A x a x e) ((inverse (A x) (transport-refl A x a e)))) q
 
 
 -- Vector (or how to deal with indices)
@@ -616,24 +607,24 @@ postulate Id-Type-Path : (A A' : Set ℓ) (x y : A) (x' y' : A') →
 -- {-# REWRITE cast-Path #-}
 
 id-to-Path : {A : Set ℓ} {x y : A} → Id A x y → x ≡ y
-id-to-Path {ℓ} {A} {x} {y} = transport (_≡_ x) x (refl) y 
+id-to-Path {ℓ} {A} {x} {y} = transport-Id (_≡_ x) x (refl) y 
 
-transportEq : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : x ≡ y) → P y
-transportEq P x t y refl = t
+transport-Path : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : x ≡ y) → P y
+transport-Path P x t y refl = t
 
-transportEq-prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : x ≡ y) → P y
-transportEq-prop P x t y refl = t
+transport-Path-prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : x ≡ y) → P y
+transport-Path-prop P x t y refl = t
 
 path-to-Id : {A : Set ℓ} {x y : A} → x ≡ y → Id A x y 
-path-to-Id {ℓ} {A} {x} {y} = transportEq-prop (Id A x) x (Id-refl x) y
+path-to-Id {ℓ} {A} {x} {y} = transport-Path-prop (Id A x) x (Id-refl x) y
 
 -- we treat cast (x' ≡ y') (x ≡ y) ee e as a new constructor of equality
 
-postulate transportEq-cast : {A : Set ℓ} (P : A → Set ℓ₁) (x x' : A) (t : P x) (y y' : A) (e : x' ≡ y') (ee : _) → P y →
-                             transportEq P x t y (cast (x' ≡ y') (x ≡ y) ee e) ≡
-                             transport P x t y (uninj (fstC ee) (path-to-Id e))
+postulate transport-Path-cast : {A : Set ℓ} (P : A → Set ℓ₁) (x x' : A) (t : P x) (y y' : A) (e : x' ≡ y') (ee : _) → P y →
+                             transport-Path P x t y (cast (x' ≡ y') (x ≡ y) ee e) ≡
+                             transport-Id P x t y (uninj (fstC ee) (path-to-Id e))
 
-{-# REWRITE transportEq-cast #-}
+{-# REWRITE transport-Path-cast #-}
 
 funext-Path : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
           ((a : A) → f a ≡ g a) → f ≡ g 
@@ -649,5 +640,5 @@ eq_fun = funext-Path Bool (λ - → Bool) _ _ λ a → etaBool a
 -- standard boolean using equality
 
 std-bool : Bool
-std-bool = transportEq (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) eq_fun 
+std-bool = transport-Path (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) eq_fun 
 
