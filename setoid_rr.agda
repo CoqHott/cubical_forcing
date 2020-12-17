@@ -109,7 +109,6 @@ funext : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
          ((a : A) → Id (B a) (f a) (g a)) → Id ((a : A) → B a) f g  
 funext A B f g e = e
 
-
 postulate Id-Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (a a' : A)
                      (b : B a) (b' : B a') → 
                      Id (Σ A B) (a , b) (a' , b') ≡
@@ -636,63 +635,19 @@ postulate transportEq-cast : {A : Set ℓ} (P : A → Set ℓ₁) (x x' : A) (t 
 
 {-# REWRITE transportEq-cast #-}
 
-funext' : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
+funext-Path : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
           ((a : A) → f a ≡ g a) → f ≡ g 
-funext' A B f g e = id-to-Path (λ a → path-to-Id (e a))
+funext-Path A B f g e = id-to-Path (λ a → path-to-Id (e a))
 
 etaBool : (a : Bool) → a ≡ (if a then true else false)
 etaBool true = refl
 etaBool false = refl
 
-test : (λ (b : Bool) → b) ≡ (λ (b : Bool) → if b then true else false)
-test = funext' Bool (λ - → Bool) _ _ λ a → etaBool a
+eq_fun : (λ (b : Bool) → b) ≡ (λ (b : Bool) → if b then true else false)
+eq_fun = funext-Path Bool (λ - → Bool) _ _ λ a → etaBool a
 
-
--- non-standard boolean using equality
-
-non-std-bool : Bool
-non-std-bool = transportEq (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) test 
-
--- Path type using Box of Id
-
-Path : {A : Set ℓ} (x : A) (y : A) → Set ℓ
-Path {ℓ} {A} x y = Box (Id A x y) -- ⊎ x ≡ y
-
-Path-refl : (A : Set ℓ) (x : A) → Path x x
-Path-refl A x = box (Id-refl x)
---Path-refl A x = inj₂ refl 
-
-transportPath : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Path x y) → P y
-transportPath P x t y (box e) = cast (P x) (P y) (ap P e) t
--- transportPath P x t y (inj₁ (box e)) = transport P x t y e
--- transportPath P x t .x (inj₂ refl) = t
-
-transportPath-refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) →
-                     Id (P x) (transportPath P x t x (Path-refl A x)) t
-transportPath-refl P x t = transport-refl P x t (Id-refl x)
-
-id-to-Path' : {A : Set ℓ} {x y : A} → Id A x y → Path x y
-id-to-Path' {ℓ} {A} {x} {y} = transport (Path x) x (Path-refl A x) y 
-
-path-to-Id' : {A : Set ℓ} {x y : A} → Path x y → Id A x y 
-path-to-Id' {ℓ} {A} {x} {y} = unbox
--- path-to-Id' {ℓ} {A} {x} {y} (inj₁ (box e)) = e
--- path-to-Id' {ℓ} {A} {x} .{x} (inj₂ refl) = Id-refl x
-
-
-funext'' : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
-          ((a : A) → Path (f a) (g a)) → Path f g 
-funext'' A B f g e = id-to-Path' {A = (a : A) → B a} (λ a → path-to-Id' {A = B a} (e a))
-
-etaBool' : (a : Bool) → Path a (if a then true else false)
-etaBool' true = Path-refl Bool true
-etaBool' false = Path-refl Bool false
-
-test'' : Path (λ (b : Bool) → b) (λ (b : Bool) → if b then true else false)
-test'' = funext'' Bool (λ - → Bool) ((λ (b : Bool) → b)) (λ (b : Bool) → if b then true else false) (λ a → etaBool' a)
-
--- standard boolean using Path
+-- standard boolean using equality
 
 std-bool : Bool
-std-bool = transportPath (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) test''
+std-bool = transportEq (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) eq_fun 
 
