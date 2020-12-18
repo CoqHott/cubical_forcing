@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting --prop --local-confluence-check #-}
+{-# OPTIONS --rewriting --prop --confluence-check #-}
 
 open import Agda.Primitive
 open import Agda.Builtin.Bool
@@ -642,3 +642,13 @@ eq_fun = funext-Path Bool (λ - → Bool) _ _ λ a → etaBool a
 std-bool : Bool
 std-bool = transport-Path (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) eq_fun 
 
+refl' : {A : Set ℓ} (x : A) → x ≡ x
+refl' {A} x = cast (x ≡ x) (x ≡ x) (inj (λ x → x) , (λ x → x)) refl
+
+concat-Path : (A : Set ℓ) {x y z : A} (p : x ≡ y)
+         (q : y ≡ z)→ x ≡ z
+concat-Path A {x} {y} {z} p q = transport-Path (λ t → x ≡ t) y p z q
+
+transport-Path-eq : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) →
+                    Id _ (transport-Path P x t x (concat-Path _ (refl' x) (refl' x))) t
+transport-Path-eq P x t = cast-refl (Id-refl (P x)) t
