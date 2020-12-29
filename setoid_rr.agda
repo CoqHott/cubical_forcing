@@ -618,11 +618,11 @@ id-to-Path {ℓ} {A} {x} {y} = transport-Id (λ y → x ≡ y) x (refl) y
 path-to-Id : {A : Set ℓ} {x y : A} → x ≡ y → Id A x y 
 path-to-Id {ℓ} {A} {x} {y} = transport-Path-prop (Id A x) x (Id-refl x) y
 
--- we treat cast X (x ≡ y) ee e as a new constructor of equality
+-- we treat cast X (a ≡ b) ee e as a new constructor of equality
 
-postulate transport-Path-cast : {A X : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : X) (ee : _) → P y →
-                             transport-Path P x t y (cast X (x ≡ y) ee e) ≡
-                             cast (P x) (P y) (ap P (path-to-Id (cast _ _ ee e))) t 
+postulate transport-Path-cast : {A X : Set ℓ} (P : A → Set ℓ₁) (a : A) (t : P a) (b : A) (x : X) (e : _) → P b →
+                             transport-Path P a t b (cast X (a ≡ b) e x) ≡
+                             cast (P a) (P b) (ap P (path-to-Id (cast X (a ≡ b) e x))) t 
 
 {-# REWRITE transport-Path-cast #-}
 
