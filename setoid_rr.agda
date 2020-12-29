@@ -87,7 +87,7 @@ inverse  : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) → Id A y x
 inverse A {x} {y} p = transport (λ z → Id A z x) x (Id-refl x) y p
 
 concatId : (A : Set ℓ) {x y z : A} (p : Id {ℓ} A x y)
-         (q : Id {ℓ} A y z)→ Id A x z
+           (q : Id {ℓ} A y z) → Id A x z
 concatId A {x} {y} {z} p q = transport (λ t → Id A x t) y p z q
 
 -- we now state rewrite rules for the identity type
@@ -606,25 +606,27 @@ postulate Id-Type-Path : (A A' : Set ℓ) (x y : A) (x' y' : A') →
 
 -- {-# REWRITE cast-Path #-}
 
-id-to-Path : {A : Set ℓ} {x y : A} → Id A x y → x ≡ y
-id-to-Path {ℓ} {A} {x} {y} = transport-Id (_≡_ x) x (refl) y 
-
 transport-Path : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : x ≡ y) → P y
 transport-Path P x t y refl = t
 
 transport-Path-prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : x ≡ y) → P y
 transport-Path-prop P x t y refl = t
 
+id-to-Path : {A : Set ℓ} {x y : A} → Id A x y → x ≡ y
+id-to-Path {ℓ} {A} {x} {y} = transport-Id (λ y → x ≡ y) x (refl) y 
+
 path-to-Id : {A : Set ℓ} {x y : A} → x ≡ y → Id A x y 
 path-to-Id {ℓ} {A} {x} {y} = transport-Path-prop (Id A x) x (Id-refl x) y
 
--- we treat cast (x' ≡ y') (x ≡ y) ee e as a new constructor of equality
+-- we treat cast X (x ≡ y) ee e as a new constructor of equality
 
-postulate transport-Path-cast : {A : Set ℓ} (P : A → Set ℓ₁) (x x' : A) (t : P x) (y y' : A) (e : x' ≡ y') (ee : _) → P y →
-                             transport-Path P x t y (cast (x' ≡ y') (x ≡ y) ee e) ≡
-                             transport-Id P x t y (uninj (fstC ee) (path-to-Id e))
+postulate transport-Path-cast : {A X : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : X) (ee : _) → P y →
+                             transport-Path P x t y (cast X (x ≡ y) ee e) ≡
+                             cast (P x) (P y) (ap P (path-to-Id (cast _ _ ee e))) t 
 
 {-# REWRITE transport-Path-cast #-}
+
+
 
 funext-Path : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
           ((a : A) → f a ≡ g a) → f ≡ g 
@@ -640,15 +642,5 @@ eq_fun = funext-Path Bool (λ - → Bool) _ _ λ a → etaBool a
 -- standard boolean using equality
 
 std-bool : Bool
-std-bool = transport-Path (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) eq_fun 
+std-bool = transport-Path (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) eq_fun
 
-refl' : {A : Set ℓ} (x : A) → x ≡ x
-refl' {A} x = cast (x ≡ x) (x ≡ x) (inj (λ x → x) , (λ x → x)) refl
-
-concat-Path : (A : Set ℓ) {x y z : A} (p : x ≡ y)
-         (q : y ≡ z)→ x ≡ z
-concat-Path A {x} {y} {z} p q = transport-Path (λ t → x ≡ t) y p z q
-
-transport-Path-eq : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) →
-                    Id _ (transport-Path P x t x (concat-Path _ (refl' x) (refl' x))) t
-transport-Path-eq P x t = cast-refl (Id-refl (P x)) t
