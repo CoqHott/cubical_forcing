@@ -618,14 +618,13 @@ id-to-Path {ℓ} {A} {x} {y} = transport-Id (λ y → x ≡ y) x (refl) y
 path-to-Id : {A : Set ℓ} {x y : A} → x ≡ y → Id A x y 
 path-to-Id {ℓ} {A} {x} {y} = transport-Path-prop (Id A x) x (Id-refl x) y
 
--- we treat cast X (a ≡ b) ee e as a new constructor of equality
+-- we treat cast X (a ≡ b) e x as a new constructor of equality
 
 postulate transport-Path-cast : {A X : Set ℓ} (P : A → Set ℓ₁) (a : A) (t : P a) (b : A) (x : X) (e : _) → P b →
                              transport-Path P a t b (cast X (a ≡ b) e x) ≡
-                             cast (P a) (P b) (ap P (path-to-Id (cast X (a ≡ b) e x))) t 
+                             transport-Id P a t b (path-to-Id (cast X (a ≡ b) e x))
 
 {-# REWRITE transport-Path-cast #-}
-
 
 
 funext-Path : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
