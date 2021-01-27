@@ -24,6 +24,14 @@ open Tel public
 
 infixr 4 _,_
 
+record ΣCov {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
+  constructor _,_
+  field
+    fstCov : A
+    sndCov : B fstCov
+
+open ΣCov public
+
 variable ℓ ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Level
 
 -- a bit of boilerplate to deal with Prop
@@ -53,9 +61,9 @@ record i (A : Prop ℓ) : Prop (ℓ ⊔ ℓ₁) where
 open i public
 
 {- 
- Axiomatisation of Id, Id-refl, transport (for proposition), cast and cast-refl (propositionally)
+ Axiomatisation of Id, Id-refl, transport (for proposition), cast 
 
- Note that Id-refl, transport and cast-refl are axioms in Prop, 
+ Note that Id-refl, transport are axioms in Prop, 
  so we don't need to give them a computation content. 
 
  Also transport-refl is useless for transport on Prop
@@ -67,7 +75,7 @@ postulate cast : (A B : Set ℓ) (e : Id (Set ℓ) A B) → A → B
 
 postulate Id-refl : {A : Set ℓ} (x : A) → Id A x x
 
-postulate cast-refl : {A : Set ℓ} (e : Id _ A A) (a : A) → Id A (cast A A e a) a
+-- postulate cast-refl : {A : Set ℓ} (e : Id _ A A) (a : A) → Id A (cast A A e a) a
 
 postulate transport : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 
@@ -80,8 +88,8 @@ ap {ℓ} {ℓ₁} {A} {B} {x} {y} f e = transport (λ z → Id B (f x) (f z)) x 
 transport-Id : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 transport-Id P x t y e = cast (P x) (P y) (ap P e) t
 
-transport-refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (e : Id A x x) → Id (P x) (transport-Id P x t x e) t
-transport-refl P x t e = cast-refl (ap P e) t
+-- transport-refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (e : Id A x x) → Id (P x) (transport-Id P x t x e) t
+-- transport-refl P x t e = cast-refl (ap P e) t
 
 inverse  : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) → Id A y x
 inverse A {x} {y} p = transport (λ z → Id A z x) x (Id-refl x) y p
@@ -109,6 +117,8 @@ funext : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
          ((a : A) → Id (B a) (f a) (g a)) → Id ((a : A) → B a) f g  
 funext A B f g e = e
 
+
+
 postulate Id-Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (a a' : A)
                      (b : B a) (b' : B a') → 
                      Id (Σ A B) (a , b) (a' , b') ≡
@@ -116,6 +126,14 @@ postulate Id-Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (a a' : A)
                          (λ e → Id (B a') (transport-Id B a b a' e) b')
 
 {-# REWRITE Id-Sigma #-}
+
+postulate Id-SigmaCov : (A : Set ℓ) (B : A → Set ℓ₁) (a a' : A)
+                     (b : B a) (b' : B a') → 
+                     Id (ΣCov A B) (a , b) (a' , b') ≡
+                     Tel (Id A a a')
+                         (λ e → Id (B a) b (transport-Id B a' b' a (inverse A e)))
+
+{-# REWRITE Id-SigmaCov #-}
 
 postulate Id-Box : (A : Prop ℓ) (p q : A) → Id (Box A) (box p) (box q) ≡ ⊤P
 
@@ -176,7 +194,7 @@ postulate Id-sum-inj₂-inj₂ : (A : Set ℓ) (B : Set ℓ₁) (b b' : B) →
 -- rewrite rules for the identity type on the universe
 
 telescope-Sigma : Set (lsuc (ℓ ⊔ ℓ₁))
-telescope-Sigma {ℓ} {ℓ₁} = Σ (Set ℓ) (λ A → A → Set ℓ₁)
+telescope-Sigma {ℓ} {ℓ₁} = ΣCov (Set ℓ) (λ A → A → Set ℓ₁)
 
 postulate Id-Type-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
                           Id (Set (ℓ ⊔ ℓ₁)) (Σ A B) (Σ A' B') ≡
@@ -255,12 +273,12 @@ J A x P t y e = transport (λ z → P (fst z) (unbox (snd z))) (x , box (Id-refl
 
 -- tranporting back and forth is the identity
 
-cast-inv : (A B : Set ℓ) (e : Id _ A B) (a : A) →
-                     Id A (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a)) a
-cast-inv {ℓ} A B e a = let e-refl = cast-refl (Id-refl A) a in
-                       let e-refl-cast = cast-refl (Id-refl A) (cast A A (Id-refl A) a) in
-                       J (Set ℓ) A (λ B e → Id A (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a)) a)
-                         (concatId A e-refl-cast e-refl) B e
+-- cast-inv : (A B : Set ℓ) (e : Id _ A B) (a : A) →
+--                      Id A (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a)) a
+-- cast-inv {ℓ} A B e a = let e-refl = cast-refl (Id-refl A) a in
+--                        let e-refl-cast = cast-refl (Id-refl A) (cast A A (Id-refl A) a) in
+--                        J (Set ℓ) A (λ B e → Id A (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a)) a)
+--                          (concatId A e-refl-cast e-refl) B e
 
 postulate cast-set : (A : Set ℓ) (e : _) → cast (Set ℓ) (Set ℓ) e A ≡ A
 
@@ -286,10 +304,9 @@ postulate cast-Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ
 postulate cast-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (x : A) (y : B x) (e : _) →
                     let eA = fstC e in
                     let x' = cast A A' eA x in 
-                    let eB = sndC e x' in
-                    let proof = concatId _ {x = B x} (ap B (inverse A (cast-inv A A' eA x))) eB in
+                    let eB = sndC e x in
                     cast (Σ A B) (Σ A' B') e (x , y) ≡
-                    (cast A A' eA x , cast (B x) (B' x') proof y)
+                    (cast A A' eA x , cast (B x) (B' x') eB y)
 
 {-# REWRITE cast-Sigma #-}
 
@@ -479,22 +496,23 @@ postulate cast-Quotient : (A A' : Set ℓ)
 
 -- Sanity Check: transport-refl oon quotient type
 
-transport-refl-Quotient : (X : Set ℓ)
-                  (A : X -> Set ℓ₁)
-                  (R : (x : X) → A x → A x → Prop ℓ₁)
-                  (r : (z : X) (x : A z) → R z x x)
-                  (s : (z : X) (x y : A z) → R z x y → R z y x)
-                  (t : (zz : X) (x y z : A zz) → R zz x y → R zz y z → R zz x z)
-                  (x : X) (q : Quotient (A x) (R x) (r x) (s x) (t x))
-                  (e : Id X x x) →
-                  Id _
-                    (transport-Id (λ x → Quotient (A x) (R x) (r x) (s x) (t x))
-                               x q x e)
-                    q
-transport-refl-Quotient X A R r s t x q e =
-  Quotient-elim-prop (A x) (R x) (r x) (s x) (t x)
-                     ((λ a → Id _ (transport-Id (λ (x : X) → Quotient (A x) (R x) (r x) (s x) (t x)) x a x e) a))
-                     (λ a → transport (λ a' → R x a' a) a (r x a) (transport-Id A x a x e) ((inverse (A x) (transport-refl A x a e)))) q
+-- transport-refl-Quotient : (X : Set ℓ)
+--                   (A : X -> Set ℓ₁)
+--                   (R : (x : X) → A x → A x → Prop ℓ₁)
+--                   (r : (z : X) (x : A z) → R z x x)
+--                   (s : (z : X) (x y : A z) → R z x y → R z y x)
+--                   (t : (zz : X) (x y z : A zz) → R zz x y → R zz y z → R zz x z)
+--                   (x : X) (q : Quotient (A x) (R x) (r x) (s x) (t x))
+--                   (e : Id X x x) →
+--                   Id _
+--                     (transport-Id (λ x → Quotient (A x) (R x) (r x) (s x) (t x))
+--                                x q x e)
+--                     q
+-- transport-refl-Quotient X A R r s t x q e =
+--   Quotient-elim-prop (A x) (R x) (r x) (s x) (t x)
+--                      ((λ a → Id _ (transport-Id (λ (x : X) → Quotient (A x) (R x) (r x) (s x) (t x)) x a x e) a))
+--                      (λ a →  transport (λ a' → R x a' a) a (r x a) (cast (A x) (A x) _ a) (inverse (A x) (transport-refl A x a e)))
+--                      q
 
 
 -- Vector (or how to deal with indices)
@@ -626,6 +644,8 @@ postulate transport-Path-cast : {A X : Set ℓ} (P : A → Set ℓ₁) (a : A) (
 
 {-# REWRITE transport-Path-cast #-}
 
+transport-refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) → transport-Path P x t x refl ≡ t
+transport-refl P x t = refl
 
 funext-Path : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
           ((a : A) → f a ≡ g a) → f ≡ g 
