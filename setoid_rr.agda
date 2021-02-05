@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting --prop --confluence-check #-}
+{-# OPTIONS --rewriting --prop --confluence-check --cumulativity #-}
 
 open import Agda.Primitive
 open import Agda.Builtin.Bool
@@ -51,15 +51,6 @@ open Box public
 _×_ : ∀ (A : Prop ℓ) (B : Prop ℓ₁) → Prop (ℓ ⊔ ℓ₁)
 A × B = Tel A (λ _ → B)
 
--- we need this for cumulativity
-
-record i (A : Prop ℓ) : Prop (ℓ ⊔ ℓ₁) where
-  constructor inj
-  field
-    uninj : A
-
-open i public
-
 {- 
  Axiomatisation of Id, Id-refl, transport (for proposition), cast 
 
@@ -71,11 +62,11 @@ open i public
 
 postulate Id : (A : Set ℓ) → A → A → Prop ℓ
 
-postulate cast : (A B : Set ℓ) (e : Id (Set ℓ) A B) → A → B 
+postulate cast : (A B : Set ℓ) (e : Id {lsuc ℓ} (Set ℓ) A B) → A → B 
 
 postulate Id-refl : {A : Set ℓ} (x : A) → Id A x x
 
-postulate cast-refl : {A : Set ℓ} (e : Id _ A A) (a : A) → Id A (cast A A e a) a
+postulate cast-refl : {A : Set ℓ} (e : Id {lsuc ℓ} (Set ℓ) A A) (a : A) → Id A (cast {ℓ = ℓ} A A e a) a
 
 postulate transport : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
 
@@ -86,13 +77,13 @@ ap : {A : Set ℓ} {B : Set ℓ₁} {x y : A} (f : A → B) (e : Id A x y) →
 ap {ℓ} {ℓ₁} {A} {B} {x} {y} f e = transport (λ z → Id B (f x) (f z)) x (Id-refl _) y e
 
 transport-Id : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (y : A) (e : Id A x y) → P y
-transport-Id P x t y e = cast (P x) (P y) (ap P e) t
+transport-Id {ℓ} {ℓ₁} P x t y e = cast {ℓ = ℓ₁} (P x) (P y) (ap P e) t
 
-transport-refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (e : Id A x x) → Id _ (transport-Id P x t x e) t
-transport-refl P x t e = cast-refl (ap P e) t
+transport-refl : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) (e : Id {ℓ} A x x) → Id _ (transport-Id P x t x e) t
+transport-refl {ℓ} {ℓ₁} P x t e = cast-refl (ap P e) t
 
 inverse  : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) → Id A y x
-inverse A {x} {y} p = transport (λ z → Id A z x) x (Id-refl x) y p
+inverse {ℓ} A {x} {y} p = transport {ℓ = ℓ} {ℓ₁ = ℓ} (λ z → Id {ℓ = ℓ} A z x) x (Id-refl x) y p
 
 -- concatId : (A : Set ℓ) {x y z : A} (p : Id {ℓ} A x y)
 --            (q : Id {ℓ} A y z) → Id A x z
@@ -101,14 +92,15 @@ inverse A {x} {y} p = transport (λ z → Id A z x) x (Id-refl x) y p
 -- we now state rewrite rules for the identity type
 
 postulate Id-Pi : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
-                  Id ((a : A) → B a) f g ≡ ((a : A) → Id (B a) (f a) (g a))
+                  Id {ℓ ⊔ ℓ₁} ((a : A) → B a) f g ≡ ((a : A) → Id {ℓ₁} (B a) (f a) (g a))
+
 
 {-# REWRITE Id-Pi #-}
 
 -- rewrite rules on Id-refl are not needed because it is in Prop
 
 refl-Pi : (A : Set ℓ) (B : A → Set ℓ₁) (f : (a : A) → B a) →
-          box (Id-refl f) ≡ box (λ a → Id-refl (f a))
+          box (Id-refl {ℓ ⊔ ℓ₁} f) ≡ box (λ a → Id-refl {ℓ₁} (f a))
 refl-Pi A B f = refl
 
 -- sanity check for funext
@@ -117,21 +109,19 @@ funext : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
          ((a : A) → Id (B a) (f a) (g a)) → Id ((a : A) → B a) f g  
 funext A B f g e = e
 
-
-
 postulate Id-Sigma : (A : Set ℓ) (B : A → Set ℓ₁) (a a' : A)
                      (b : B a) (b' : B a') → 
-                     Id (Σ A B) (a , b) (a' , b') ≡
-                     Tel (Id A a a')
+                     Id {ℓ ⊔ ℓ₁} (Σ A B) (a , b) (a' , b') ≡
+                     Tel (Id {ℓ} A a a')
                          (λ e → Id (B a') (transport-Id B a b a' e) b')
 
 {-# REWRITE Id-Sigma #-}
 
 postulate Id-SigmaCov : (A : Set ℓ) (B : A → Set ℓ₁) (a a' : A)
                      (b : B a) (b' : B a') → 
-                     Id (ΣCov A B) (a , b) (a' , b') ≡
-                     Tel (Id A a a')
-                         (λ e → Id (B a) b (transport-Id B a' b' a (inverse A e)))
+                     Id {ℓ ⊔ ℓ₁} (ΣCov A B) (a , b) (a' , b') ≡
+                     Tel (Id {ℓ} A a a')
+                         (λ e → Id (B a) b (transport-Id B a' b' a (inverse {ℓ} A e)))
 
 {-# REWRITE Id-SigmaCov #-}
 
@@ -152,12 +142,14 @@ postulate Id-list-nil-nil : (A : Set ℓ) →
 -- postulate Id-list-cons-nil : (A : Set ℓ) (a : A) (l : List A) →
 --                              Id (List A) (a ∷ l) [] ≡ i ⊥
 
-postulate Id-list-cons-cons : (A : Set ℓ) (a a' : A) (l l' : List A) →
+postulate Id-list-cons-cons : (A : Set ℓ) (a a' : A) (l l' : List {ℓ} A) →
                              Id (List A) (a ∷ l) (a' ∷ l') ≡
                              Id A a a' × Id (List A) l l'
 
 {-# REWRITE Id-list-nil-nil #-}
 {-# REWRITE Id-list-cons-cons #-}
+
+
 
 postulate Id-nat-zero-zero : Id Nat 0 0 ≡ ⊤P
 
@@ -180,13 +172,14 @@ postulate Id-bool-false-false : Id Bool false false ≡ ⊤P
 {-# REWRITE Id-bool-true-true #-}
 {-# REWRITE Id-bool-false-false #-}
 
+
 postulate Id-sum-inj₁-inj₁ : (A : Set ℓ) (B : Set ℓ₁) (a a' : A) →
                            Id (A ⊎ B) (inj₁ a) (inj₁ a') ≡
-                           i {ℓ = ℓ} {ℓ₁ = ℓ₁} (Id A a a')
+                           Id A a a'
 
 postulate Id-sum-inj₂-inj₂ : (A : Set ℓ) (B : Set ℓ₁) (b b' : B) →
                            Id (A ⊎ B) (inj₂ b) (inj₂ b') ≡
-                           i {ℓ = ℓ₁} {ℓ₁ = ℓ} (Id B b b')
+                           Id B b b'
 
 {-# REWRITE Id-sum-inj₁-inj₁ #-}
 {-# REWRITE Id-sum-inj₂-inj₂ #-}
@@ -197,8 +190,8 @@ telescope-Sigma : Set (lsuc (ℓ ⊔ ℓ₁))
 telescope-Sigma {ℓ} {ℓ₁} = ΣCov (Set ℓ) (λ A → A → Set ℓ₁)
 
 postulate Id-Type-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
-                          Id (Set (ℓ ⊔ ℓ₁)) (Σ A B) (Σ A' B') ≡
-                          Id telescope-Sigma (A , B) (A' , B')
+                          Id {lsuc (ℓ ⊔ ℓ₁)} (Set (ℓ ⊔ ℓ₁)) (Σ A B) (Σ A' B') ≡
+                          Id {lsuc (ℓ ⊔ ℓ₁)} telescope-Sigma (A , B) (A' , B')
 
 {-# REWRITE Id-Type-Sigma #-}
 
@@ -206,21 +199,19 @@ telescope-Forall : Set (lsuc (ℓ ⊔ ℓ₁))
 telescope-Forall {ℓ} {ℓ₁} = Σ (Set ℓ) (λ A → A → Set ℓ₁)
 
 postulate Id-Type-Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) →
-                       Id (Set (ℓ ⊔ ℓ₁)) ((a : A) → B a) ((a' : A') → B' a') ≡
-                       Id telescope-Forall (A , B) (A' , B')
+                       Id {lsuc (ℓ ⊔ ℓ₁)} (Set (ℓ ⊔ ℓ₁)) ((a : A) → B a) ((a' : A') → B' a') ≡
+                       Id {lsuc (ℓ ⊔ ℓ₁)} telescope-Forall (A , B) (A' , B')
 
 {-# REWRITE Id-Type-Pi #-}
-
 
 telescope-Sum : Set (lsuc (ℓ ⊔ ℓ₁))
 telescope-Sum {ℓ} {ℓ₁} = Σ (Set ℓ) (λ _ → Set ℓ₁)
 
 postulate Id-Type-Sum : (A A' : Set ℓ) (B B' : Set ℓ₁)  →
-                          Id (Set (ℓ ⊔ ℓ₁)) (A ⊎ B) (A' ⊎ B') ≡
-                          Id telescope-Sum (A , B) (A' , B')
+                          Id {lsuc (ℓ ⊔ ℓ₁)} (Set (ℓ ⊔ ℓ₁)) (A ⊎ B) (A' ⊎ B') ≡
+                          Id {lsuc (ℓ ⊔ ℓ₁)} telescope-Sum (A , B) (A' , B')
 
 {-# REWRITE Id-Type-Sum #-}
-
 
 telescope-List : Set (lsuc ℓ)
 telescope-List {ℓ} = Set ℓ
@@ -252,7 +243,7 @@ postulate Id-Type-Box : (P P' : Prop ℓ) → Id (Set ℓ) (Box P) (Box P') ≡ 
 
 -- rewrite rules for the identity type on Prop : Prop ext modulo cumul 
 
-postulate Id-prop : (P Q : Prop ℓ) → Id (Prop ℓ) P Q ≡ i (P → Q) × (Q → P)
+postulate Id-prop : (P Q : Prop ℓ) → Id (Prop ℓ) P Q ≡ (P → Q) × (Q → P)
 
 {-# REWRITE Id-prop #-}
 
@@ -264,12 +255,13 @@ postulate Id-set : Id (Set (lsuc ℓ₁)) (Set ℓ₁) (Set ℓ₁) ≡ ⊤P
 --- Contractibility of singletons and J can be defined
 
 contr-sing : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) →
-    Id (Σ A (λ y → Box (Id A x y))) (x , box (Id-refl x)) (y , box p) 
+    Id {ℓ} (Σ A (λ y → Box (Id {ℓ} A x y))) (x , box (Id-refl {ℓ} x)) (y , box p) 
 contr-sing A {x} {y} p = p , ttP
 
-J : (A : Set ℓ) (x : A) (P : (y : A) → Id A x y → Prop ℓ₁) 
-    (t : P x (Id-refl x)) (y : A) (e : Id A x y) → P y e
-J A x P t y e = transport (λ z → P (fst z) (unbox (snd z))) (x , box (Id-refl x)) t (y , box e) (contr-sing A e)
+J : (A : Set ℓ) (x : A) (P : (y : A) → Id {ℓ} A x y → Prop ℓ₁) 
+    (t : P x (Id-refl {ℓ} x)) (y : A) (e : Id {ℓ} A x y) → P y e
+J {ℓ} {ℓ₁} A x P t y e = transport {ℓ = ℓ} {ℓ₁ = ℓ₁} (λ (z : Σ {ℓ} {ℓ} A (λ y → Box {ℓ = ℓ} (Id {ℓ} A x y))) → P (fst z) (unbox {ℓ = ℓ} (snd z)))
+                                   (x , box (Id-refl {ℓ = ℓ} x)) t (y , box e) (contr-sing {ℓ = ℓ} A e)
 
 -- tranporting back and forth is the identity
 
@@ -280,7 +272,8 @@ J A x P t y e = transport (λ z → P (fst z) (unbox (snd z))) (x , box (Id-refl
 --                        J (Set ℓ) A (λ B e → Id A (cast B A (inverse (Set ℓ) {x = A} {y = B} e) (cast A B e a)) a)
 --                          (concatId A e-refl-cast e-refl) B e
 
-postulate cast-set : (A : Set ℓ) (e : _) → cast (Set ℓ) (Set ℓ) e A ≡ A
+
+postulate cast-set : (A : Set ℓ) (e : _) → cast {lsuc ℓ} (Set ℓ) (Set ℓ) e A ≡ A
 
 {-# REWRITE cast-set #-}
 
@@ -288,62 +281,64 @@ postulate cast-prop : (A : Prop ℓ) (e : _) → cast (Prop ℓ) (Prop ℓ) e A 
 
 {-# REWRITE cast-prop #-}
 
-postulate cast-type-family : (A A' : Set ℓ) (f : (a : A) → Set ℓ₁) (e : _) →
-                    cast ((a : A) → Set ℓ₁) ((a' : A') → Set ℓ₁) e f ≡
-                    λ (a' : A') → let a = cast A' A (inverse (Set ℓ) {x = A} {y = A'} (fstC e)) a' in f a 
+postulate cast-type-family : (A A' : Set ℓ) (f : (a : A) → Set ℓ₁) (e : Id {lsuc (ℓ ⊔ lsuc ℓ₁)} (Set (ℓ ⊔ lsuc ℓ₁)) ((a : A) → Set ℓ₁) ((a' : A') → Set ℓ₁)) →
+                    cast {ℓ ⊔ lsuc ℓ₁} ((a : A) → Set ℓ₁) ((a' : A') → Set ℓ₁) e f ≡
+                    λ (a' : A') → let a = cast {ℓ} A' A (inverse {lsuc ℓ} (Set ℓ) {x = A} {y = A'} (fstC e)) a' in f a 
 
 {-# REWRITE cast-type-family #-}
 
-postulate cast-Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (f : (a : A) → B a) (e : Id _ ((a : A) → B a) ((a' : A') → B' a')) →
-                    cast ((a : A) → B a) ((a' : A') → B' a') e f ≡
-                    λ (a' : A') → let a = cast A' A (inverse (Set ℓ) {x = A} {y = A'} (fstC e)) a' in
-                                  cast _ _ (sndC e a') (f a)
+postulate cast-Pi : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (f : (a : A) → B a)
+                    (e : Id {lsuc (ℓ ⊔ ℓ₁)} (Set (ℓ ⊔ ℓ₁)) ((a : A) → B a) ((a' : A') → B' a')) →
+                    cast {ℓ ⊔ ℓ₁} ((a : A) → B a) ((a' : A') → B' a') e f ≡
+                    let eAA' = fstC e
+                    in λ (a' : A') → let a = cast {ℓ} A' A (inverse {lsuc ℓ} (Set ℓ) {x = A} {y = A'} eAA') a' in
+                                     cast {ℓ₁} (B (cast {ℓ} A' A (inverse {lsuc ℓ} (Set ℓ) {x = A} {y = A'} eAA') a')) (B' a') (sndC e a') (f a)
 
 {-# REWRITE cast-Pi #-}
 
-postulate cast-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (x : A) (y : B x) (e : _) →
-                    let eA = fstC e in
-                    let x' = cast A A' eA x in 
-                    let eB = sndC e x in
-                    cast (Σ A B) (Σ A' B') e (x , y) ≡
-                    (cast A A' eA x , cast (B x) (B' x') eB y)
+
+postulate cast-Sigma : (A A' : Set ℓ) (B : A → Set ℓ₁) (B' : A' → Set ℓ₁) (x : A) (y : B x)
+                       (e : Id {lsuc (ℓ ⊔ ℓ₁)} (Set (ℓ ⊔ ℓ₁)) (Σ {ℓ} {ℓ₁} A B) (Σ {ℓ} {ℓ₁} A' B')) →
+                       let eA = fstC e in
+                       let x' = cast {ℓ} A A' eA x in 
+                       let eB = sndC e x in
+                       cast {ℓ ⊔ ℓ₁} (Σ {ℓ} {ℓ₁} A B) (Σ {ℓ} {ℓ₁} A' B') e (x , y) ≡
+                         (cast {ℓ} A A' eA x , cast {ℓ₁} (B x) (B' x') eB y)
 
 {-# REWRITE cast-Sigma #-}
-
-postulate cast-Sum-inj₁ : (A A' : Set ℓ) (B B' : Set ℓ₁) (a : A) (e : _) →
+ 
+postulate cast-Sum-inj₁ : (A A' : Set ℓ) (B B' : Set ℓ₁) (a : A) (e : Id {lsuc (ℓ ⊔ ℓ₁)} (Set (ℓ ⊔ ℓ₁)) (_⊎_ {ℓ} {ℓ₁} A B) (_⊎_ {ℓ} {ℓ₁} A' B')) →
                     let eA = fstC e in
                     let eB = sndC e in
-                    cast (A ⊎ B) (A' ⊎ B') e (inj₁ a) ≡
-                    inj₁ (cast A A' eA a)
+                    cast {ℓ ⊔ ℓ₁} (_⊎_ {ℓ} {ℓ₁} A B) (_⊎_ {ℓ} {ℓ₁} A' B') e (inj₁ a) ≡
+                    inj₁ (cast {ℓ} A A' eA a)
 
-postulate cast-Sum-inj₂ : (A A' : Set ℓ) (B B' : Set ℓ₁) (b : B) (e : _) →
+postulate cast-Sum-inj₂ : (A A' : Set ℓ) (B B' : Set ℓ₁) (b : B) (e : Id {lsuc (ℓ ⊔ ℓ₁)} (Set (ℓ ⊔ ℓ₁)) (_⊎_ {ℓ} {ℓ₁} A B) (_⊎_ {ℓ} {ℓ₁} A' B')) →
                     let eA = fstC e in
                     let eB = sndC e in
-                    cast (A ⊎ B) (A' ⊎ B') e (inj₂ b) ≡
-                    inj₂ (cast B B' eB b)
+                    cast {ℓ ⊔ ℓ₁} (_⊎_ {ℓ} {ℓ₁} A B) (_⊎_ {ℓ} {ℓ₁} A' B') e (inj₂ b) ≡
+                    inj₂ (cast {ℓ₁} B B' eB b)
 
 
 {-# REWRITE cast-Sum-inj₁ #-}
 {-# REWRITE cast-Sum-inj₂ #-}
 
- 
 postulate cast-List-nil : (A A' : Set ℓ) (e : _) →
-                          cast (List A) (List A') e [] ≡ []
+                          cast {ℓ} (List {ℓ} A) (List {ℓ} A') e [] ≡ []
 
-postulate cast-List-cons : (A A' : Set ℓ) (e : _) (a : A) (l : List A) →
-                           cast (List A) (List A') e (a ∷ l) ≡
-                           cast A A' e a ∷ cast _ _ e l
+postulate cast-List-cons : (A A' : Set ℓ) (e : _) (a : A) (l : List {ℓ} A) →
+                           cast {ℓ} (List {ℓ} A) (List {ℓ} A') e (a ∷ l) ≡
+                           cast {ℓ} A A' e a ∷ cast {ℓ} _ _ e l
 
 {-# REWRITE cast-List-nil #-}
 
 {-# REWRITE cast-List-cons #-}
 
-
 postulate cast-Nat-zero : (e : _) → cast Nat Nat e 0 ≡ 0
 
 postulate cast-Nat-suc : (e : _) (n : Nat ) →
-                          cast Nat Nat e (suc n) ≡
-                          suc (cast _ _ e n)
+                          cast {lzero} Nat Nat e (suc n) ≡
+                          suc (cast {lzero} _ _ e n)
 
 {-# REWRITE cast-Nat-zero #-}
 
@@ -363,25 +358,24 @@ postulate cast-Unit : (e : _) → cast ⊤ ⊤ e tt ≡ tt
 
 
 postulate cast-Box : (A A' : Prop ℓ) (a : A) (f : _) (g : _) →
-                    cast (Box A) (Box A') (f , g) (box a) ≡ box (uninj f a)
+                    cast {ℓ} (Box {ℓ} A) (Box {ℓ} A') (f , g) (box a) ≡ box (f a)
 
 {-# REWRITE cast-Box #-}
 
 -- sanity check on closed terms
-
-foo : transport-Id (λ (T : Σ Set (λ A → Σ A (λ _ → A → Set))) → ((snd (snd T)) (fst (snd T))))
+{-
+foo : transport-Id (λ (T : Σ {lsuc lzero} {lsuc lzero} Set (λ A → Σ {lzero} {lsuc lzero} A (λ _ → A → Set))) → ((snd (snd T)) (fst (snd T))))
                           (Nat , (0 , λ _ → Nat))
                           3
                           (Nat , (0 , λ _ → Nat))
-                          (Id-refl {A = Σ Set (λ A → Σ A (λ _ → A → Set))} (Nat , (0 , λ _ → Nat)))
+                          (Id-refl {lsuc lzero} {A = Σ {lsuc lzero} {lsuc lzero} Set (λ A → Σ {lzero} {lsuc lzero} A (λ _ → A → Set))} (Nat , (0 , λ _ → Nat)))
       ≡ 3
 foo = refl
-
+-}
 
 test-J-refl-on-closed-term : (X : Set ℓ) (x : X) →
-       transport-Id (λ z → Σ ⊤ (λ z → ⊤)) x (tt , tt) x (Id-refl x) ≡ (tt , tt)
+       transport-Id {ℓ} (λ z → Σ {lzero} {lzero} ⊤ (λ z → ⊤)) x (tt , tt) x (Id-refl {ℓ} x) ≡ (tt , tt)
 test-J-refl-on-closed-term X x = refl 
-
 
 
 -- Quotient types
@@ -420,7 +414,7 @@ postulate Id-Quotient : (A : Set ℓ)
                         (s : (x y : A) → R x y → R y x)
                         (t : (x y z : A) → R x y → R y z → R x z)
                         (a a' : A) →
-                        Id (Quotient A R r s t)
+                        Id {ℓ} (Quotient {ℓ} A R r s t)
                            (pi A R r s t a) (pi A R r s t a') ≡ R a a'
 
 {-# REWRITE Id-Quotient #-}
@@ -430,24 +424,23 @@ postulate Quotient-elim : (A : Set ℓ)
                (r : (x : A) → R x x)
                (s : (x y : A) → R x y → R y x)
                (t : (x y z : A) → R x y → R y z → R x z)
-               (P : Quotient A R r s t → Set ℓ₁) 
-               (p : (x : A) → P (pi A R r s t x))
+               (P : Quotient {ℓ} A R r s t → Set ℓ₁) 
+               (p : (x : A) → P (pi {ℓ} A R r s t x))
                (e : (x y : A) → (rel : R x y) →
-                    Id _ (transport-Id P (pi A R r s t x) (p x) (pi A R r s t y) rel) (p y))
-               (w : Quotient A R r s t) → P w
+                    Id {ℓ₁} _ (transport-Id {ℓ} P (pi {ℓ} A R r s t x) (p x) (pi {ℓ} A R r s t y) rel) (p y))
+               (w : Quotient {ℓ} A R r s t) → P w
 
 postulate Quotient-elim-red : (A : Set ℓ)
-                (R : A → A → Prop ℓ)
-                (r : (x : A) → R x x)
-                (s : (x y : A) → R x y → R y x)
-                (t : (x y z : A) → R x y → R y z → R x z)
-                (P : Quotient A R r s t → Set ℓ₁) 
-                (p : (x : A) → P (pi A R r s t x))
-                (e : (x y : A) → (rel : R x y) →
-                     Id _ (transport-Id P (pi A R r s t x) (p x) (pi A R r s t y) rel) (p y))
-                (a : A) →
-                Quotient-elim A R r s t P p e (pi A R r s t a)
-                ≡ p a
+               (R : A → A → Prop ℓ)
+               (r : (x : A) → R x x)
+               (s : (x y : A) → R x y → R y x)
+               (t : (x y z : A) → R x y → R y z → R x z)
+               (P : Quotient {ℓ} A R r s t → Set ℓ₁) 
+               (p : (x : A) → P (pi {ℓ} A R r s t x))
+               (e : _)
+               (a : A) →
+               Quotient-elim {ℓ} {ℓ₁} A R r s t P p e (pi {ℓ} A R r s t a)
+               ≡ p a
 
 {-# REWRITE Quotient-elim-red #-}
 
@@ -456,10 +449,9 @@ postulate Quotient-elim-prop : (A : Set ℓ)
                (r : (x : A) → R x x)
                (s : (x y : A) → R x y → R y x)
                (t : (x y z : A) → R x y → R y z → R x z)
-               (P : Quotient A R r s t → Prop ℓ₁) 
-               (p : (x : A) → P (pi A R r s t x))
-               (w : Quotient A R r s t) → P w
-
+               (P : Quotient {ℓ} A R r s t → Prop ℓ₁) 
+               (p : (x : A) → P (pi {ℓ} A R r s t x))
+               (w : Quotient {ℓ} A R r s t) → P w
 
 postulate Id-Type-Quotient : (A A' : Set ℓ) 
                 (R : A → A → Prop ℓ)
@@ -488,32 +480,32 @@ postulate cast-Quotient : (A A' : Set ℓ)
                 (t : (x y z : A) → R x y → R y z → R x z)
                 (t' : (x y z : A') → R' x y → R' y z → R' x z)
                 (a : A) (e : _) →
-                cast (Quotient A R r s t) (Quotient A' R' r' s' t') e (pi A R r s t a) ≡
-                pi A' R' r' s' t' (cast A A' (fstC e) a)
+                cast {ℓ} (Quotient {ℓ} A R r s t) (Quotient {ℓ} A' R' r' s' t') e (pi A R r s t a) ≡
+                pi {ℓ} A' R' r' s' t' (cast {ℓ} A A' (fstC e) a)
 
 {-# REWRITE cast-Quotient #-}
 
 
 -- Sanity Check: transport-refl on quotient type
-
+{-
 transport-refl-Quotient : (X : Set ℓ)
                   (A : X -> Set ℓ₁)
                   (R : (x : X) → A x → A x → Prop ℓ₁)
                   (r : (z : X) (x : A z) → R z x x)
                   (s : (z : X) (x y : A z) → R z x y → R z y x)
                   (t : (zz : X) (x y z : A zz) → R zz x y → R zz y z → R zz x z)
-                  (x : X) (q : Quotient (A x) (R x) (r x) (s x) (t x))
-                  (e : Id X x x) →
-                  Id _
-                    (transport-Id (λ x → Quotient (A x) (R x) (r x) (s x) (t x))
+                  (x : X) (q : Quotient {ℓ₁} (A x) (R x) (r x) (s x) (t x))
+                  (e : Id {ℓ} X x x) →
+                  Id {ℓ₁} _
+                    (transport-Id {ℓ} (λ x → Quotient {ℓ₁} (A x) (R x) (r x) (s x) (t x))
                                x q x e)
                     q
-transport-refl-Quotient X A R r s t x q e =
-  Quotient-elim-prop (A x) (R x) (r x) (s x) (t x)
+transport-refl-Quotient {ℓ} {ℓ₁} X A R r s t x q e =
+  Quotient-elim-prop {ℓ = ℓ₁} (A x) (R x) (r x) (s x) (t x)
                      ((λ a → Id _ (transport-Id (λ (x : X) → Quotient (A x) (R x) (r x) (s x) (t x)) x a x e) a))
                      (λ a →  transport (λ a' → R x a' a) a (r x a) (cast (A x) (A x) _ a) (inverse (A x) (transport-refl A x a e)))
                      q
-
+-}
 
 -- Vector (or how to deal with indices)
 -- Some of the rewrite rules below can be defined only because
@@ -537,8 +529,8 @@ postulate Id-vector-vnil-vnil : (A : Set ℓ) →
 {- Note that the rule below are technically non-linear, but the arguments A and n of vcons can be seen as "forced" -}
 
 postulate Id-vector-vcons-vcons : (A : Set ℓ) (n : Nat) (a a' : A)
-                                  (l l' : Vec A n) →
-                                  Id (Vec A (suc n)) (_∷_ {A = A} {n = n} a l) (_∷_ {A = A} {n = n} a' l') ≡
+                                  (l l' : Vec {ℓ} A n) →
+                                  Id {ℓ} (Vec {ℓ} A (suc n)) (_∷_ {A = A} {n = n} a l) (_∷_ {A = A} {n = n} a' l') ≡
                                   Id A a a' × Id (Vec A n) l l'
 
 {-# REWRITE Id-vector-vnil-vnil #-}
@@ -546,11 +538,11 @@ postulate Id-vector-vcons-vcons : (A : Set ℓ) (n : Nat) (a a' : A)
 
 
 postulate cast-Vec-vnil : (A A' : Set ℓ) (e : _) →
-                       cast (Vec A 0) (Vec A' 0) e [] ≡ []
+                       cast {ℓ} (Vec {ℓ} A 0) (Vec {ℓ} A' 0) e [] ≡ []
 
-postulate cast-Vec-vcons : (A A' : Set ℓ) (n n' : Nat) (a : A) (v : Vec A n) (e : _) →
-                       cast (Vec A (suc n)) (Vec A' (suc n')) e (_∷_ {A = A} {n = n} a v) ≡
-                       _∷_ {A = A'} {n = n'} (cast A A' (fstC e) a) (cast (Vec A n) (Vec A' n') e v)
+postulate cast-Vec-vcons : (A A' : Set ℓ) (n n' : Nat) (a : A) (v : Vec {ℓ} A n) (e : _) →
+                       cast {ℓ} (Vec {ℓ} A (suc n)) (Vec {ℓ} A' (suc n')) e (_∷_ {A = A} {n = n} a v) ≡
+                       _∷_ {A = A'} {n = n'} (cast {ℓ} A A' (fstC e) a) (cast {ℓ} (Vec {ℓ} A n) (Vec {ℓ} A' n') e v)
 
 
 {-# REWRITE cast-Vec-vnil #-}
@@ -561,7 +553,7 @@ postulate cast-Vec-vcons : (A A' : Set ℓ) (n n' : Nat) (a : A) (v : Vec A n) (
 
 data VecL (A : Set ℓ) (a : A) : List A → Set ℓ where
   []  : VecL A a []
-  _∷_ : {l : List A} → A → VecL A a l → VecL A a (a ∷ l)
+  _∷_ : {l : List {ℓ} A} → A → VecL {ℓ} A a l → VecL {ℓ} A a (a ∷ l)
 
 telescope-VecL : Set (lsuc ℓ)
 telescope-VecL {ℓ} = Σ (Set ℓ) (λ A → Σ A (λ - → List A))
@@ -572,34 +564,31 @@ postulate Id-vectorL-vnil-vnil : (A : Set ℓ) (a : A) →
 -- postulate Id-vector-vnil-vcons : not well typed
 -- postulate Id-vector-vcons-vnil : not well typed
 
-postulate Id-vectorL-vcons-vcons : (A : Set ℓ) (x : A) (l : List A) (a a' : A)
-                                  (v v' : VecL A x l) →
-                                  Id (VecL A x (x ∷ l)) (a ∷ v) (a' ∷ v') ≡
-                                  Id A a a' × Id (VecL A x l) v v'
+postulate Id-vectorL-vcons-vcons : (A : Set ℓ) (x : A) (l : List {ℓ} A) (a a' : A)
+                                  (v v' : VecL {ℓ} A x l) →
+                                  Id (VecL {ℓ} A x (x ∷ l)) (a ∷ v) (a' ∷ v') ≡
+                                  Id A a a' × Id (VecL {ℓ} A x l) v v'
 
 {-# REWRITE Id-vectorL-vnil-vnil #-}
 {-# REWRITE Id-vectorL-vcons-vcons #-}
 
-postulate Id-Type-VecL : (A A' : Set ℓ) (a : A) (a' : A') (l : List A) (l' : List A') →
-                       Id (Set ℓ) (VecL A a l) (VecL A' a' l') ≡
+postulate Id-Type-VecL : (A A' : Set ℓ) (a : A) (a' : A') (l : List {ℓ} A) (l' : List {ℓ} A') →
+                       Id (Set ℓ) (VecL {ℓ} A a l) (VecL {ℓ} A' a' l') ≡
                        Id telescope-VecL (A , (a , l)) (A' , (a' , l'))
 
 {-# REWRITE Id-Type-VecL #-}
 
-
-
 postulate cast-VecL-vnil : (A A' : Set ℓ) (a : A) (a' : A')  (e : _) →
-                       cast (VecL A a []) (VecL A' a' []) e [] ≡ []
+                       cast {ℓ} (VecL {ℓ} A a []) (VecL {ℓ} A' a' []) e [] ≡ []
 
-postulate cast-VecL-vcons : (A A' : Set ℓ) (a : A) (a' : A') (l : List A) (l' : List A') 
-                           (x : A) (v : VecL A a l) (x' : A') (v' : VecL A' a' l') (e : _) →
-                     cast (VecL A a (a ∷ l)) (VecL A' a' (a' ∷ l')) e (x ∷ v) ≡ 
-                     cast A A' (fstC e) a ∷ cast (VecL A a l) (VecL A' a' l') ( fstC e , (fstC (sndC e) , sndC (sndC (sndC e)))) v 
+postulate cast-VecL-vcons : (A A' : Set ℓ) (a : A) (a' : A') (l : List {ℓ} A) (l' : List {ℓ} A') 
+                           (x : A) (v : VecL {ℓ} A a l) (x' : A') (v' : VecL {ℓ} A' a' l') (e : _) →
+                     cast {ℓ} (VecL {ℓ} A a (a ∷ l)) (VecL {ℓ} A' a' (a' ∷ l')) e (x ∷ v) ≡ 
+                     cast {ℓ} A A' (fstC e) a ∷ cast {ℓ} (VecL {ℓ} A a l) (VecL {ℓ} A' a' l') ( fstC e , (fstC (sndC e) , sndC (sndC (sndC e)))) v 
 
 
 {-# REWRITE cast-VecL-vnil #-}
 {-# REWRITE cast-VecL-vcons #-}
-
 
 -- Now for Path
 
@@ -631,21 +620,25 @@ transport-Path-prop : {A : Set ℓ} (P : A → Prop ℓ₁) (x : A) (t : P x) (y
 transport-Path-prop P x t y refl = t
 
 id-to-Path : {A : Set ℓ} {x y : A} → Id A x y → x ≡ y
-id-to-Path {ℓ} {A} {x} {y} = transport-Id (λ y → x ≡ y) x (refl) y 
+id-to-Path {ℓ} {A} {x} {y} = transport-Id {ℓ} (λ y → x ≡ y) x (refl) y 
 
 path-to-Id : {A : Set ℓ} {x y : A} → x ≡ y → Id A x y 
-path-to-Id {ℓ} {A} {x} {y} = transport-Path-prop (Id A x) x (Id-refl x) y
+path-to-Id {ℓ} {A} {x} {y} = transport-Path-prop {ℓ} {ℓ} (Id {ℓ} A x) x (Id-refl {ℓ} x) y
 
 -- we treat cast X (a ≡ b) e x as a new constructor of equality
 
-postulate transport-Path-cast : {A X : Set ℓ} (P : A → Set ℓ₁) (a : A) (t : P a) (b : A) (x : X) (e : _) → P b →
-                             transport-Path P a t b (cast X (a ≡ b) e x) ≡
-                             transport-Id P a t b (path-to-Id (cast X (a ≡ b) e x))
+postulate transport-Path-cast : {A X : Set ℓ} (P : A → Set ℓ₁) (a : A) (t : P a) (b : A) (x : X) (e : Id {lsuc ℓ} (Set ℓ) X ( _≡_ {ℓ} a b)) → P b →
+                             transport-Path {ℓ} {ℓ₁} P a t b (cast {ℓ} X (a ≡ b) e x) ≡
+                             transport-Id {ℓ} {ℓ₁} P a t b (path-to-Id {ℓ} (cast {ℓ} X (a ≡ b) e x))
 
 {-# REWRITE transport-Path-cast #-}
 
 transport-refl-Path : {A : Set ℓ} (P : A → Set ℓ₁) (x : A) (t : P x) → transport-Path P x t x refl ≡ t
 transport-refl-Path P x t = refl
+
+transport-refl-Path' : {A X : Set ℓ} (P : A → Set ℓ₁) (a : A) (t : P a) (x : X) (e : _) →
+                       Id {ℓ₁} (P a) (transport-Path {ℓ} {ℓ₁} P a t a (cast {ℓ} X ( _≡_ {ℓ} a a) e x)) t
+transport-refl-Path' {ℓ} {ℓ₁} {A} {X} P a t x e = transport-refl {ℓ} {ℓ₁} P a t (Id-refl {ℓ = ℓ} a) 
 
 funext-Path : (A : Set ℓ) (B : A → Set ℓ₁) (f g : (a : A) → B a) →
           ((a : A) → f a ≡ g a) → f ≡ g 
@@ -662,4 +655,5 @@ eq_fun = funext-Path Bool (λ - → Bool) _ _ λ a → etaBool a
 
 std-bool : Bool
 std-bool = transport-Path (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) eq_fun
+
 
