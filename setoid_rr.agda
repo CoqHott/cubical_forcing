@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting --prop --confluence-check --cumulativity #-}
+{-# OPTIONS --rewriting --prop --cumulativity #-}
 
 open import Agda.Primitive
 open import Agda.Builtin.Bool
@@ -37,6 +37,9 @@ variable ℓ ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Level
 -- a bit of boilerplate to deal with Prop
 
 data ⊥ : Prop where
+
+⊥-elim : {A : Set ℓ} → ⊥ → A
+⊥-elim () 
 
 record ⊤P : Prop ℓ where
   constructor ttP
@@ -252,6 +255,23 @@ postulate Id-set : Id (Set (lsuc ℓ₁)) (Set ℓ₁) (Set ℓ₁) ≡ ⊤P
 
 {-# REWRITE Id-set #-}
 
+-- non-diagonal cases
+
+{- There are n^2 cases, that's a pain, this is not exhaustive for the moment -}
+
+postulate Id-set-nat : Id _ (Set ℓ) Nat ≡ ⊥
+postulate Id-nat-set : Id (Set (lsuc ℓ)) Nat (Set ℓ) ≡ ⊥
+postulate Id-set-bool : Id _ (Set ℓ) Bool ≡ ⊥
+postulate Id-bool-set : Id (Set (lsuc ℓ)) Bool (Set ℓ) ≡ ⊥
+postulate Id-bool-nat : Id (Set ℓ) Bool Nat ≡ ⊥
+postulate Id-nat-bool : Id (Set ℓ) Nat Bool ≡ ⊥
+postulate Id-set-pi : (A : Set ℓ₁) (B : A → Set ℓ₂) → Id (Set (lsuc ℓ ⊔ ℓ₁ ⊔ ℓ₂)) (Set ℓ) ((a : A) → B a)  ≡ ⊥
+postulate Id-pi-set : (A : Set ℓ₁) (B : A → Set ℓ₂) → Id (Set (lsuc ℓ ⊔ ℓ₁ ⊔ ℓ₂)) ((a : A) → B a) (Set ℓ)  ≡ ⊥
+postulate Id-set-sigma : (A : Set ℓ₁) (B : A → Set ℓ₂) → Id (Set (lsuc ℓ ⊔ ℓ₁ ⊔ ℓ₂)) (Set ℓ) (Σ A B) ≡ ⊥
+postulate Id-sigma-set : (A : Set ℓ₁) (B : A → Set ℓ₂) → Id (Set (lsuc ℓ ⊔ ℓ₁ ⊔ ℓ₂)) (Σ A B) (Set ℓ) ≡ ⊥
+
+{-# REWRITE Id-set-nat Id-nat-set Id-set-bool Id-bool-set Id-bool-nat Id-nat-bool Id-set-pi Id-pi-set Id-set-sigma Id-sigma-set #-}
+
 --- Contractibility of singletons and J can be defined
 
 contr-sing : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) →
@@ -361,6 +381,21 @@ postulate cast-Box : (A A' : Prop ℓ) (a : A) (f : _) (g : _) →
                     cast {ℓ} (Box {ℓ} A) (Box {ℓ} A') (f , g) (box a) ≡ box (f a)
 
 {-# REWRITE cast-Box #-}
+
+-- impossible casts
+
+postulate cast-set-nat :  (e : _) (x : _) → cast {lsuc ℓ} (Set ℓ) Nat e x ≡ ⊥-elim e
+postulate cast-nat-set :  (e : _) (x : _) → cast {lsuc ℓ} Nat (Set ℓ) e x ≡ ⊥-elim e
+postulate cast-set-bool : (e : _) (x : _) → cast {lsuc ℓ} (Set ℓ) Bool e x ≡ ⊥-elim e 
+postulate cast-bool-set : (e : _) (x : _) → cast {lsuc ℓ} Bool (Set ℓ) e x ≡ ⊥-elim e
+postulate cast-bool-nat : (e : _) (x : _) → cast {ℓ} Bool Nat e x ≡ ⊥-elim e
+postulate cast-nat-bool : (e : _) (x : _) → cast {ℓ} Nat Bool e x ≡ ⊥-elim e
+postulate cast-set-pi : (A : Set ℓ₁) (B : A → Set ℓ₂) (e : _) (x : _) → cast {lsuc ℓ ⊔ ℓ₁ ⊔ ℓ₂} (Set ℓ) ((a : A) → B a) e x ≡ ⊥-elim e
+postulate cast-pi-set : (A : Set ℓ₁) (B : A → Set ℓ₂) (e : _) (x : _) → cast {lsuc ℓ ⊔ ℓ₁ ⊔ ℓ₂} ((a : A) → B a) (Set ℓ) e x ≡ ⊥-elim e
+postulate cast-set-sigma : (A : Set ℓ₁) (B : A → Set ℓ₂) (e : _) (x : _) → cast {lsuc ℓ ⊔ ℓ₁ ⊔ ℓ₂} (Set ℓ) (Σ {ℓ₁} {ℓ₂} A B) e x ≡ ⊥-elim e 
+postulate cast-sigma-set : (A : Set ℓ₁) (B : A → Set ℓ₂) (e : _) (x : _) → cast {lsuc ℓ ⊔ ℓ₁ ⊔ ℓ₂} (Σ {ℓ₁} {ℓ₂} A B) (Set ℓ) e x ≡ ⊥-elim e
+
+{-# REWRITE cast-set-nat cast-nat-set cast-set-bool cast-bool-set cast-bool-nat cast-nat-bool cast-set-pi cast-pi-set  cast-set-sigma cast-sigma-set #-}
 
 -- sanity check on closed terms
 {-
