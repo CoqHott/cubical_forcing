@@ -88,9 +88,9 @@ transport-refl {ℓ} {ℓ₁} P x t e = cast-refl (ap P e) t
 inverse  : (A : Set ℓ) {x y : A} (p : Id {ℓ} A x y) → Id A y x
 inverse {ℓ} A {x} {y} p = transport {ℓ = ℓ} {ℓ₁ = ℓ} (λ z → Id {ℓ = ℓ} A z x) x (Id-refl x) y p
 
--- concatId : (A : Set ℓ) {x y z : A} (p : Id {ℓ} A x y)
---            (q : Id {ℓ} A y z) → Id A x z
--- concatId A {x} {y} {z} p q = transport (λ t → Id A x t) y p z q
+concatId : (A : Set ℓ) {x y z : A} (p : Id {ℓ} A x y)
+            (q : Id {ℓ} A y z) → Id A x z
+concatId A {x} {y} {z} p q = transport (λ t → Id A x t) y p z q
 
 -- we now state rewrite rules for the identity type
 
