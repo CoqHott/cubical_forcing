@@ -692,3 +692,222 @@ std-bool : Bool
 std-bool = transport-Path (λ f → Bool) (λ (b : Bool) → b) true (λ (b : Bool) → if b then true else false) eq_fun
 
 
+-- Example: State monad
+
+open import Data.Nat
+open import Function
+
+S : Set
+S = ℕ
+
+
+data ΣState (X : Set) : Set where
+  `get : ⊤ → (S → X) → ΣState X
+  `set : S → (⊤ → X) → ΣState X
+
+ΣState-map : ∀{V W : Set} → (V → W) → ΣState V → ΣState W
+ΣState-map f (`get tt k) = `get tt (f ∘ k)
+ΣState-map f (`set s k) = `set s (f ∘ k)
+
+ΣState-map-id : ∀{V} (x : ΣState V) →
+                  ΣState-map (λ xs → xs) x ≡ x
+ΣState-map-id (`get tt k) = refl
+ΣState-map-id (`set s k) = refl
+
+ΣState-map-∘ : ∀{U V W : Set} (f : U → V)(g : V → W)(x : ΣState U) →
+               ΣState-map (g ∘ f) x ≡ ΣState-map g (ΣState-map f x)
+ΣState-map-∘ f g (`get tt k) = refl
+ΣState-map-∘ f g (`set s k) = refl
+
+-- TODO: the free monad construction could be defined generically
+
+data StateF (V : Set) : Set where
+  return : V → StateF V
+  op : ΣState (StateF V) → StateF V
+
+get : ⊤ → StateF S
+get tt = op (`get tt (λ s → return s))
+
+set : S → StateF ⊤
+set s = op (`set s (λ tt → return tt))
+
+-- TODO 1: this is mostly independent from the ΣState: any functor will do
+
+{-# TERMINATING #-}
+_>>=_ : ∀{V W} → StateF V → (V → StateF W) → StateF W
+return x >>= mf = mf x
+op fa >>= mf = op (ΣState-map (λ mv → mv >>= mf) fa)
+
+-- TODO2: the above definition can be made (obviously) terminating by
+-- writing the following mutual definition. However, this makes proofs
+-- less readable so I don't do that for now.
+
+{-
+mutual
+  _>>=_ : ∀{V W : Set} → StateF V → (V → StateF W) → StateF W
+  return x >>= mf = mf x
+  op fa >>= mf = op (ΣStatemap mf fa)
+
+  ΣStatemap : ∀{V W : Set} → (V → StateF W) → ΣState (StateF V) → ΣState (StateF W)
+  ΣStatemap mf (`get tt k) = `get tt λ s → (k s) >>= mf
+  ΣStatemap mf (`set s k) = `set s  λ tt → (k tt) >>= mf
+-}
+
+bind-left-unit : ∀ {X Y : Set} → (x : X)(k : X → StateF Y) →
+  (return x >>= k) ≡ k x
+bind-left-unit x k = refl
+
+cong≡ : ∀ {A B : Set} (f : A → B) {x y} → x ≡ y → f x ≡ f y
+cong≡ f refl = refl
+
+trans≡ : ∀ {A : Set} {x y z : A} → x ≡ y → y ≡ z → x ≡ z
+trans≡ refl e = e
+
+sym≡ : ∀ {A : Set} {x y : A} → x ≡ y → y ≡ x
+sym≡ refl = refl
+
+{-# TERMINATING #-}
+bind-right-unit : ∀ {X} → (mx : StateF X) →
+              mx >>= return ≡ mx
+bind-right-unit (return x) = refl
+bind-right-unit (op x) = cong≡ op
+                       (trans≡ (cong≡ (λ f → ΣState-map f x)
+                                           (funext-Path _ _ _ _  bind-right-unit))
+                                      (ΣState-map-id x))
+
+
+
+{-# TERMINATING #-}
+bind-compose : ∀ {X Y Z} → (mx : StateF X)(f : X → StateF Y)(g : Y → StateF Z) →
+  ((mx >>= f) >>= g) ≡ (mx >>= λ x → (f x >>= g))
+bind-compose (return x) f g = refl
+bind-compose (op x) f g = cong≡ op
+                         (trans≡ (sym≡ (ΣState-map-∘ (λ mv → mv >>= f)
+                                                     (λ mv → mv  >>= g) x))
+                         (cong≡ (λ f → ΣState-map f x)
+                         (funext-Path _ _ _ _ (λ mx → bind-compose mx f g))))
+
+
+data _↝_ {V : Set} : StateF V → StateF V → Prop where
+
+
+  get-get : ∀{k : S → S → StateF V} →
+          (get tt >>= (λ s → get tt >>= λ s' → k s s' )) ↝ (get tt >>= λ s → k s s )
+
+  set-set : ∀{k s₁ s₂} →
+          (set s₁ >>= (λ _ → set s₂ >>= λ _ → k)) ↝ (set s₂ >>= λ _ → k)
+
+  get-set : ∀{k} →
+          (get tt >>= λ s → set s >>= λ _ → k) ↝ k
+
+  set-get : ∀{k s} →
+          (set s >>= (λ _ → get tt >>= k)) ↝ (set s >>= λ _ → k s)
+
+data _∼_ {V : Set} : StateF V → StateF V → Prop₁ where
+  inc : ∀{p q} → p ↝ q → p ∼ q
+
+  trans : ∀{p q r} → p ∼ q → q ∼ r → p ∼ r
+  refl : ∀{p} → p ∼ p
+  sym : ∀{p q} → p ∼ q → q ∼ p
+
+  cong : ∀{W}(tm : StateF W){ps qs : W → StateF V}  →
+         (∀ w → ps w ∼ qs w) →
+         (tm >>= ps) ∼ (tm >>= qs)
+
+open import Relation.Binary
+
+FreeState : Set → Set₁ -- XXX: annoying to end up in Set₁
+FreeState V = Quotient (StateF V) _∼_ (λ x → refl {p = x}) (λ x y eq → sym eq) (λ x y z eq1 eq2 → trans eq1 eq2)
+
+inject : forall {V} → StateF V → FreeState V
+inject {V} x =  pi (StateF V) _∼_ (λ x → refl {p = x}) (λ x y eq → sym eq) (λ x y z eq1 eq2 → trans eq1 eq2) x
+
+open import Data.Product
+
+STATE : Set → Set
+STATE V = S → S × V
+
+eval : ∀{A} → StateF A → STATE A
+eval (return a) = λ s → (s , a)
+eval (op (`get tt k)) = λ s → eval (k s) s
+eval (op (`set s' k)) = λ s → eval (k tt) s'
+
+reify : ∀{A} → STATE A → StateF A
+reify {A} f = get tt >>= λ s →
+              set (proj₁ (f s)) >>= λ _ →
+              return (proj₂ (f s))
+
+norm : ∀{A} → StateF A → StateF A
+norm p = reify (eval p)
+
+
+pf-sound : ∀{A} → (p : StateF A) → p ∼ norm p
+pf-sound (return x) = sym (inc get-set)
+pf-sound {V} (op (`get tt k)) =
+         trans (cong (op (`get tt return))
+          (λ s' → pf-sound (k s')))
+         (inc get-get)
+pf-sound {V} (op (`set s' k)) =
+  trans (cong (op (`set s' return)) (λ _ → pf-sound (k tt)))
+    (trans (inc set-get)
+     (trans (inc set-set)
+      (trans (sym (inc get-set))
+       (cong (get tt >>= return) (λ s → inc set-set)))))
+
+eval-compose : ∀{A B}(tm : StateF A)(k : A → StateF B){s} →
+             eval (tm >>= k) s
+             ≡ (let p : S × A
+                    p = eval tm s in
+               eval (k (proj₂ p)) (proj₁ p))
+eval-compose (return x) k {s} = refl
+eval-compose (op (`get tt k)) k' {s} = eval-compose (k s) k'
+eval-compose (op (`set s' k)) k' {s} = eval-compose (k tt) k'
+
+pf-complete : ∀ {A} {p q : StateF A} → p ∼ q → ∀{s} → Id _ (eval p s) (eval q s)
+pf-complete (inc (get-get {k})) {s} = Id-refl {lzero} (eval (k s s) s)
+pf-complete (inc (set-set {k}{s₂ = s₂})) = Id-refl {lzero} (eval k s₂)
+pf-complete (inc (set-get {k}{s})) = Id-refl {lzero} (eval (k s) s)
+pf-complete (inc (get-set {k})) {s} = Id-refl {lzero} (eval k s)
+pf-complete {A} {p = p}{q} (trans {q = r} r₁ r₂) {s} = concatId {lzero} (S × A) {eval p s}{eval r s}{eval q s} (pf-complete r₁ {s}) (pf-complete r₂ {s})
+pf-complete (refl {p}) {s} = Id-refl {lzero} (eval p s)
+pf-complete {A} (sym {p}{q} r) {s} = inverse {lzero} (S × A) {eval p s} {eval q s} (pf-complete r {s})
+pf-complete {A} (cong tm {ps}{qs} x) {s} = {!!} {-
+  -- TODO: this is the right term but one needs to provide the implicit arguments to avoid silly unification questions:
+
+  concatId (S × A) (eval-compose tm ps)
+    (concatId (S × A) (pf-complete (x (proj₂ (eval tm s))))
+                       (sym≡ (eval-compose tm qs))) -}
+
+pf-complete2 : ∀ {A} {p q : StateF A} → p ∼ q → ∀{s} → eval p s ≡ eval q s
+pf-complete2 {A} {p}{q} r {s} = id-to-Path (pf-complete {A} {p}{q} r {s})
+
+sound : ∀ {V} (p q : StateF V) → norm p ≡ norm q → p ∼ q
+sound {V} p q r = help {norm p}{norm q} (pf-sound p) (sym (pf-sound q)) r
+  where help : ∀ {a b} → p ∼ a → b ∼ q → a ≡ b → p ∼ q
+        help eq1 eq2 refl = trans eq1 eq2
+
+complete : ∀ {A} {p q : StateF A} → p ∼ q → norm p ≡ norm q
+complete {A} {p = p} {q} r = cong≡ (λ x → reify x) (funext-Path _ _ _ _ (λ z → pf-complete2 {A}{p}{q} r {z}))
+
+prog1 : StateF ℕ
+prog1 =
+  get tt >>= λ x →
+  set (1 + x) >>= λ _ →
+  get tt >>= λ y →
+  set (2 + x) >>= λ _ →
+  get tt >>= λ z →
+  set (3 + y) >>= λ _ →
+  return y
+
+prog2 : StateF ℕ
+prog2 =
+  get tt >>= λ x →
+  set (4 + x) >>= λ _ →
+  return (1 + x)
+
+prog-equiv : prog1 ∼ prog2
+prog-equiv = sound prog1 prog2 refl
+
+
+prog-equiv2 : inject prog1 ≡ inject prog2
+prog-equiv2 = {!!} -- TODO: what would that be useful for?
