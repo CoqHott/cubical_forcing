@@ -8,8 +8,8 @@ open import Agda.Builtin.Equality
 open import Agda.Builtin.Equality.Rewrite
 open import Agda.Builtin.Sigma
 open import Agda.Builtin.Unit
-open import Data.Vec.Base
-open import Data.Bool
+open import Data.Vec.Base hiding (_>>=_)
+open import Data.Bool hiding (_∧_)
 open import Data.Sum
 
 -- sigma type in Prop used to handle telescopes. 
@@ -51,8 +51,8 @@ record Box (A : Prop ℓ) : Set ℓ where
 
 open Box public
 
-_×_ : ∀ (A : Prop ℓ) (B : Prop ℓ₁) → Prop (ℓ ⊔ ℓ₁)
-A × B = Tel A (λ _ → B)
+_∧_ : ∀ (A : Prop ℓ) (B : Prop ℓ₁) → Prop (ℓ ⊔ ℓ₁)
+A ∧ B = Tel A (λ _ → B)
 
 {- 
  Axiomatisation of Id, Id-refl, transport (for proposition), cast 
@@ -147,7 +147,7 @@ postulate Id-list-nil-nil : (A : Set ℓ) →
 
 postulate Id-list-cons-cons : (A : Set ℓ) (a a' : A) (l l' : List {ℓ} A) →
                              Id (List A) (a ∷ l) (a' ∷ l') ≡
-                             Id A a a' × Id (List A) l l'
+                             Id A a a' ∧ Id (List A) l l'
 
 {-# REWRITE Id-list-nil-nil #-}
 {-# REWRITE Id-list-cons-cons #-}
@@ -246,7 +246,7 @@ postulate Id-Type-Box : (P P' : Prop ℓ) → Id (Set ℓ) (Box P) (Box P') ≡ 
 
 -- rewrite rules for the identity type on Prop : Prop ext modulo cumul 
 
-postulate Id-prop : (P Q : Prop ℓ) → Id (Prop ℓ) P Q ≡ (P → Q) × (Q → P)
+postulate Id-prop : (P Q : Prop ℓ) → Id (Prop ℓ) P Q ≡ (P → Q) ∧ (Q → P)
 
 {-# REWRITE Id-prop #-}
 
@@ -566,7 +566,7 @@ postulate Id-vector-vnil-vnil : (A : Set ℓ) →
 postulate Id-vector-vcons-vcons : (A : Set ℓ) (n : Nat) (a a' : A)
                                   (l l' : Vec {ℓ} A n) →
                                   Id {ℓ} (Vec {ℓ} A (suc n)) (_∷_ {A = A} {n = n} a l) (_∷_ {A = A} {n = n} a' l') ≡
-                                  Id A a a' × Id (Vec A n) l l'
+                                  Id A a a' ∧ Id (Vec A n) l l'
 
 {-# REWRITE Id-vector-vnil-vnil #-}
 {-# REWRITE Id-vector-vcons-vcons #-}
@@ -602,7 +602,7 @@ postulate Id-vectorL-vnil-vnil : (A : Set ℓ) (a : A) →
 postulate Id-vectorL-vcons-vcons : (A : Set ℓ) (x : A) (l : List {ℓ} A) (a a' : A)
                                   (v v' : VecL {ℓ} A x l) →
                                   Id (VecL {ℓ} A x (x ∷ l)) (a ∷ v) (a' ∷ v') ≡
-                                  Id A a a' × Id (VecL {ℓ} A x l) v v'
+                                  Id A a a' ∧ Id (VecL {ℓ} A x l) v v'
 
 {-# REWRITE Id-vectorL-vnil-vnil #-}
 {-# REWRITE Id-vectorL-vcons-vcons #-}
